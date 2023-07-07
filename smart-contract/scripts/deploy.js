@@ -7,22 +7,42 @@
 const hre = require("hardhat");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+  const zeroEx = await hre.ethers.deployContract("ZeroEx", ["0x19Ef6AB7a5e9753C214462df01F77aD324dA645D"]);
+  const zeroExDeployed = await zeroEx.waitForDeployment();
+  const zeroAddress = await zeroExDeployed.getAddress();
 
-  const lockedAmount = hre.ethers.parseEther("0.001");
+  const weth = await hre.ethers.deployContract("WETH9");
+  const wethDeployed = await weth.waitForDeployment();
+  const wethAddress = await wethDeployed.getAddress();
 
-  const lock = await hre.ethers.deployContract("NativeOrdersSettlement", [unlockTime], {
-    value: lockedAmount,
-  });
+  const staking = await hre.ethers.deployContract("Staking", [wethAddress]);
+  const stakingDeployed = await staking.waitForDeployment();
+  const stakingAddress = await stakingDeployed.getAddress();
 
-  await lock.waitForDeployment();
+  const zrxToken = await hre.ethers.deployContract("ZRXToken");
+  const zrxTokenDeployed = await zrxToken.waitForDeployment();
+  const zrxAddress = await zrxTokenDeployed.getAddress();
 
-  console.log(
-    `Lock with ${ethers.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`
-  );
+  const feeCollectorController = await hre.ethers.deployContract("FeeCollectorController", [wethAddress, stakingAddress]);
+  const feeCollectorControllerDeployed = await feeCollectorController.waitForDeployment();
+  const feeCollectorControllerAddress = await feeCollectorControllerDeployed.getAddress();
+
+  const NativeOrdersFeature = await hre.ethers.deployContract("NativeOrdersFeature", [
+    zeroAddress,
+    wethAddress,
+    stakingAddress,
+    feeCollectorControllerAddress,
+    1
+  ]);
+  const NativeOrdersFeatureDeployed = await NativeOrdersFeature.waitForDeployment();
+  const NativeOrdersFeatureAddress = await NativeOrdersFeatureDeployed.getAddress();
+
+  console.log(zeroAddress, "zeroAddress");
+  console.log(wethAddress, "wethAddress");
+  console.log(stakingAddress, "stakingAddress");
+  console.log(zrxAddress, "zrxAddress");
+  console.log(feeCollectorControllerAddress, "feeCollectorControllerAddress");
+  console.log(NativeOrdersFeatureAddress, "NativeOrdersFeatureAddress");
 }
 
 // We recommend this pattern to be able to use async/await everywhere
