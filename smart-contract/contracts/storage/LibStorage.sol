@@ -21,7 +21,7 @@ library LibStorage {
     /// This gives us a maximum of 2**128 inline fields in each bucket.
     uint256 private constant STORAGE_SLOT_EXP = 128;
 
-    /// @dev Storage IDs for feature storage buckets.
+    /// @dev Storage IDs for features storage buckets.
     /// WARNING: APPEND-ONLY.
     enum StorageId {
         Proxy,

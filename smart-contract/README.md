@@ -1,13 +1,9 @@
-# Sample Hardhat Project
-
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
-
-Try running some of the following tasks:
-
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.ts
+# Smart contract for DEX
+## Required
+Node version v18.13.0 <br />
+Npm version 9.6.4 <br />
+## Installation
+```bash
+npm install
+npx hardhat compile
 ```

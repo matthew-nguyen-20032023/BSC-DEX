@@ -19,7 +19,7 @@ import "./LibStorage.sol";
 
 /// @dev Storage helpers for `NativeOrdersFeature`.
 library LibNativeOrdersStorage {
-    /// @dev Storage bucket for this feature.
+    /// @dev Storage bucket for this features.
     struct Storage {
         // How much taker token has been filled in order.
         // The lower `uint128` is the taker token fill amount.
