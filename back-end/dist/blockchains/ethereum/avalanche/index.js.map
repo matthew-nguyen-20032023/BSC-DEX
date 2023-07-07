@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../../src/blockchains/ethereum/avalanche/index.ts"],"names":[],"mappings":";;;AAAA,MAAM,IAAI,GAAG,OAAO,CAAC,MAAM,CAAC,CAAC;AAC7B,iCAAoD;AAEpD,MAAa,SAAU,SAAQ,mBAAQ;IACrC;QACE,KAAK,EAAE,CAAC;QACR,IAAI,CAAC,MAAM,GAAG,IAAI,IAAI,CAAC,OAAO,CAAC,GAAG,CAAC,kBAAkB,CAAC,CAAC;IACzD,CAAC;CACF;AALD,8BAKC"}
