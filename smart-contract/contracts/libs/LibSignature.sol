@@ -111,7 +111,7 @@ library LibSignature {
                 .rrevert();
         }
 
-        // If a feature supports pre-signing, it wouldn't use
+        // If a features supports pre-signing, it wouldn't use
         // `getSignerOfHash` on a pre-signed order.
         if (signature.signatureType == SignatureType.PRESIGNED) {
             LibSignatureRichErrors

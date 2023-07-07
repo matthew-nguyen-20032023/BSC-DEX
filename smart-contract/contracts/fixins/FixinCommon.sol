@@ -21,11 +21,11 @@ import "../errors/LibOwnableRichErrors.sol";
 import "../interfaces/IOwnableFeature.sol";
 import "../interfaces/ISimpleFunctionRegistryFeature.sol";
 
-/// @dev Common feature utilities.
+/// @dev Common features utilities.
 abstract contract FixinCommon {
     using LibRichErrorsV06 for bytes;
 
-    /// @dev The implementation address of this feature.
+    /// @dev The implementation address of this features.
     address internal immutable _implementation;
 
     /// @dev The caller must be this contract.
@@ -48,11 +48,11 @@ abstract contract FixinCommon {
     }
 
     constructor() internal {
-        // Remember this feature's original address.
+        // Remember this features's original address.
         _implementation = address(this);
     }
 
-    /// @dev Registers a function implemented by this feature at `_implementation`.
+    /// @dev Registers a function implemented by this features at `_implementation`.
     ///      Can and should only be called within a `migrate()`.
     /// @param selector The selector of the function whose implementation
     ///        is at `_implementation`.
@@ -60,10 +60,10 @@ abstract contract FixinCommon {
         ISimpleFunctionRegistryFeature(address(this)).extend(selector, _implementation);
     }
 
-    /// @dev Encode a feature version as a `uint256`.
-    /// @param major The major version number of the feature.
-    /// @param minor The minor version number of the feature.
-    /// @param revision The revision number of the feature.
+    /// @dev Encode a features version as a `uint256`.
+    /// @param major The major version number of the features.
+    /// @param minor The minor version number of the features.
+    /// @param revision The revision number of the features.
     /// @return encodedVersion The encoded version number.
     function _encodeVersion(
         uint32 major,
