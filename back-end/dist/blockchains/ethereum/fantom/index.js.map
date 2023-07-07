@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../../src/blockchains/ethereum/fantom/index.ts"],"names":[],"mappings":";;;AAAA,MAAM,IAAI,GAAG,OAAO,CAAC,MAAM,CAAC,CAAC;AAC7B,iCAAoD;AAEpD,MAAa,MAAO,SAAQ,mBAAQ;IAClC;QACE,KAAK,EAAE,CAAC;QACR,IAAI,CAAC,MAAM,GAAG,IAAI,IAAI,CAAC,OAAO,CAAC,GAAG,CAAC,eAAe,CAAC,CAAC;IACtD,CAAC;CACF;AALD,wBAKC"}

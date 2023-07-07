@@ -1,15 +1,16 @@
 require("@nomicfoundation/hardhat-toolbox");
+require('dotenv').config()
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   networks: {
     hardhat: {
     },
-    BSC: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
-      chainId: 97,
-      gasPrice: 20000000000,
-      accounts: ["a76b86ec80171b9f242d9dde72347cab8d9f9b69be688e901b81d3e1a92a2577"]
+    BSCTestnet: {
+      url: process.env.RPC_URL,
+      chainId: Number(process.env.CHAIN_ID),
+      gasPrice: Number(process.env.GAS_PRICE),
+      accounts: [process.env.ACCOUNT_PRIVATE_KEY_1]
     },
     EthereumLocal: {
       url: "http://127.0.0.1:7545",
