@@ -1,35 +1,17 @@
-import { createRouter, createWebHistory } from "vue-router";
-import signin from "@/views/signin.vue";
-import signup from "@/views/signup.vue";
-import admin from "@/views/admin.vue";
-import user from "@/views/user";
+import VueRouter from "vue-router";
+import routes from "./routes";
 
-const routes = [
-  {
-    path: "/",
-    name: "signin",
-    component: signin,
-  },
-  {
-    path: "/signup",
-    name: "signup",
-    component: signup,
-  },
-  {
-    path: "/admin",
-    name: "admin",
-    component: admin,
-  },
-  {
-    path: "/user",
-    name: "user",
-    component: user,
-  },
-];
-
-const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
-  routes,
+// configure router
+const router = new VueRouter({
+  routes, // short for routes: routes
+  linkExactActiveClass: "active",
+  scrollBehavior: (to) => {
+    if (to.hash) {
+      return {selector: to.hash}
+    } else {
+      return { x: 0, y: 0 }
+    }
+  }
 });
 
 export default router;
