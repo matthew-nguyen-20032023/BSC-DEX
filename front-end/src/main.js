@@ -1,13 +1,33 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
-import store from './store'
-import Notifications from '@kyvg/vue3-notification'
-import BootstrapVue3 from 'bootstrap-vue-3'
-import 'bootstrap/dist/css/bootstrap.css'
-import 'bootstrap-vue-3/dist/bootstrap-vue-3.css'
+/*
+ =========================================================
+ * Vue Black Dashboard - v1.1.2
+ =========================================================
 
-// import font
+ * Product Page: https://www.creative-tim.com/product/black-dashboard
+ * Copyright 2023 Creative Tim (http://www.creative-tim.com)
 
+ =========================================================
 
-createApp(App).use(store).use(router).use(Notifications).use(BootstrapVue3).mount('#app')
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+ */
+import Vue from "vue";
+import VueRouter from "vue-router";
+import RouterPrefetch from 'vue-router-prefetch'
+import App from "./App";
+// TIP: change to import router from "./router/starterRouter"; to start with a clean layout
+import router from "./router/index";
+
+import BlackDashboard from "./plugins/blackDashboard";
+import i18n from "./i18n"
+import './registerServiceWorker'
+Vue.use(BlackDashboard);
+Vue.use(VueRouter);
+Vue.use(RouterPrefetch);
+
+/* eslint-disable no-new */
+new Vue({
+  router,
+  i18n,
+  render: h => h(App)
+}).$mount("#app");
