@@ -1,44 +1,13 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsString } from "class-validator";
-import { AuthMessageSuccess } from "src/modules/authentication/auth.const";
-import { HttpStatus } from "@nestjs/common";
 
-export class LoginDto {
+export class LoginWithWallet {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
-    description: "Email",
+    description: "Message for login sign from metamask",
     required: true,
-    example: "exampleEmail@gmail.com",
+    example: "0xf04e7f4e6f56bfea5521281406a63d93eb12f7f0358428e290e6f795846ea057235e861f996b6ad5f6458333abfca4b492c6c8eb0496cb722fda4e8bc7bf5c8c1c",
   })
-  email: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({
-    description: "Password",
-    required: true,
-    example: "examplePassword@123",
-  })
-  password: string;
-}
-
-export class LoginResponseSuccess {
-  @ApiProperty({
-    example: AuthMessageSuccess.LoginSuccess,
-  })
-  message: string;
-
-  @ApiProperty({
-    example: {
-      accessToken:
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImV4YW1wbGVFbWFpbEBnbWFpbC5jb20iLCJ0eXBlT2ZVc2VyIjoiQWRtaW4iLCJpYXQiOjE2NzM0MjA3MTAsImV4cCI6MTY3MzUwNTMxMH0.YeRNSCvGX40hrQYT_nN0vyBBXPfwgIasE_8PMUCxwBM",
-    },
-  })
-  data: {};
-
-  @ApiProperty({
-    example: HttpStatus.OK,
-  })
-  statusCode: number;
+  signedMessage: string;
 }

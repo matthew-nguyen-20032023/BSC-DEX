@@ -20,6 +20,7 @@
     "console:dev": "ts-node -r tsconfig-paths/register src/console.ts"
   },
   "dependencies": {
+    "ethers": "5.6.9",
     "@hashgraph/hethers": "1.2.6",
     "@hashgraph/sdk": "2.19.2",
     "@nestjs/common": "9.0.0",

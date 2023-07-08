@@ -1,6 +1,7 @@
 import DashboardLayout from "@/layout/dashboard/DashboardLayout.vue";
 // GeneralViews
 import NotFound from "@/pages/NotFoundPage.vue";
+import TradingLayout from "@/layout/trading/TradingLayout";
 
 // Admin pages
 const Dashboard = () => import(/* webpackChunkName: "dashboard" */"@/pages/Dashboard.vue");
@@ -12,6 +13,17 @@ const Typography = () => import(/* webpackChunkName: "common" */ "@/pages/Typogr
 const TableList = () => import(/* webpackChunkName: "common" */ "@/pages/TableList.vue");
 
 const routes = [
+  {
+    path: "/trading",
+    component: TradingLayout,
+    children: [
+      {
+        path: "profile",
+        name: "profile",
+        component: Profile
+      },
+    ]
+  },
   {
     path: "/",
     component: DashboardLayout,

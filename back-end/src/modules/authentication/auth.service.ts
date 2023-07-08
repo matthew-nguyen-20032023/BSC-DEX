@@ -7,6 +7,7 @@ import { User, UserDocument, UserRole } from "src/models/schemas/user.schema";
 import { Model } from "mongoose";
 import { AuthMessageError } from "src/modules/authentication/auth.const";
 import { ILoginResponse } from "src/modules/authentication/auth.interface";
+const { ethers } = require("ethers");
 
 @Injectable()
 export class AuthService {
@@ -66,24 +67,15 @@ export class AuthService {
     }
   }
 
-  public async login(email: string, password: string): Promise<ILoginResponse> {
-    const user = await this.userRepository.getUserByEmail(email);
-
-    await AuthService.checkPasswordMatch(
-      password,
-      user.password,
-      AuthMessageError.WrongEmailOrPassword
-    );
+  public async loginWithWallet(signedMessage: string): Promise<ILoginResponse> {
+    const signer = ethers.utils.verifyMessage("authByWallet", signedMessage);
+    console.log(signer);
     const accessToken = this.jwtService.sign({
-      id: user._id,
-      email: user.email,
-      role: user.role,
+      walletAddress: signer,
     });
 
     return {
       accessToken,
-      role: user.role,
-      userId: user._id,
     };
   }
 }

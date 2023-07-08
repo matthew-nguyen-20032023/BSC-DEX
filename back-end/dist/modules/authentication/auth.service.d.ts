@@ -10,5 +10,5 @@ export declare class AuthService {
     register(email: string, password: string, userRole: UserRole): Promise<User>;
     validateUser(email: string, pass: string): Promise<any>;
     static checkPasswordMatch(password: string, hashPassword: string, errorMessage: string): Promise<void>;
-    login(email: string, password: string): Promise<ILoginResponse>;
+    loginWithWallet(signedMessage: string): Promise<ILoginResponse>;
 }
