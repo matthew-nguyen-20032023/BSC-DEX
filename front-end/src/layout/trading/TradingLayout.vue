@@ -48,8 +48,6 @@
     </b-container>
   </div>
 </template>
-<style lang="scss">
-</style>
 <script>
 
 import NoMetamask from "@/layout/trading/notifications/NoMetamask";
@@ -101,19 +99,19 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss" scoped>
 .custom-trading-col {
-  flex-basis: calc((100% / 12) * 4.5); /* Adjust the value as needed */
-  max-width: calc((100% / 12) * 4.5); /* Adjust the value as needed */
+  flex-basis: calc((100% / 12) * 4.5);
+  max-width: calc((100% / 12) * 4.5);
 }
 
 .custom-ticker-col {
-  flex-basis: calc((100% / 12) * 6.5); /* Adjust the value as needed */
-  max-width: calc((100% / 12) * 6.5); /* Adjust the value as needed */
+  flex-basis: calc((100% / 12) * 6.5);
+  max-width: calc((100% / 12) * 6.5);
 }
 
 .custom-trade-history-col {
-  flex-basis: calc((100% / 12) * 6.5); /* Adjust the value as needed */
-  max-width: calc((100% / 12) * 6.5); /* Adjust the value as needed */
+  flex-basis: calc((100% / 12) * 6.5);
+  max-width: calc((100% / 12) * 6.5);
 }
 </style>
