@@ -11,15 +11,24 @@
         <b-dropdown-item @click="disconnectWallet()">Disconnect</b-dropdown-item>
       </b-dropdown>
     </b-nav>
-    <b-container>
-      <b-row>
-        <b-row>
-          <b-col md="auto">
-            <div style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
-              <TradingChart/>
-            </div>
-          </b-col>
-        </b-row>
+    <b-container fluid>
+      <b-row class="justify-content-center">
+        <b-col style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
+          <b-row class="mt-1  ml-1 mr-1 mb-1">
+            <order-book :order-book-type="'ask'"/>
+          </b-row>
+          <b-row class="mt-1  ml-1 mr-1 mb-1">
+            <order-book :order-book-type="'bid'"/>
+          </b-row>
+        </b-col>
+        <b-col cols="5">
+          <div style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
+            <TradingChart/>
+          </div>
+        </b-col>
+        <b-col style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
+          <market-trade />
+        </b-col>
       </b-row>
     </b-container>
   </div>
@@ -33,6 +42,7 @@ import {notificationApp} from "@/plugins/notification";
 import SomethingWrong from "@/layout/trading/notifications/SomethingWrong";
 import TradingChart from "@/layout/trading/TradingChart";
 import OrderBook from "@/layout/trading/OrderBook";
+import MarketTrade from "@/layout/trading/MarketTrade";
 
 export default {
   data() {
@@ -42,6 +52,7 @@ export default {
     }
   },
   components: {
+    MarketTrade,
     TradingChart,
     OrderBook
   },
