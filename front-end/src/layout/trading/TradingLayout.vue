@@ -89,7 +89,7 @@ export default {
           });
       } else {
         notificationApp(this, NoMetamask);
-      }custom-trade-history-col
+      }
     },
     disconnectWallet() {
       this.walletAddress = '';
