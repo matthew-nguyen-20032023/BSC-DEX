@@ -12,6 +12,12 @@
       </b-dropdown>
     </b-nav>
     <b-container fluid>
+      <b-row class="justify-content-center mb-3">
+        <b-col class="custom-ticker-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
+          <ticker />
+        </b-col>
+      </b-row>
+
       <b-row class="justify-content-center">
         <b-col style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
           <b-row class="mt-1  ml-1 mr-1 mb-1">
@@ -21,13 +27,22 @@
             <order-book :order-book-type="'bid'"/>
           </b-row>
         </b-col>
-        <b-col cols="5">
+
+        <b-col class="custom-trading-col">
           <div style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
             <TradingChart/>
           </div>
         </b-col>
         <b-col style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
-          <market-trade />
+          <b-row class="mt-1  ml-1 mr-1 mb-1">
+            <market-trade />
+          </b-row>
+        </b-col>
+      </b-row>
+
+      <b-row class="justify-content-center mt-3">
+        <b-col class="custom-trade-history-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
+          <history />
         </b-col>
       </b-row>
     </b-container>
@@ -43,6 +58,8 @@ import SomethingWrong from "@/layout/trading/notifications/SomethingWrong";
 import TradingChart from "@/layout/trading/TradingChart";
 import OrderBook from "@/layout/trading/OrderBook";
 import MarketTrade from "@/layout/trading/MarketTrade";
+import Ticker from "@/layout/trading/Ticker";
+import History from "@/layout/trading/History";
 
 export default {
   data() {
@@ -52,6 +69,8 @@ export default {
     }
   },
   components: {
+    History,
+    Ticker,
     MarketTrade,
     TradingChart,
     OrderBook
@@ -72,7 +91,7 @@ export default {
           });
       } else {
         notificationApp(this, NoMetamask);
-      }
+      }custom-trade-history-col
     },
     disconnectWallet() {
       this.walletAddress = '';
@@ -81,3 +100,20 @@ export default {
   }
 };
 </script>
+
+<style>
+.custom-trading-col {
+  flex-basis: calc((100% / 12) * 4.5); /* Adjust the value as needed */
+  max-width: calc((100% / 12) * 4.5); /* Adjust the value as needed */
+}
+
+.custom-ticker-col {
+  flex-basis: calc((100% / 12) * 6.5); /* Adjust the value as needed */
+  max-width: calc((100% / 12) * 6.5); /* Adjust the value as needed */
+}
+
+.custom-trade-history-col {
+  flex-basis: calc((100% / 12) * 6.5); /* Adjust the value as needed */
+  max-width: calc((100% / 12) * 6.5); /* Adjust the value as needed */
+}
+</style>
