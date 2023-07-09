@@ -1,9 +1,3 @@
-export declare class LoginDto {
-    email: string;
-    password: string;
-}
-export declare class LoginResponseSuccess {
-    message: string;
-    data: {};
-    statusCode: number;
+export declare class LoginWithWallet {
+    signedMessage: string;
 }
