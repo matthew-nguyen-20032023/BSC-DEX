@@ -14,8 +14,10 @@
     <b-container>
       <b-row>
         <b-row>
-          <b-col md="11" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
-            <TradingChart/>
+          <b-col md="auto">
+            <div style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
+              <TradingChart/>
+            </div>
           </b-col>
         </b-row>
       </b-row>
@@ -30,6 +32,7 @@ import NoMetamask from "@/layout/trading/notifications/NoMetamask";
 import {notificationApp} from "@/plugins/notification";
 import SomethingWrong from "@/layout/trading/notifications/SomethingWrong";
 import TradingChart from "@/layout/trading/TradingChart";
+import OrderBook from "@/layout/trading/OrderBook";
 
 export default {
   data() {
@@ -39,7 +42,8 @@ export default {
     }
   },
   components: {
-    TradingChart
+    TradingChart,
+    OrderBook
   },
   methods: {
     connectWallet() {
