@@ -1,7 +1,9 @@
 import { Body, Controller, HttpStatus, Post } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "src/modules/authentication/auth.service";
-import { LoginWithWallet } from "src/modules/authentication/dto/login.dto";
+import {
+  LoginDto,
+} from "src/modules/authentication/dto/login.dto";
 import { IResponseToClient } from "src/configs/response-to-client.config";
 import {
   AuthMessageSuccess,
@@ -12,4 +14,21 @@ import {
 @ApiTags("Authentication")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post("login")
+  @ApiOperation({
+    summary: "Api for admin to login.",
+  })
+  @Public()
+  async login(@Body() loginDto: LoginDto): Promise<IResponseToClient> {
+    const result = await this.authService.login(
+        loginDto.email,
+        loginDto.password
+    );
+    return {
+      message: AuthMessageSuccess.LoginSuccess,
+      data: result,
+      statusCode: HttpStatus.OK,
+    };
+  }
 }

@@ -3,6 +3,7 @@
     <trading-vue
       :data="getTrades()"
       :width="getTradingViewWith()"
+      :height="getTradingViewHeight()"
       @range-changed="rangeChange"
       :toolbar="true"
       :titleTxt="tradingPair"
@@ -110,6 +111,9 @@ export default {
     },
     getTradingViewWith() {
       return window.innerWidth / 2.8;
+    },
+    getTradingViewHeight() {
+      return window.innerHeight / 1.97;
     }
   }
 }

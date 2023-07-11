@@ -3,11 +3,10 @@ import { JwtService } from "@nestjs/jwt";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { UserRepository } from "src/models/repositories/user.repository";
 import { InjectModel } from "@nestjs/mongoose";
-import { User, UserDocument, UserRole } from "src/models/schemas/user.schema";
+import { User, UserDocument } from "src/models/schemas/user.schema";
 import { Model } from "mongoose";
 import { AuthMessageError } from "src/modules/authentication/auth.const";
 import { ILoginResponse } from "src/modules/authentication/auth.interface";
-const { ethers } = require("ethers");
 
 @Injectable()
 export class AuthService {
@@ -19,29 +18,6 @@ export class AuthService {
     private jwtService: JwtService
   ) {
     this.userRepository = new UserRepository(this.userModel);
-  }
-
-  public async register(
-    email: string,
-    password: string,
-    userRole: UserRole
-  ): Promise<User> {
-    const existUser = await this.userRepository.getUserByEmail(email);
-    if (existUser) {
-      throw new HttpException(
-        { message: AuthMessageError.EmailTaken },
-        HttpStatus.BAD_REQUEST
-      );
-    }
-
-    const newUser = new User();
-    newUser.email = email;
-    newUser.password = await bcrypt.hash(
-      password,
-      Number(process.env.SALT_OR_ROUNDS)
-    );
-    newUser.role = userRole;
-    return this.userRepository.save(newUser);
   }
 
   public async validateUser(email: string, pass: string): Promise<any> {
@@ -67,15 +43,23 @@ export class AuthService {
     }
   }
 
-  public async loginWithWallet(signedMessage: string): Promise<ILoginResponse> {
-    const signer = ethers.utils.verifyMessage("authByWallet", signedMessage);
-    console.log(signer);
+  public async login(email: string, password: string): Promise<ILoginResponse> {
+    const user = await this.userRepository.getUserByEmail(email);
+
+    await AuthService.checkPasswordMatch(
+        password,
+        user.password,
+        AuthMessageError.WrongEmailOrPassword
+    );
     const accessToken = this.jwtService.sign({
-      walletAddress: signer,
+      id: user._id,
+      email: user.email,
+      role: user.role,
     });
 
     return {
       accessToken,
+      userId: user._id,
     };
   }
 }
