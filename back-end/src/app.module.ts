@@ -10,10 +10,12 @@ import { NftModule } from "src/modules/nft/nft.module";
 import { TransactionModule } from "src/modules/transaction/transaction.module";
 import { StakeModule } from "src/modules/stake/stake.module";
 import { ConsoleModule } from "nestjs-console";
+import { TokenModule } from "src/modules/token/token.module";
 
 @Module({
   imports: [
     AuthModule,
+    TokenModule,
     WalletModule,
     NftModule,
     TransactionModule,
