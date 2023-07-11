@@ -7,7 +7,6 @@ import { DATABASE_CONFIG as db } from "src/configs/database.config";
 import { AuthModule } from "src/modules/authentication/auth.module";
 import { JwtStrategy } from "src/modules/authentication/jwt.strategy";
 import { JwtAuthGuard } from "src/modules/authentication/jwt-auth.guard";
-import { TransactionModule } from "src/modules/transaction/transaction.module";
 import { TokenModule } from "src/modules/token/token.module";
 import { PairModule } from "src/modules/pair/pair.module";
 
@@ -16,7 +15,6 @@ import { PairModule } from "src/modules/pair/pair.module";
     AuthModule,
     TokenModule,
     PairModule,
-    TransactionModule,
     ConsoleModule,
     MongooseModule.forRoot(
       `mongodb://${db.userName}:${db.password}@${db.host}:${db.port}/${db.databaseName}?authSource=${db.databaseName}`
