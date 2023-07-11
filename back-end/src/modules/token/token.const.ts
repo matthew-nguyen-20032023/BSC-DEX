@@ -4,6 +4,7 @@
 export enum TokenMessageSuccess {
   AddTokenSuccess = "Add token success",
   ListTokenSuccess = "List token success",
+  GetTokenDetailSuccess = "Get token detail success",
 }
 
 export enum TokenMessageError {

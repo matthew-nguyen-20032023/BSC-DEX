@@ -1,18 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional } from "class-validator";
+import { IsNumber } from "class-validator";
 import { Type } from "class-transformer";
 
-export class ListNftDto {
-  @IsOptional()
-  @ApiProperty({
-    description: "Nft type",
-    required: false,
-    example: ["Dragon", "Hero"],
-  })
-  nftTypes: string[];
-
+export class ListPairDto {
+  @IsNumber()
   @Type(() => Number)
-  @IsNotEmpty()
   @ApiProperty({
     description: "Page",
     required: true,
@@ -20,8 +12,8 @@ export class ListNftDto {
   })
   page: number;
 
+  @IsNumber()
   @Type(() => Number)
-  @IsNotEmpty()
   @ApiProperty({
     description: "Limit",
     required: true,

@@ -5,19 +5,14 @@ import {
   ContractFunctionParameters,
   ContractExecuteTransaction,
   PrivateKey,
-  AccountCreateTransaction,
   TokenAssociateTransaction,
   TransactionRecord,
-  AccountId,
   TransferTransaction,
   AccountBalanceQuery,
   Hbar,
   TokenMintTransaction,
 } from "@hashgraph/sdk";
 import { IResponseCallFunctionOnChain } from "src/blockchains/hedera/hedera.interface";
-import { Wallet } from "src/models/schemas/wallet.schema";
-import { hethers } from "@hashgraph/hethers";
-import { NftType } from "src/models/schemas/nft-type.schema";
 import { SmartContractManageNFTFunction } from "src/blockchains/hedera/hedera.const";
 import {
   Transaction,
@@ -144,89 +139,6 @@ export class Hedera {
         false
       );
     }
-  }
-
-  /**
-   * @description Create wallet for user on Hedera chain
-   * @param userId
-   */
-  public async createNewAccount(userId: string): Promise<Wallet> {
-    const newAccountPrivateKey = PrivateKey.generateED25519();
-    const newAccountPublicKey = newAccountPrivateKey.publicKey;
-    const transaction = await new AccountCreateTransaction()
-      .setKey(newAccountPublicKey)
-      .execute(this.client);
-
-    const getReceipt = await transaction.getReceipt(this.client);
-    const newAccountId = getReceipt.accountId;
-
-    const newWallet = new Wallet();
-    newWallet.userId = userId;
-    newWallet.accountId = newAccountId.toString();
-    newWallet.evmAddress = hethers.utils.getAddressFromAccount(
-      newAccountId.toString()
-    );
-    newWallet.privateKey = CryptoJS.AES.encrypt(
-      newAccountPrivateKey.toString(),
-      process.env.HEDERA_SECRET_KEY_ENCRYPT
-    ).toString();
-    newWallet.publicKey = newAccountPublicKey.toString();
-    return newWallet;
-  }
-
-  /**
-   * @description Create new type of NFT on Hedera chain
-   * @param nftName
-   * @param nftSymbol
-   */
-  public async createNewNftType(
-    nftName: string,
-    nftSymbol: string
-  ): Promise<{ newNftType: NftType; transaction: Transaction }> {
-    const getNftTypeCreatedInfo = (
-      transactionRecord: TransactionRecord
-    ): { emvAddress: string; accountId: string } => {
-      const NFTAddress = transactionRecord.contractFunctionResult.getAddress(0);
-      const NFTAccountId = AccountId.fromSolidityAddress(NFTAddress);
-      return { emvAddress: NFTAddress, accountId: NFTAccountId.toString() };
-    };
-
-    const result = await this.callFunctionOnChain(
-      process.env.SMART_CONTRACT_MANAGE_NFT,
-      SmartContractManageNFTFunction.CreateNonFungibleToken,
-      new ContractFunctionParameters()
-        .addString(nftName)
-        .addString(nftSymbol)
-        .addInt64(new BigNumber(process.env.HEDERA_NFT_AUTO_RENEWABLE)),
-      getNftTypeCreatedInfo,
-      Number(process.env.HEDERA_CREATE_NFT_TYPE_MAX_GAS),
-      Number(process.env.HEDERA_CREATE_NFT_TYPE_MAX_PAYABLE)
-    );
-
-    if (!result.status) {
-      return {
-        newNftType: null,
-        transaction: Hedera.createTransaction(
-          TransactionType.NewNftTypeCreated,
-          result.transactionId,
-          result.status
-        ),
-      };
-    }
-
-    const newNftType = new NftType();
-    newNftType.name = nftName;
-    newNftType.symbol = nftSymbol;
-    newNftType.evmAddress = result.dataCallback.emvAddress;
-    newNftType.accountId = result.dataCallback.accountId;
-    return {
-      newNftType: newNftType,
-      transaction: Hedera.createTransaction(
-        TransactionType.NewNftTypeCreated,
-        result.transactionId,
-        result.status
-      ),
-    };
   }
 
   /**

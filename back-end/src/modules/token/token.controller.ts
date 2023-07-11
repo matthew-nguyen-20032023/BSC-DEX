@@ -1,7 +1,6 @@
 import { Body, Controller, Get, HttpStatus, Post, Query } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { IResponseToClient } from "src/configs/response-to-client.config";
-import { NFTSuccessMessage } from "src/modules/nft/nft.const";
 import { TokenService } from "src/modules/token/token.service";
 import { AddTokenDto } from "src/modules/token/dto/add-token.dto";
 import { TokenMessageSuccess } from "src/modules/token/token.const";
@@ -64,7 +63,7 @@ export class TokenController {
       detailTokenDto.tokenAddress
     );
     return {
-      message: NFTSuccessMessage.GetMyNFTSuccess,
+      message: TokenMessageSuccess.GetTokenDetailSuccess,
       data,
       statusCode: HttpStatus.OK,
     };
