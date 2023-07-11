@@ -9,4 +9,5 @@ dist
 # Hardhat files
 cache
 artifacts
+.idea
 
