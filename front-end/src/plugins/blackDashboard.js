@@ -1,4 +1,3 @@
-import SideBar from "@/components/SidebarPlugin";
 import Notify from "@/components/NotificationPlugin";
 import GlobalComponents from "./globalComponents";
 import GlobalDirectives from "./globalDirectives";
@@ -13,7 +12,6 @@ export default {
   install(Vue) {
     Vue.use(GlobalComponents);
     Vue.use(GlobalDirectives);
-    Vue.use(SideBar);
     Vue.use(Notify);
     Vue.use(RTLPlugin);
   }
