@@ -1,16 +1,18 @@
 <template>
-  <table style="font-size: 12px">
-    <tr style="color: rgb(132, 142, 156);">
-      <th>Price</th>
-      <th>Amount</th>
-      <th>Time</th>
-    </tr>
-    <tr v-for="(order, index) in orderBook" :key="index">
-      <td :style="getTradeColor(order.type)">{{ order.price }}</td>
-      <td>{{ order.amount }}</td>
-      <td>16:09:09</td>
-    </tr>
-  </table>
+  <b-card style="background-color: rgb(18, 24, 38)">
+    <b-tabs
+      active-nav-item-class="font-weight-bold"
+      active-tab-class="font-weight-bold text-success"
+      small
+    >
+      <b-tab title="Limit" :title-link-class="'text-light'">
+        <b-card-text>Tab contents 1</b-card-text>
+      </b-tab>
+      <b-tab title="Market" :title-link-class="'text-light'">
+        <b-card-text>Tab contents 2</b-card-text>
+      </b-tab>
+    </b-tabs>
+  </b-card>
 </template>
 
 <script>
@@ -19,35 +21,10 @@ export default {
   },
   data() {
     return {
-      orderBook: [
-        { price: 100, amount: 10, type: 'bid' },
-        { price: 99, amount: 5, type: 'bid' },
-        { price: 101, amount: 7, type: 'ask' },
-        { price: 101, amount: 7, type: 'bid' },
-        { price: 101, amount: 7, type: 'ask' },
-        { price: 101, amount: 7, type: 'bid' },
-        { price: 101, amount: 7, type: 'ask' },
-        { price: 101, amount: 7, type: 'ask' },
-        { price: 101, amount: 7, type: 'ask' },
-        { price: 101, amount: 7, type: 'bid' },
-        { price: 101, amount: 7, type: 'bid' },
-      ],
-      orderBookFields: ['Price', 'Amount', 'Total'],
     };
   },
   mounted() {},
   methods: {
-    getTradeColor(type) {
-      return type === 'bid' ? 'color: #23a776' : 'color: #e54150';
-    },
-    calculateTotal(order) {
-      // Calculate the total value for each order
-      return order.price * order.size;
-    }
   }
 };
 </script>
-
-<style>
-/* Add your component styles here */
-</style>

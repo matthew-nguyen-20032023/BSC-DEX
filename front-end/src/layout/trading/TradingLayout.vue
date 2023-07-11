@@ -41,8 +41,11 @@
       </b-row>
 
       <b-row class="justify-content-center mt-3">
-        <b-col class="custom-trade-history-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
+        <b-col cols="1" class="custom-trade-history-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
           <history />
+        </b-col>
+        <b-col cols="1" class="custom-order-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
+          <order />
         </b-col>
       </b-row>
     </b-container>
@@ -58,6 +61,7 @@ import OrderBook from "@/layout/trading/OrderBook";
 import MarketTrade from "@/layout/trading/MarketTrade";
 import Ticker from "@/layout/trading/Ticker";
 import History from "@/layout/trading/History";
+import Order from "@/layout/trading/Order";
 
 export default {
   data() {
@@ -67,6 +71,7 @@ export default {
     }
   },
   components: {
+    Order,
     History,
     Ticker,
     MarketTrade,
@@ -111,7 +116,12 @@ export default {
 }
 
 .custom-trade-history-col {
-  flex-basis: calc((100% / 12) * 6.5);
-  max-width: calc((100% / 12) * 6.5);
+  flex-basis: calc((100% / 12) * 3.25);
+  max-width: calc((100% / 12) * 3.25);
+}
+
+.custom-order-col {
+  flex-basis: calc((100% / 12) * 3.25);
+  max-width: calc((100% / 12) * 3.25);
 }
 </style>

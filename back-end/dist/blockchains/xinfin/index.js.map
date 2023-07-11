@@ -1,1 +1,0 @@
-{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../src/blockchains/xinfin/index.ts"],"names":[],"mappings":";;;AAAA,MAAM,IAAI,GAAG,OAAO,CAAC,MAAM,CAAC,CAAC;AAG7B,MAAa,MAAM;IAGjB;QACE,IAAI,CAAC,MAAM,GAAG,IAAI,IAAI,CACpB,IAAI,IAAI,CAAC,SAAS,CAAC,YAAY,CAAC,OAAO,CAAC,GAAG,CAAC,eAAe,CAAC,CAC7D,CAAC;IACJ,CAAC;CACF;AARD,wBAQC"}

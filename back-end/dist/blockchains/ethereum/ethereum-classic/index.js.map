@@ -1,1 +1,0 @@
-{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../../src/blockchains/ethereum/ethereum-classic/index.ts"],"names":[],"mappings":";;;AAAA,MAAM,IAAI,GAAG,OAAO,CAAC,MAAM,CAAC,CAAC;AAC7B,iCAAoD;AAEpD,MAAa,eAAgB,SAAQ,mBAAQ;IAC3C;QACE,KAAK,EAAE,CAAC;QACR,IAAI,CAAC,MAAM,GAAG,IAAI,IAAI,CAAC,OAAO,CAAC,GAAG,CAAC,yBAAyB,CAAC,CAAC;IAChE,CAAC;CACF;AALD,0CAKC"}
