@@ -36,7 +36,8 @@ module.exports = {
         }
       },
       { version: "0.4.11" },
-      { version: "0.5.9" }
+      { version: "0.5.9" },
+      { version: "0.8.9" }
     ],
     overrides: {
       "contracts/WETH9.sol": {
@@ -44,7 +45,10 @@ module.exports = {
       },
       "contracts/ZRXToken.sol": {
         version: "0.4.11",
-      }
+      },
+      "contracts/ERC20Token.sol": {
+        version: "0.8.9",
+      },
     }
   },
   paths: {

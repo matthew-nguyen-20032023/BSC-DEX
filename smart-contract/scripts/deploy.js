@@ -19,9 +19,13 @@ async function main() {
   const stakingDeployed = await staking.waitForDeployment();
   const stakingAddress = await stakingDeployed.getAddress();
 
-  const zrxToken = await hre.ethers.deployContract("ZRXToken");
-  const zrxTokenDeployed = await zrxToken.waitForDeployment();
-  const zrxAddress = await zrxTokenDeployed.getAddress();
+  const birdToken = await hre.ethers.deployContract("ERC20TokenCreation", [100000000000, 'Bird', "B"]);
+  const birdTokenDeployed = await birdToken.waitForDeployment();
+  const birdAddress = await birdTokenDeployed.getAddress();
+
+  const tigerToken = await hre.ethers.deployContract("ERC20TokenCreation", [100000000000, 'Bird', "B"]);
+  const tigerTokenDeployed = await tigerToken.waitForDeployment();
+  const tigerAddress = await tigerTokenDeployed.getAddress();
 
   const feeCollectorController = await hre.ethers.deployContract("FeeCollectorController", [wethAddress, stakingAddress]);
   const feeCollectorControllerDeployed = await feeCollectorController.waitForDeployment();
@@ -40,7 +44,8 @@ async function main() {
   console.log(zeroAddress, "zeroAddress");
   console.log(wethAddress, "wethAddress");
   console.log(stakingAddress, "stakingAddress");
-  console.log(zrxAddress, "zrxAddress");
+  console.log(birdAddress, "birdAddress");
+  console.log(tigerAddress, "tigerAddress");
   console.log(feeCollectorControllerAddress, "feeCollectorControllerAddress");
   console.log(NativeOrdersFeatureAddress, "NativeOrdersFeatureAddress");
 }
