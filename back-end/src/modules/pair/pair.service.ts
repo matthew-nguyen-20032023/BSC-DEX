@@ -27,6 +27,12 @@ export class PairService {
     baseTokenAddress: string,
     quoteTokenAddress: string
   ): Promise<Pair> {
+    if (baseTokenAddress.toLowerCase() === quoteTokenAddress.toLowerCase()) {
+      throw new HttpException(
+          { message: PairMessageError.SameBaseQuoteToken },
+          HttpStatus.BAD_REQUEST
+      );
+    }
     const [baseToken, quoteToken] = await Promise.all([
       await this.tokenRepository.getTokenByAddress(baseTokenAddress),
       await this.tokenRepository.getTokenByAddress(quoteTokenAddress),

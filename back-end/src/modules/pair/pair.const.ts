@@ -8,4 +8,5 @@ export enum PairMessageError {
   QuoteTokenNotFound = "Quote token not found.",
   PairExist = "Pair exist.",
   PairNotFound = "Pair not found",
+  SameBaseQuoteToken = "Can not create pair with same base and quote token"
 }

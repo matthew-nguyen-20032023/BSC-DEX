@@ -4,7 +4,8 @@ import { IResponseToClient } from "src/configs/response-to-client.config";
 import { PairService } from "src/modules/pair/pair.service";
 import { CreatePairDto } from "src/modules/pair/dto/create-pair.dto";
 import { PairMessageSuccess } from "src/modules/pair/pair.const";
-import { ListPairDto } from "./dto/list-pair.dto";
+import { ListPairDto } from "src/modules/pair/dto/list-pair.dto";
+import { Public } from "src/modules/authentication/auth.const";
 
 @Controller("pair")
 @ApiBearerAuth()
@@ -34,6 +35,7 @@ export class PairController {
   @ApiOperation({
     summary: "Api get list pair",
   })
+  @Public()
   public async listPair(
     @Query() listPairDto: ListPairDto
   ): Promise<IResponseToClient> {
