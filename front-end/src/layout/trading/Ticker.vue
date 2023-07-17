@@ -8,7 +8,7 @@
       <th>24h Volume</th>
     </tr>
     <tr>
-      <th>BTC / BUSD</th>
+      <th>{{ pairName }}</th>
       <th>100</th>
       <th>115</th>
       <th>98</th>
@@ -20,6 +20,10 @@
 <script>
 export default {
   props: {
+    pairName: {
+      type: String,
+      required: true,
+    }
   },
   data() {
     return {

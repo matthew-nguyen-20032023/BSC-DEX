@@ -14,7 +14,7 @@
     <b-container fluid>
       <b-row class="justify-content-center mb-3">
         <b-col class="custom-ticker-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
-          <ticker />
+          <ticker :pair-name="pairName" />
         </b-col>
       </b-row>
 
@@ -45,7 +45,9 @@
           <history />
         </b-col>
         <b-col cols="1" class="custom-order-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
-          <order />
+          <order
+            :base-token-symbol="baseTokenSymbol"
+          />
         </b-col>
       </b-row>
     </b-container>
@@ -67,7 +69,10 @@ export default {
   data() {
     return {
       walletAddress: '',
-      sortWalletAddress: ''
+      sortWalletAddress: '',
+      baseTokenSymbol: 'TG',
+      quoteTokenSymbol: 'B',
+      pairName: "TG / B"
     }
   },
   components: {
