@@ -7,7 +7,15 @@
 const hre = require("hardhat");
 
 async function main() {
-  const zeroEx = await hre.ethers.deployContract("ZeroEx", ["0x19Ef6AB7a5e9753C214462df01F77aD324dA645D"]);
+  // await hre.tenderly.persistArtifacts({
+  //   name: "ZeroEx",
+  //   address: "0x51Bfa0FCebd9a9F72b0523aa37968794F3C214a7",
+  // });
+  // return;
+
+  const zeroEx = await hre.ethers.deployContract("ZeroEx", [
+    "0x594Ab22De186eBad2f4c0FD4F3D224599BEc3Cac",
+  ]);
   const zeroExDeployed = await zeroEx.waitForDeployment();
   const zeroAddress = await zeroExDeployed.getAddress();
 
@@ -19,27 +27,39 @@ async function main() {
   const stakingDeployed = await staking.waitForDeployment();
   const stakingAddress = await stakingDeployed.getAddress();
 
-  const birdToken = await hre.ethers.deployContract("ERC20TokenCreation", [100000000000, 'Bird', "B"]);
+  const birdToken = await hre.ethers.deployContract("ERC20TokenCreation", [
+    100000000000,
+    "Bird",
+    "B",
+  ]);
   const birdTokenDeployed = await birdToken.waitForDeployment();
   const birdAddress = await birdTokenDeployed.getAddress();
 
-  const tigerToken = await hre.ethers.deployContract("ERC20TokenCreation", [100000000000, 'Bird', "B"]);
+  const tigerToken = await hre.ethers.deployContract("ERC20TokenCreation", [
+    100000000000,
+    "Bird",
+    "B",
+  ]);
   const tigerTokenDeployed = await tigerToken.waitForDeployment();
   const tigerAddress = await tigerTokenDeployed.getAddress();
 
-  const feeCollectorController = await hre.ethers.deployContract("FeeCollectorController", [wethAddress, stakingAddress]);
-  const feeCollectorControllerDeployed = await feeCollectorController.waitForDeployment();
-  const feeCollectorControllerAddress = await feeCollectorControllerDeployed.getAddress();
+  const feeCollectorController = await hre.ethers.deployContract(
+    "FeeCollectorController",
+    [wethAddress, stakingAddress]
+  );
+  const feeCollectorControllerDeployed =
+    await feeCollectorController.waitForDeployment();
+  const feeCollectorControllerAddress =
+    await feeCollectorControllerDeployed.getAddress();
 
-  const NativeOrdersFeature = await hre.ethers.deployContract("NativeOrdersFeature", [
-    zeroAddress,
-    wethAddress,
-    stakingAddress,
-    feeCollectorControllerAddress,
-    1
-  ]);
-  const NativeOrdersFeatureDeployed = await NativeOrdersFeature.waitForDeployment();
-  const NativeOrdersFeatureAddress = await NativeOrdersFeatureDeployed.getAddress();
+  const NativeOrdersFeature = await hre.ethers.deployContract(
+    "NativeOrdersFeature",
+    [zeroAddress, wethAddress, stakingAddress, feeCollectorControllerAddress, 0]
+  );
+  const NativeOrdersFeatureDeployed =
+    await NativeOrdersFeature.waitForDeployment();
+  const NativeOrdersFeatureAddress =
+    await NativeOrdersFeatureDeployed.getAddress();
 
   console.log(zeroAddress, "zeroAddress");
   console.log(wethAddress, "wethAddress");
