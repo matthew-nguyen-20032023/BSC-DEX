@@ -14,7 +14,6 @@
               <b-input :disabled="true" v-model="buyMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
               <i class="mt-1">Estimate fee: 0.0008</i>
               <b-button class="w-100 mt-1" variant="success" @click="createOrder('buy')">Buy {{ baseTokenSymbol }}</b-button>
-              <b-button class="w-100 mt-1" variant="success" @click="takeOrder()">Take Order</b-button>
             </b-col>
             <b-col>
               <b-input v-model="sellMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
@@ -38,6 +37,8 @@ import { LimitOrder, SignatureType } from "@0x/protocol-utils";
 import { exchangeABI } from "@/libs/abi/exchange.ts";
 import { erc20ABI } from "@/libs/abi/erc20.ts";
 import { createOrder } from "@/plugins/backend";
+import { notificationWithCustomMessage } from "@/plugins/notification";
+import NoMetamask from "@/layout/trading/notifications/NoMetamask";
 const BigNumber = require('bignumber.js');
 const Web3 = require('web3');
 
@@ -130,8 +131,11 @@ export default {
       const limitOrder = await this.createLimitOrder(type);
       const signature = await limitOrder.getSignatureWithProviderAsync(window.web3.currentProvider, SignatureType.EIP712, this.currentAccountWallet);
       await this.approveToken(type);
-      const data = await createOrder({...limitOrder, type, signature: JSON.stringify(signature)})
-      console.log(data);
+      createOrder({...limitOrder, type, signature: JSON.stringify(signature)}).then(res => {
+        notificationWithCustomMessage('success', this, res.data.message);
+      }).catch(error => {
+        notificationWithCustomMessage('warning', this, error.response.data.message);
+      })
     },
     async takeOrder() {
       const limitOrder = JSON.parse(localStorage.getItem('limitOrder'));
