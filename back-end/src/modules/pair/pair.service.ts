@@ -29,8 +29,8 @@ export class PairService {
   ): Promise<Pair> {
     if (baseTokenAddress.toLowerCase() === quoteTokenAddress.toLowerCase()) {
       throw new HttpException(
-          { message: PairMessageError.SameBaseQuoteToken },
-          HttpStatus.BAD_REQUEST
+        { message: PairMessageError.SameBaseQuoteToken },
+        HttpStatus.BAD_REQUEST
       );
     }
     const [baseToken, quoteToken] = await Promise.all([
@@ -68,7 +68,7 @@ export class PairService {
     const newPair = new Pair();
     newPair.name = pairName;
     newPair.baseTokenAddress = baseToken.address;
-    newPair.quoteTokenAddress = baseToken.address;
+    newPair.quoteTokenAddress = quoteToken.address;
     return this.pairRepository.save(newPair);
   }
 

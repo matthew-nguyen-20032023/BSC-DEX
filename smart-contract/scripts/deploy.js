@@ -14,7 +14,7 @@ async function main() {
   // return;
 
   const zeroEx = await hre.ethers.deployContract("ZeroEx", [
-    "0x594Ab22De186eBad2f4c0FD4F3D224599BEc3Cac",
+    "0x19Ef6AB7a5e9753C214462df01F77aD324dA645D",
   ]);
   const zeroExDeployed = await zeroEx.waitForDeployment();
   const zeroAddress = await zeroExDeployed.getAddress();

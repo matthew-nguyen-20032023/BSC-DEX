@@ -9,16 +9,16 @@
         <b-card-text>
           <b-row>
             <b-col>
-              <b-input class="mt-1" :placeholder="'Price'"></b-input>
-              <b-input class="mt-1" :placeholder="'Amount'"></b-input>
-              <b-input class="mt-1" :placeholder="'Total'"></b-input>
+              <b-input v-model="buyMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
+              <b-input v-model="buyMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
+              <b-input :disabled="true" v-model="buyMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
               <i class="mt-1">Estimate fee: 0.0008</i>
-              <b-button class="w-100 mt-1" variant="success" @click="createOrder()">Buy {{ baseTokenSymbol }}</b-button>
+              <b-button class="w-100 mt-1" variant="success" @click="createOrder('buy')">Buy {{ baseTokenSymbol }}</b-button>
             </b-col>
             <b-col>
-              <b-input class="mt-1" :placeholder="'Price'"></b-input>
-              <b-input class="mt-1" :placeholder="'Amount'"></b-input>
-              <b-input class="mt-1" :placeholder="'Total'"></b-input>
+              <b-input v-model="sellMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
+              <b-input v-model="sellMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
+              <b-input v-model="sellMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
               <i class="mt-1">Estimate fee: 0.0008</i>
               <b-button class="w-100 mt-1" variant="danger">Sell {{ baseTokenSymbol }}</b-button>
             </b-col>
@@ -36,6 +36,9 @@
 import { LimitOrder, SignatureType } from "@0x/protocol-utils";
 import { exchangeABI } from "@/libs/abi/exchange.ts";
 import { erc20ABI } from "@/libs/abi/erc20.ts";
+import { createOrder } from "@/plugins/backend";
+import { notificationWithCustomMessage } from "@/plugins/notification";
+import NoMetamask from "@/layout/trading/notifications/NoMetamask";
 const BigNumber = require('bignumber.js');
 const Web3 = require('web3');
 
@@ -48,68 +51,106 @@ export default {
   },
   data() {
     return {
+      baseTokenContract: null,
+      quoteTokenContract: null,
+      baseTokenAddress: "0xf0fbdc550bbA5689b5c51e7B7AF339E2c731ee5f",
+      quoteTokenAddress: "0x0518D7a894d7E08DDDaCCD2550C33eBa399ad2b6",
+      zeroExContract: null,
+      orderContract: null,
       client: null,
-      contractEx: null,
-      contractToken: null,
-      contractOtherToken: null,
-      nativeOrderContract: null,
+      currentAccountWallet: null,
+      buyMakerPrice: 2,
+      buyMakerAmount: 3,
+      buyMakerTotal: 6,
+      sellMakerPrice: 2,
+      sellMakerAmount: 3,
+      sellMakerTotal: 6,
     };
+  },
+  watch: {
+    buyMakerPrice() {
+      this.buyMakerTotal = this.buyMakerPrice * this.buyMakerAmount
+    },
+    buyMakerAmount() {
+      this.buyMakerTotal = this.buyMakerPrice * this.buyMakerAmount
+    },
+  },
+  created() {
+    this.client = new Web3(window.ethereum);
+    this.baseTokenContract = new this.client.eth.Contract(erc20ABI, this.baseTokenAddress);
+    this.quoteTokenContract = new this.client.eth.Contract(erc20ABI, this.quoteTokenAddress);
+    this.zeroExContract = new this.client.eth.Contract(exchangeABI, process.env.VUE_APP_ZERO_CONTRACT_ADDRESS);
+    this.orderContract = new this.client.eth.Contract(exchangeABI, process.env.VUE_APP_ORDER_ADDRESS);
+    this.client.eth.getAccounts().then(res => { this.currentAccountWallet = res[0] });
   },
   mounted() {},
   methods: {
-    async approveToken() {
-      this.contractToken = new this.client.eth.Contract(erc20ABI, '0xa877612B5330541eB161b96976a6c447e9ce4e7D');
-      this.contractOtherToken = new this.client.eth.Contract(erc20ABI, '0xc5f4ae3af43e8260d5101b17def71ff43eb7680b');
-      await this.contractToken.methods.approve('0x6fc4D23d60472B78901CF59beF7EA8990f49B61D', new BigNumber(2).times(new BigNumber(10).pow(18)).toString())
+    async approveToken(type) {
+      if (type === 'buy') {
+        await this.quoteTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, new BigNumber(this.buyMakerAmount).times(new BigNumber(10).pow(18)))
         .send({
-          from: '0x594Ab22De186eBad2f4c0FD4F3D224599BEc3Cac',
-          value: 0,
+          from: this.currentAccountWallet,
           gas: 800000,
           gasPrice: 20e9
         });
-      await this.contractOtherToken.methods.approve('0x6fc4D23d60472B78901CF59beF7EA8990f49B61D', new BigNumber(4).times(new BigNumber(10).pow(18)).toString())
-        .send({
-          from: '0x594Ab22De186eBad2f4c0FD4F3D224599BEc3Cac',
-          value: 0,
-          gas: 800000,
-          gasPrice: 20e9
-        });
-    },
-    async createOrder() {
-      if (window.ethereum) {
-        this.client = new Web3(window.ethereum);
-        this.contractEx = new this.client.eth.Contract(exchangeABI,'0x51Bfa0FCebd9a9F72b0523aa37968794F3C214a7');
-        this.nativeOrderContract = new this.client.eth.Contract(exchangeABI,'0x6fc4D23d60472B78901CF59beF7EA8990f49B61D');
+      } else {
+        await this.baseTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, new BigNumber(this.sellMakerAmount).times(new BigNumber(10).pow(18)))
+          .send({
+            from: this.currentAccountWallet,
+            gas: 800000,
+            gasPrice: 20e9
+          });
       }
-      await this.approveToken();
-      const limitOrder = new LimitOrder({
-        chainId: 97,
-        verifyingContract: '0x51Bfa0FCebd9a9F72b0523aa37968794F3C214a7',
-        maker: '0x594Ab22De186eBad2f4c0FD4F3D224599BEc3Cac',
-        taker: '0x0000000000000000000000000000000000000000',
-        makerToken: '0xa877612B5330541eB161b96976a6c447e9ce4e7D',
-        takerToken: '0xc5f4ae3af43e8260d5101b17def71ff43eb7680b',
-        makerAmount: new BigNumber(2).times(new BigNumber(10).pow(18)).toString(),
-        takerAmount: new BigNumber(4).times(new BigNumber(10).pow(18)).toString(),
+    },
+    async createLimitOrder(type = 'buy') {
+      return new LimitOrder({
+        chainId: Number(process.env.VUE_APP_CHAIN_ID),
+        verifyingContract: process.env.VUE_APP_ZERO_CONTRACT_ADDRESS,
+        maker: this.currentAccountWallet,
+        taker: process.env.VUE_APP_ZERO_ADDRESS,
+        makerToken: type === 'buy' ? this.quoteTokenAddress : this.baseTokenAddress,
+        takerToken: type === 'buy' ? this.baseTokenAddress : this.quoteTokenAddress,
+        makerAmount: type === 'buy' ?
+          new BigNumber(this.buyMakerAmount).times(new BigNumber(10).pow(18)).toString() :
+          new BigNumber(this.sellMakerAmount).times(new BigNumber(10).pow(18)).toString(),
+        takerAmount: type === 'buy' ?
+          new BigNumber(this.buyMakerTotal).times(new BigNumber(10).pow(18)).toString() :
+          new BigNumber(this.sellMakerTotal).times(new BigNumber(10).pow(18)).toString(),
         takerTokenFeeAmount: new BigNumber(0).toString(),
-        sender: '0x0000000000000000000000000000000000000000',
-        feeRecipient: '0x0000000000000000000000000000000000000000',
-        expiry: Math.floor(Date.now() / 1000 + 300),
-        pool: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        salt: Date.now().toString(),
+        sender: process.env.VUE_APP_ZERO_ADDRESS,
+        feeRecipient: process.env.VUE_APP_ZERO_ADDRESS,
+        expiry: Math.floor(Date.now() / 1000 + 3000),
+        pool: process.env.VUE_APP_DEFAULT_POOL,
+        salt: Date.now().toString()
       });
-
-      const signature = await limitOrder.getSignatureWithProviderAsync(window.web3.currentProvider, SignatureType.EIP712, '0x594Ab22De186eBad2f4c0FD4F3D224599BEc3Cac');
-      await this.nativeOrderContract.methods.fillLimitOrder(
+    },
+    async createOrder(type) {
+      // await this.baseTokenContract.methods.mint("0x2b98a2c5A0155d9D6aAa0747E6bbE3D285EA7bb7", '100000000000000000000000').send({from: this.currentAccountWallet});
+      // await this.quoteTokenContract.methods.mint("0x19Ef6AB7a5e9753C214462df01F77aD324dA645D", '100000000000000000000000').send({from: this.currentAccountWallet});
+      // return;
+      const limitOrder = await this.createLimitOrder(type);
+      const signature = await limitOrder.getSignatureWithProviderAsync(window.web3.currentProvider, SignatureType.EIP712, this.currentAccountWallet);
+      await this.approveToken(type);
+      createOrder({...limitOrder, type, signature: JSON.stringify(signature)}).then(res => {
+        notificationWithCustomMessage('success', this, res.data.message);
+      }).catch(error => {
+        notificationWithCustomMessage('warning', this, error.response.data.message);
+      })
+    },
+    async takeOrder() {
+      const limitOrder = JSON.parse(localStorage.getItem('limitOrder'));
+      await this.approveToken('sell');
+      const data = await this.orderContract.methods.fillLimitOrder(
         limitOrder,
-        signature,
-        new BigNumber(4).times(new BigNumber(10).pow(18)).toString()
+        JSON.parse(localStorage.getItem('signature')),
+        new BigNumber(this.buyMakerTotal).times(new BigNumber(10).pow(18)).toString()
       ).send({
-        from: '0x594Ab22De186eBad2f4c0FD4F3D224599BEc3Cac',
+        from: this.currentAccountWallet,
         value: 0,
         gas: 800000,
         gasPrice: 20e9
       });
+      console.log(data);
     }
   }
 };
