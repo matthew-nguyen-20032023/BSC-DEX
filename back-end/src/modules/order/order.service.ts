@@ -41,8 +41,8 @@ export class OrderService {
       type === OrderType.BuyOrder ? makerToken : takerToken;
 
     const existPair = await this.pairRepository.getPairByBaseQuoteToken(
-      baseTokenAddress,
-      quoteTokenAddress
+      baseTokenAddress.toLowerCase(),
+      quoteTokenAddress.toLowerCase()
     );
     if (!existPair) {
       throw new HttpException(

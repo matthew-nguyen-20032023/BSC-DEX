@@ -101,8 +101,8 @@ describe("Exchange Smart Contract", function () {
         taker: otherAccount.address,
         makerToken: BirdContract.target,
         takerToken: TigerContract.target,
-        makerAmount: 1,
-        takerAmount: 2,
+        makerAmount: 100,
+        takerAmount: 200,
         takerTokenFeeAmount: new BigNumber(0).toString(),
         sender: "0x0000000000000000000000000000000000000000",
         feeRecipient: "0x0000000000000000000000000000000000000000",
@@ -152,7 +152,12 @@ describe("Exchange Smart Contract", function () {
       await NativeOrdersFeatureContract.connect(otherAccount).fillLimitOrder(
         limitOrder,
         signature,
-        2
+        200
+      );
+      await NativeOrdersFeatureContract.connect(otherAccount).fillLimitOrder(
+        limitOrder,
+        signature,
+        200
       );
 
       const birdBalance1 = await BirdContract.balanceOf(owner.address);
