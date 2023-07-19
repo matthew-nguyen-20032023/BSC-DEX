@@ -175,7 +175,8 @@ export default {
       const limitOrder = await this.createLimitOrder(type);
       const signature = await limitOrder.getSignatureWithProviderAsync(window.web3.currentProvider, SignatureType.EIP712, this.currentAccountWallet);
       await this.approveToken(type);
-      createOrder({...limitOrder, type, signature: JSON.stringify(signature)}).then(res => {
+      const price = new BigNumber(limitOrder.takerAmount).div(limitOrder.makerAmount).toString();
+      createOrder({...limitOrder, type, price, signature: JSON.stringify(signature)}).then(res => {
         notificationWithCustomMessage('success', this, res.data.message);
       }).catch(error => {
         notificationWithCustomMessage('warning', this, error.response.data.message);

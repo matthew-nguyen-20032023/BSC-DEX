@@ -14,6 +14,7 @@ import { CreateOrderDto } from "src/modules/order/dto/create-order.dto";
 import { PairRepository } from "src/models/repositories/pair.repository";
 import { Pair, PairDocument } from "src/models/schemas/pair.schema";
 import { PairMessageError } from "src/modules/pair/pair.const";
+import { ListOrderDto } from "src/modules/order/dto/list-order.dto";
 
 @Injectable()
 export class OrderService {
@@ -64,5 +65,22 @@ export class OrderService {
     newOrder.remainingAmount = newOrder.takerAmount;
 
     return this.orderRepository.save(newOrder);
+  }
+
+  public async listOrder(listOrderDto: ListOrderDto): Promise<Order[]> {
+    const pair = await this.pairRepository.getPairByBaseQuoteToken(
+      listOrderDto.baseTokenAddress.toLowerCase(),
+      listOrderDto.quoteTokenAddress.toLowerCase()
+    );
+
+    if (!pair) {
+      throw new HttpException(
+        { message: PairMessageError.PairNotFound },
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    listOrderDto.pairId = pair._id.toString();
+    return this.orderRepository.listOrder(listOrderDto);
   }
 }
