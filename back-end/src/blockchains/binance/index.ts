@@ -37,4 +37,61 @@ export class Binance {
       decimals,
     };
   }
+
+  /**
+   * @description this for testing on ganache only, ganache does require connect account
+   * @param receiver
+   * @param amount
+   * @param tokenAddress
+   */
+  public async mintTokenForTest(
+    receiver: string,
+    amount: string,
+    tokenAddress: string
+  ): Promise<boolean> {
+    const account = await this.client.eth.accounts.privateKeyToAccount(
+      process.env.ADMIN_WALLET_PRIVATE_KEY
+    );
+    const erc20TokenContract = new this.client.eth.Contract(
+      erc20ABI,
+      tokenAddress
+    );
+    await erc20TokenContract.methods
+      .mint(receiver, amount)
+      .send({ from: account.address });
+    // const privateKey = toBuffer(process.env.ADMIN_WALLET_PRIVATE_KEY);
+    // const adminAddress = "0x19Ef6AB7a5e9753C214462df01F77aD324dA645D";
+    //
+    // const mintFunctionData = erc20TokenContract.methods
+    //   .mint(receiver, amount)
+    //   .encodeABI();
+    //
+    // const rawTx = {
+    //   from: adminAddress,
+    //   nonce: await this.client.eth.getTransactionCount(adminAddress),
+    //   gasPrice: this.client.utils.toHex("20000000000"),
+    //   gasLimit: this.client.utils.toHex("3000000"),
+    //   to: tokenAddress,
+    //   value: "0x00",
+    //   data: mintFunctionData,
+    //   chainId: this.client.utils.toHex(1337),
+    // };
+    //
+    // const tx = new Transaction(rawTx);
+    // tx.sign(privateKey);
+    // const serializedTx = tx.serialize();
+    //
+    // this.client.eth
+    //   .sendSignedTransaction("0x" + serializedTx.toString("hex"))
+    //   .on("transactionHash", (hash) => {
+    //     console.log("Transaction hash:", hash);
+    //   })
+    //   .on("receipt", (receipt) => {
+    //     console.log("Transaction receipt:", receipt);
+    //   })
+    //   .on("error", (error) => {
+    //     console.error("Error while sending transaction:", error);
+    //   });
+    return true;
+  }
 }

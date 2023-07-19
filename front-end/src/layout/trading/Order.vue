@@ -162,7 +162,7 @@ export default {
     async approveToken(type, isSend = true) {
       let tx;
       if (type === 'buy') {
-        tx = this.quoteTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, new BigNumber(this.buyMakerAmount).times(new BigNumber(10).pow(18)))
+        tx = this.quoteTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, new BigNumber(this.buyMakerTotal).times(new BigNumber(10).pow(18)))
       } else {
         tx = this.baseTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, new BigNumber(this.sellMakerAmount).times(new BigNumber(10).pow(18)))
       }
@@ -186,10 +186,10 @@ export default {
         makerToken: type === 'buy' ? this.quoteTokenAddress : this.baseTokenAddress,
         takerToken: type === 'buy' ? this.baseTokenAddress : this.quoteTokenAddress,
         makerAmount: type === 'buy' ?
-          new BigNumber(this.buyMakerAmount).times(new BigNumber(10).pow(18)).toString() :
+          new BigNumber(this.buyMakerTotal).times(new BigNumber(10).pow(18)).toString() :
           new BigNumber(this.sellMakerAmount).times(new BigNumber(10).pow(18)).toString(),
         takerAmount: type === 'buy' ?
-          new BigNumber(this.buyMakerTotal).times(new BigNumber(10).pow(18)).toString() :
+          new BigNumber(this.buyMakerAmount).times(new BigNumber(10).pow(18)).toString() :
           new BigNumber(this.sellMakerTotal).times(new BigNumber(10).pow(18)).toString(),
         takerTokenFeeAmount: new BigNumber(0).toString(),
         sender: process.env.VUE_APP_ZERO_ADDRESS,
@@ -222,7 +222,10 @@ export default {
       const limitOrder = await this.createLimitOrder(type);
       const signature = await limitOrder.getSignatureWithProviderAsync(window.web3.currentProvider, SignatureType.EIP712, this.currentAccountWallet);
       await this.approveToken(type);
-      const price = new BigNumber(limitOrder.takerAmount).div(limitOrder.makerAmount).toString();
+      const price = type === 'buy' ?
+        new BigNumber(limitOrder.makerAmount).div(limitOrder.takerAmount).toString() :
+        new BigNumber(limitOrder.takerAmount).div(limitOrder.makerAmount).toString();
+
       createOrder({...limitOrder, type, price, signature: JSON.stringify(signature)}).then(res => {
         notificationWithCustomMessage('success', this, res.data.message);
       }).catch(error => {

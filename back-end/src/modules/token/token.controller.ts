@@ -7,6 +7,7 @@ import { TokenMessageSuccess } from "src/modules/token/token.const";
 import { ListTokenDto } from "src/modules/token/dto/list-token.dto";
 import { Public } from "src/modules/authentication/auth.const";
 import { DetailTokenDto } from "src/modules/token/dto/detail-token.dto";
+import { MintTokenForTestDto } from "src/modules/token/dto/mint-token-for-test.dto";
 
 @Controller("token")
 @ApiBearerAuth()
@@ -64,6 +65,26 @@ export class TokenController {
     );
     return {
       message: TokenMessageSuccess.GetTokenDetailSuccess,
+      data,
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  @Post("mint-token-for-test")
+  @ApiOperation({
+    summary: "Api to mint token for test",
+  })
+  @Public()
+  public async mintTokenForTest(
+    @Body() mintTokenForTestDto: MintTokenForTestDto
+  ): Promise<IResponseToClient> {
+    const data = await this.tokenService.mintTokenForTest(
+      mintTokenForTestDto.receiver,
+      mintTokenForTestDto.amount,
+      mintTokenForTestDto.tokenAddress
+    );
+    return {
+      message: TokenMessageSuccess.MintTokenForTestSuccess,
       data,
       statusCode: HttpStatus.OK,
     };
