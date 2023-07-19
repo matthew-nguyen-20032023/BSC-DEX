@@ -21,7 +21,7 @@
               <td>{{ removeDecimal(data.remainingAmount) }}</td>
               <td>{{ convertExpiryToDate(data.expiry) }}</td>
               <td>{{ data.createdAt }}</td>
-              <td><b-button size="sm" variant="warning">Fill</b-button></td>
+              <td><b-button size="sm" variant="warning" @click="fillOrder(data)">Fill</b-button></td>
             </tr>
           </table>
         </b-card-text>
@@ -52,6 +52,10 @@
 
 <script>
 import { listOrder } from "@/plugins/backend";
+import { LimitOrder } from "@0x/protocol-utils";
+import Web3 from "web3";
+import {exchangeABI} from "@/libs/abi/exchange.ts";
+import {erc20ABI} from "@/libs/abi/erc20.ts";
 const debounce = require('debounce');
 const BigNumber = require('bignumber.js');
 const moment = require('moment');
@@ -71,7 +75,8 @@ export default {
     return {
       buyOffers: [],
       sellOffer: [],
-      historyTab: null
+      historyTab: null,
+      currentAccountWallet: null,
     };
   },
   watch: {
@@ -97,6 +102,8 @@ export default {
   created: debounce(function () {
     this.listBuyOffer();
     this.listSellOffer();
+    this.client = new Web3(window.ethereum);
+    this.client.eth.getAccounts().then(res => { this.currentAccountWallet = res[0] });
   }, 500),
   methods: {
     convertExpiryToDate(expiry) {
@@ -117,6 +124,43 @@ export default {
       .then(res => {
         this.sellOffer = res.data.data;
       })
+    },
+    async fillOrder(order) {
+      const signature = JSON.parse(order.signature);
+      const limitOrder = new LimitOrder({
+        chainId: Number(order.chainId),
+        verifyingContract: order.verifyingContract,
+        maker: order.maker,
+        taker: order.taker,
+        makerToken: order.makerToken,
+        takerToken: order.takerToken,
+        makerAmount: order.makerAmount,
+        takerAmount: order.takerAmount,
+        takerTokenFeeAmount: order.takerTokenFeeAmount,
+        sender: order.sender,
+        feeRecipient: order.feeRecipient,
+        expiry: Number(order.expiry),
+        pool: order.pool,
+        salt: order.salt
+      });
+
+      const erc20TokenContract = new this.client.eth.Contract(erc20ABI, order.takerToken);
+      const orderContract = new this.client.eth.Contract(exchangeABI, process.env.VUE_APP_ORDER_ADDRESS);
+      await erc20TokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, order.takerAmount).send({
+        from: this.currentAccountWallet,
+        gas: 800000,
+        gasPrice: 20e9
+      });
+      await orderContract.methods.fillLimitOrder(
+        limitOrder,
+        signature,
+        order.takerAmount
+      ).send({
+        from: this.currentAccountWallet,
+        value: 0,
+        gas: 800000,
+        gasPrice: 20e9
+      });
     }
   }
 };

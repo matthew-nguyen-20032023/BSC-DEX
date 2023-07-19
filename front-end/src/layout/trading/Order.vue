@@ -231,21 +231,6 @@ export default {
       }).catch(error => {
         notificationWithCustomMessage('warning', this, error.response.data.message);
       })
-    },
-    async takeOrder() {
-      const limitOrder = JSON.parse(localStorage.getItem('limitOrder'));
-      await this.approveToken('sell');
-      const data = await this.orderContract.methods.fillLimitOrder(
-        limitOrder,
-        JSON.parse(localStorage.getItem('signature')),
-        new BigNumber(this.buyMakerTotal).times(new BigNumber(10).pow(18)).toString()
-      ).send({
-        from: this.currentAccountWallet,
-        value: 0,
-        gas: 800000,
-        gasPrice: 20e9
-      });
-      console.log(data);
     }
   }
 };
