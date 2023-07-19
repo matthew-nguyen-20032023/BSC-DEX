@@ -7,12 +7,19 @@ Npm version 9.6.4 <br />
 ## Installation && Deploy
 ```bash
 npm install
+
 npx hardhat compile
-cp ..env.example .env # And then replace the value in .env file
-# For deploy ganache local
+
+cp ..env.example .env # And then replace the value in .env file follow exactly note before move to next step
+
+# If you using ganache for develop
 npx hardhat run ./scripts/deploy.js --network EthereumLocal
-# For deploy bsc testnet
+
+# If you using BSC for develop
 npx hardhat run ./scripts/deploy.js --network BSCTestnet
-# For verify smart contract
-npx hardhat verify --network BSCTestnet ContractAddress constructorParam1 constructorParam2
+
+# For verify smart contract (only use for BSC network)
+npx hardhat verify --network NetworkName ContractAddress ConstructorParam1 ConstructorParam2
 ```
+## Result Installation && Deploy
+![alt text](https://github.com/matthew-nguyen-20032023/[reponame]/blob/[branch]/image.jpg?raw=true)
