@@ -1,5 +1,9 @@
 import { Model } from "mongoose";
-import { Order, OrderDocument } from "src/models/schemas/order.schema";
+import {
+  Order,
+  OrderDocument,
+  OrderStatus,
+} from "src/models/schemas/order.schema";
 import { ListOrderDto } from "src/modules/order/dto/list-order.dto";
 
 export class OrderRepository {
@@ -21,6 +25,7 @@ export class OrderRepository {
     if (listOrderDto.type) condition["type"] = listOrderDto.type;
     if (listOrderDto.pairId) condition["pairId"] = listOrderDto.pairId;
     condition["expiry"] = { $gt: Date.now() / 1000 };
+    condition["status"] = OrderStatus.FillAble;
 
     return this.model
       .find(condition)
