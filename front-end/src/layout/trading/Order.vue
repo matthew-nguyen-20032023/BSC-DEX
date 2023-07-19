@@ -5,7 +5,7 @@
       active-tab-class="font-weight-bold text-success"
       small
     >
-      <b-tab title="Limit" :title-link-class="'text-light'">
+      <b-tab title="Spot" :title-link-class="'text-light'">
         <b-card-text>
           <b-row>
             <b-col>
@@ -24,9 +24,6 @@
             </b-col>
           </b-row>
         </b-card-text>
-      </b-tab>
-      <b-tab title="Market" :title-link-class="'text-light'">
-        <b-card-text>Tab contents 2</b-card-text>
       </b-tab>
     </b-tabs>
   </b-card>
@@ -48,13 +45,19 @@ export default {
       type: String,
       required: true
     },
+    baseTokenAddress: {
+      type: String,
+      required: true
+    },
+    quoteTokenAddress: {
+      type: String,
+      required: true
+    },
   },
   data() {
     return {
       baseTokenContract: null,
       quoteTokenContract: null,
-      baseTokenAddress: "0xf0fbdc550bbA5689b5c51e7B7AF339E2c731ee5f",
-      quoteTokenAddress: "0x0518D7a894d7E08DDDaCCD2550C33eBa399ad2b6",
       zeroExContract: null,
       orderContract: null,
       client: null,
