@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 import { OrderType } from "src/models/schemas/order.schema";
 import { Type } from "class-transformer";
 
@@ -61,10 +61,10 @@ export class ListOrderDto {
   type: OrderType;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @ApiProperty({
     description: "Address of maker wallet",
-    required: true,
+    required: false,
     example: "0x2b98a2c5A0155d9D6aAa0747E6bbE3D285EA7bb7",
   })
   maker: string;
