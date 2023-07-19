@@ -1,13 +1,6 @@
-const {
-  time,
-  loadFixture,
-} = require("@nomicfoundation/hardhat-toolbox/network-helpers");
-const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
-const { expect } = require("chai");
 const { LimitOrder, SignatureType } = require("@0x/protocol-utils");
 const BigNumber = require("bignumber.js");
 const { ethers } = require("hardhat");
-
 const {
   RPCSubprovider,
   Web3ProviderEngine,
@@ -15,21 +8,23 @@ const {
 } = require("@0x/subproviders");
 const { providerUtils } = require("@0x/utils");
 const { Web3Wrapper } = require("@0x/web3-wrapper");
-const { ContractWrappers } = require("@0x/contract-wrappers");
 
 describe("Exchange Smart Contract", function () {
-  async function deployContract() {
+  async function getProviderEngine() {
     const wallet = new PrivateKeyWalletSubprovider(
-      "0x274aa78ffefcea2a84f444bcff6d360cbdd0610ffe29f444364b49e9d79bf125",
-      1337
+      process.env.ACCOUNT_PRIVATE_KEY_1,
+      Number(process.env.CHAIN_ID)
     );
     const pe = new Web3ProviderEngine();
     pe.addProvider(wallet);
-    pe.addProvider(new RPCSubprovider("http://127.0.0.1:7545"));
+    pe.addProvider(new RPCSubprovider(process.env.RPC_URL));
     providerUtils.startProviderEngine(pe);
-    const web3Wrapper = new Web3Wrapper(pe);
+    return pe;
+  }
 
-    const contractWrappers = new ContractWrappers(pe, { chainId: 1337 });
+  async function deployContract() {
+    const pe = await getProviderEngine();
+    const web3Wrapper = new Web3Wrapper(pe);
 
     const [owner, otherAccount] = await ethers.getSigners();
 
@@ -42,11 +37,11 @@ describe("Exchange Smart Contract", function () {
     const Staking = await ethers.getContractFactory("Staking");
     const StakingContract = await Staking.deploy(WETH9Contract.target);
 
-    const Bird = await ethers.getContractFactory("ERC20TokenCreation");
-    const BirdContract = await Bird.deploy(100000000000, "Bird", "B");
+    const BTC = await ethers.getContractFactory("ERC20TokenCreation");
+    const BTCContract = await BTC.deploy(100000000000, "Bitcoin", "BTC");
 
-    const Tiger = await ethers.getContractFactory("ERC20TokenCreation");
-    const TigerContract = await Tiger.deploy(100000000000, "Tiger", "T");
+    const USDT = await ethers.getContractFactory("ERC20TokenCreation");
+    const USDTContract = await USDT.deploy(100000000000, "Dollar", "USDT");
 
     const FeeCollectorController = await ethers.getContractFactory(
       "FeeCollectorController"
@@ -71,14 +66,13 @@ describe("Exchange Smart Contract", function () {
       ZeroExContract,
       WETH9Contract,
       StakingContract,
-      BirdContract,
-      TigerContract,
+      BTCContract,
+      USDTContract,
       FeeCollectorControllerContract,
       NativeOrdersFeatureContract,
       owner,
       otherAccount,
       web3Wrapper,
-      contractWrappers,
     };
   }
 
@@ -86,23 +80,29 @@ describe("Exchange Smart Contract", function () {
     it("Fill Limit Order", async function () {
       const {
         owner,
-        BirdContract,
-        TigerContract,
+        BTCContract,
+        USDTContract,
         web3Wrapper,
         NativeOrdersFeatureContract,
         ZeroExContract,
         otherAccount,
       } = await deployContract();
 
+      // For example I want to sell 200 amount of BTC to get 600 amount of USDT
+      // From owner account to another account
+      const makerAmount = "200"; // This not include decimal, for real you need to times with decimal of token
+      const takerAmount = "600"; // This not include decimal, for real you need to times with decimal of token
+
+      // Limit order that will be created off chain and save in Backend
       const limitOrder = new LimitOrder({
-        chainId: 1337,
+        chainId: Number(process.env.CHAIN_ID),
         verifyingContract: ZeroExContract.target,
         maker: owner.address,
         taker: otherAccount.address,
-        makerToken: BirdContract.target,
-        takerToken: TigerContract.target,
-        makerAmount: 100,
-        takerAmount: 200,
+        makerToken: BTCContract.target,
+        takerToken: USDTContract.target,
+        makerAmount: makerAmount,
+        takerAmount: takerAmount,
         takerTokenFeeAmount: new BigNumber(0).toString(),
         sender: "0x0000000000000000000000000000000000000000",
         feeRecipient: "0x0000000000000000000000000000000000000000",
@@ -111,68 +111,69 @@ describe("Exchange Smart Contract", function () {
         salt: Date.now().toString(),
       });
 
+      // Signature will save with limit order above and used for other account fill order
       const signature = await limitOrder.getSignatureWithProviderAsync(
         web3Wrapper.getProvider(),
         SignatureType.EIP712,
         owner.address
       );
 
-      await BirdContract.mint(owner.address, "100000000000000000000000");
-      await TigerContract.mint(
-        otherAccount.address,
-        "100000000000000000000000"
-      );
-      await BirdContract.approve(
+      // Use owner to mint token for owner and otherAccount for test
+      const tokenAmountMintForTest = "100000000000000000000000";
+      await BTCContract.mint(owner.address, tokenAmountMintForTest); // Mint BTC for owner
+      await USDTContract.mint(otherAccount.address, tokenAmountMintForTest); // Mint USDT for other account
+
+      // Owner approve for smart contract to use BTC of owner
+      await BTCContract.approve(
         NativeOrdersFeatureContract.target,
-        "100000000000000000000000"
-      );
-      await TigerContract.connect(otherAccount).approve(
-        NativeOrdersFeatureContract.target,
-        "100000000000000000000000"
+        makerAmount
       );
 
-      const birdBalance = await BirdContract.balanceOf(owner.address);
-      const tigerBalance = await TigerContract.balanceOf(owner.address);
-      console.log(birdBalance, "maker bird balance before");
-      console.log(tigerBalance, "maker tiger balance before");
-
-      const birdBalanceOther = await BirdContract.balanceOf(
+      let ownerBTCBalance = await BTCContract.balanceOf(owner.address);
+      let ownerUSDTBalance = await USDTContract.balanceOf(owner.address);
+      let otherAccountBTCBalance = await BTCContract.balanceOf(
         otherAccount.address
       );
-      const tigerBalanceOther = await TigerContract.balanceOf(
+      let otherAccountUSDTBalance = await USDTContract.balanceOf(
         otherAccount.address
       );
-      console.log(birdBalanceOther, "taker bird balance before");
-      console.log(tigerBalanceOther, "taker tiger balance before");
-      console.log("==============================================");
-      console.log("==============================================");
-      console.log("==============================================");
+      console.log("Owner want to sell 200 BTC to get 600 USDT");
+      console.log("Balance before trade execution");
+      console.log("Owner BTC", ownerBTCBalance);
+      console.log("Owner USDT", ownerUSDTBalance);
+      console.log("Other Account BTC", otherAccountBTCBalance);
+      console.log("Other Account USDT", otherAccountUSDTBalance);
       console.log("==============================================");
 
+      // Other account approve for smart contract to use USDT of other account
+      await USDTContract.connect(otherAccount).approve(
+        NativeOrdersFeatureContract.target,
+        takerAmount
+      );
+
+      // Fill order above
+      // This is other account accept to take 200 BTC with 600 USDT spent
       await NativeOrdersFeatureContract.connect(otherAccount).fillLimitOrder(
         limitOrder,
         signature,
-        200
-      );
-      await NativeOrdersFeatureContract.connect(otherAccount).fillLimitOrder(
-        limitOrder,
-        signature,
-        200
+        takerAmount
       );
 
-      const birdBalance1 = await BirdContract.balanceOf(owner.address);
-      const tigerBalance1 = await TigerContract.balanceOf(owner.address);
-      console.log(birdBalance1, "maker bird balance after");
-      console.log(tigerBalance1, "maker tiger balance after");
+      ownerBTCBalance = await BTCContract.balanceOf(owner.address);
+      ownerUSDTBalance = await USDTContract.balanceOf(owner.address);
+      otherAccountBTCBalance = await BTCContract.balanceOf(
+        otherAccount.address
+      );
+      otherAccountUSDTBalance = await USDTContract.balanceOf(
+        otherAccount.address
+      );
 
-      const birdBalanceOther1 = await BirdContract.balanceOf(
-        otherAccount.address
-      );
-      const tigerBalanceOther1 = await TigerContract.balanceOf(
-        otherAccount.address
-      );
-      console.log(birdBalanceOther1, "taker bird balance after");
-      console.log(tigerBalanceOther1, "taker tiger balance after");
+      console.log("Balance after trade execution");
+      console.log("Owner BTC", ownerBTCBalance);
+      console.log("Owner USDT", ownerUSDTBalance);
+      console.log("Other Account BTC", otherAccountBTCBalance);
+      console.log("Other Account USDT", otherAccountUSDTBalance);
+      console.log("==============================================");
     });
   });
 });
