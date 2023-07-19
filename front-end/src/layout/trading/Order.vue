@@ -9,6 +9,7 @@
         <b-card-text>
           <b-row>
             <b-col>
+              <i class="mt-1">{{quoteTokenSymbol}} balance: {{ quoteTokenBalance }}</i>
               <b-input v-model="buyMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
               <b-input v-model="buyMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
               <b-input :disabled="true" v-model="buyMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
@@ -16,6 +17,7 @@
               <b-button class="w-100 mt-1" variant="success" @click="createOrder('buy')">Buy {{ baseTokenSymbol }}</b-button>
             </b-col>
             <b-col>
+              <i class="mt-1">{{baseTokenSymbol}} balance: {{ baseTokenBalance }}</i>
               <b-input v-model="sellMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
               <b-input v-model="sellMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
               <b-input :disabled="true" v-model="sellMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
@@ -41,7 +43,15 @@ const debounce = require('debounce');
 
 export default {
   props: {
+    pairId: {
+      type: String,
+      required: true
+    },
     baseTokenSymbol: {
+      type: String,
+      required: true
+    },
+    quoteTokenSymbol: {
       type: String,
       required: true
     },
@@ -70,9 +80,15 @@ export default {
       sellMakerAmount: null,
       sellMakerTotal: null,
       sellMakerCost: 0,
+      baseTokenBalance: 0,
+      quoteTokenBalance: 0
     };
   },
   watch: {
+    pairId: debounce(async function () {
+      await this.setBaseQuoteContract();
+      await this.getBalances();
+    }, 500),
     buyMakerPrice: debounce( function () {
       if (this.buyMakerPrice && this.buyMakerAmount) {
         this.buyMakerTotal = this.buyMakerPrice * this.buyMakerAmount
@@ -110,16 +126,28 @@ export default {
       }
     }, 1000),
   },
-  created() {
+  created: debounce(function () {
     this.client = new Web3(window.ethereum);
-    this.baseTokenContract = new this.client.eth.Contract(erc20ABI, this.baseTokenAddress);
-    this.quoteTokenContract = new this.client.eth.Contract(erc20ABI, this.quoteTokenAddress);
+    this.setBaseQuoteContract();
     this.zeroExContract = new this.client.eth.Contract(exchangeABI, process.env.VUE_APP_ZERO_CONTRACT_ADDRESS);
     this.orderContract = new this.client.eth.Contract(exchangeABI, process.env.VUE_APP_ORDER_ADDRESS);
     this.client.eth.getAccounts().then(res => { this.currentAccountWallet = res[0] });
-  },
+    this.getBalances();
+  }, 500),
   mounted() {},
   methods: {
+    async setBaseQuoteContract() {
+      this.baseTokenContract = new this.client.eth.Contract(erc20ABI, this.baseTokenAddress);
+      this.quoteTokenContract = new this.client.eth.Contract(erc20ABI, this.quoteTokenAddress);
+    },
+    async getBalances() {
+      setTimeout(async () => {
+        const quoteTokenBalance = await this.quoteTokenContract.methods.balanceOf(this.currentAccountWallet).call();
+        const baseTokenBalance = await this.baseTokenContract.methods.balanceOf(this.currentAccountWallet).call();
+        this.quoteTokenBalance = new BigNumber(quoteTokenBalance).div(new BigNumber(10).pow(18));
+        this.baseTokenBalance = new BigNumber(baseTokenBalance).div(new BigNumber(10).pow(18));
+      }, 1000)
+    },
     async estimateFee(type) {
       const tx = await this.approveToken(type, false);
       const gas = await tx.estimateGas({from: this.currentAccountWallet});
@@ -172,8 +200,24 @@ export default {
       });
     },
     async createOrder(type) {
-      // await this.baseTokenContract.methods.mint("0x2b98a2c5A0155d9D6aAa0747E6bbE3D285EA7bb7", '100000000000000000000000').send({from: this.currentAccountWallet});
-      // await this.quoteTokenContract.methods.mint("0x19Ef6AB7a5e9753C214462df01F77aD324dA645D", '100000000000000000000000').send({from: this.currentAccountWallet});
+      if (type === 'buy') {
+        if (!this.buyMakerTotal) {
+          return notificationWithCustomMessage('warning', this, `Please input full fill`);
+        }
+        if (new BigNumber(this.buyMakerAmount).gt(this.quoteTokenBalance)) {
+          return notificationWithCustomMessage('warning', this, `Not enough balance of ${this.quoteTokenSymbol}`);
+        }
+      }
+      if (type === 'sell') {
+        if (!this.sellMakerTotal) {
+          return notificationWithCustomMessage('warning', this, `Please input full fill`);
+        }
+        if (new BigNumber(this.sellMakerAmount).gt(this.baseTokenBalance)) {
+          return notificationWithCustomMessage('warning', this, `Not enough balance of ${this.baseTokenSymbol}`);
+        }
+      }
+      // await this.baseTokenContract.methods.mint(this.currentAccountWallet, '100000000000000000000000').send({from: this.currentAccountWallet});
+      // await this.quoteTokenContract.methods.mint(this.currentAccountWallet, '100000000000000000000000').send({from: this.currentAccountWallet});
       // return;
       const limitOrder = await this.createLimitOrder(type);
       const signature = await limitOrder.getSignatureWithProviderAsync(window.web3.currentProvider, SignatureType.EIP712, this.currentAccountWallet);

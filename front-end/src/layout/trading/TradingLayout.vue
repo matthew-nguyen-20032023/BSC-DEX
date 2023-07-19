@@ -42,11 +42,16 @@
 
       <b-row class="justify-content-center mt-3">
         <b-col cols="1" class="custom-trade-history-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
-          <history />
+          <history
+            :base-token-address="baseTokenAddress"
+            :quote-token-address="quoteTokenAddress"
+          />
         </b-col>
         <b-col cols="1" class="custom-order-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
           <order
+            :pair-id="pairId"
             :base-token-symbol="baseTokenSymbol"
+            :quote-token-symbol="quoteTokenSymbol"
             :base-token-address="baseTokenAddress"
             :quote-token-address="quoteTokenAddress"
           />
@@ -73,8 +78,10 @@ export default {
       walletAddress: '',
       sortWalletAddress: '',
       baseTokenSymbol: '',
+      quoteTokenSymbol: '',
       baseTokenAddress: '',
       quoteTokenAddress: '',
+      pairId: '',
     }
   },
   components: {
@@ -88,8 +95,10 @@ export default {
   methods: {
     pairChange(newPair) {
       this.baseTokenSymbol = newPair.name.split(" / ")[0];
+      this.quoteTokenSymbol = newPair.name.split(" / ")[1];
       this.baseTokenAddress = newPair.baseTokenAddress;
       this.quoteTokenAddress = newPair.quoteTokenAddress;
+      this.pairId = newPair._id.toString();
     },
     connectWallet() {
       if (typeof window.ethereum !== "undefined") {
