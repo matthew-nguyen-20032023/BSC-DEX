@@ -29,16 +29,16 @@ async function main() {
 
   const birdToken = await hre.ethers.deployContract("ERC20TokenCreation", [
     100000000000,
-    "Bird",
-    "B",
+    "Bitcoin",
+    "BTC",
   ]);
   const birdTokenDeployed = await birdToken.waitForDeployment();
   const birdAddress = await birdTokenDeployed.getAddress();
 
   const tigerToken = await hre.ethers.deployContract("ERC20TokenCreation", [
     100000000000,
-    "Bird",
-    "B",
+    "Ethereum",
+    "ETH",
   ]);
   const tigerTokenDeployed = await tigerToken.waitForDeployment();
   const tigerAddress = await tigerTokenDeployed.getAddress();

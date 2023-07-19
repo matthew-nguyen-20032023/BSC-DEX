@@ -1,6 +1,7 @@
 export enum PairMessageSuccess {
   CreatePairSuccess = "Create pair success.",
   ListPairSuccess = "List pair success",
+  DisablePairSuccess = "Disable pair success",
 }
 
 export enum PairMessageError {
@@ -8,5 +9,5 @@ export enum PairMessageError {
   QuoteTokenNotFound = "Quote token not found.",
   PairExist = "Pair exist.",
   PairNotFound = "Pair not found",
-  SameBaseQuoteToken = "Can not create pair with same base and quote token"
+  SameBaseQuoteToken = "Can not create pair with same base and quote token",
 }
