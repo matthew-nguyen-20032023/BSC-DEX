@@ -7,6 +7,15 @@ export class CreateOrderDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
+    description: "Price",
+    required: true,
+    example: "200000000000000000000",
+  })
+  price: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
     description: "Order side type",
     required: true,
     example: `${OrderType.SellOrder} | ${OrderType.BuyOrder}`,

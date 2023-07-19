@@ -25,6 +25,9 @@ export class Order extends CreateUpdateSchema {
   status: OrderStatus;
 
   @Prop()
+  price: string;
+
+  @Prop()
   remainingAmount: string;
 
   @Prop()

@@ -12,15 +12,15 @@
               <b-input v-model="buyMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
               <b-input v-model="buyMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
               <b-input :disabled="true" v-model="buyMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
-              <i class="mt-1">Estimate fee: 0.0008</i>
+              <i class="mt-1">Estimate fee: {{ buyMakerCost }}</i>
               <b-button class="w-100 mt-1" variant="success" @click="createOrder('buy')">Buy {{ baseTokenSymbol }}</b-button>
             </b-col>
             <b-col>
               <b-input v-model="sellMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
               <b-input v-model="sellMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
-              <b-input v-model="sellMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
-              <i class="mt-1">Estimate fee: 0.0008</i>
-              <b-button class="w-100 mt-1" variant="danger">Sell {{ baseTokenSymbol }}</b-button>
+              <b-input :disabled="true" v-model="sellMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
+              <i class="mt-1">Estimate fee: {{ sellMakerCost }}</i>
+              <b-button class="w-100 mt-1" variant="danger" @click="createOrder('sell')">Sell {{ baseTokenSymbol }}</b-button>
             </b-col>
           </b-row>
         </b-card-text>
@@ -38,9 +38,9 @@ import { exchangeABI } from "@/libs/abi/exchange.ts";
 import { erc20ABI } from "@/libs/abi/erc20.ts";
 import { createOrder } from "@/plugins/backend";
 import { notificationWithCustomMessage } from "@/plugins/notification";
-import NoMetamask from "@/layout/trading/notifications/NoMetamask";
 const BigNumber = require('bignumber.js');
 const Web3 = require('web3');
+const debounce = require('debounce');
 
 export default {
   props: {
@@ -59,21 +59,53 @@ export default {
       orderContract: null,
       client: null,
       currentAccountWallet: null,
-      buyMakerPrice: 2,
-      buyMakerAmount: 3,
-      buyMakerTotal: 6,
-      sellMakerPrice: 2,
-      sellMakerAmount: 3,
-      sellMakerTotal: 6,
+      buyMakerPrice: null,
+      buyMakerAmount: null,
+      buyMakerTotal: null,
+      buyMakerCost: 0,
+      sellMakerPrice: null,
+      sellMakerAmount: null,
+      sellMakerTotal: null,
+      sellMakerCost: 0,
     };
   },
   watch: {
-    buyMakerPrice() {
-      this.buyMakerTotal = this.buyMakerPrice * this.buyMakerAmount
-    },
-    buyMakerAmount() {
-      this.buyMakerTotal = this.buyMakerPrice * this.buyMakerAmount
-    },
+    buyMakerPrice: debounce( function () {
+      if (this.buyMakerPrice && this.buyMakerAmount) {
+        this.buyMakerTotal = this.buyMakerPrice * this.buyMakerAmount
+        this.estimateFee('buy');
+      } else {
+        this.buyMakerTotal = null;
+        this.buyMakerCost = 0;
+      }
+    }, 1000),
+    buyMakerAmount: debounce(function () {
+      if (this.buyMakerPrice && this.buyMakerAmount) {
+        this.buyMakerTotal = this.buyMakerPrice * this.buyMakerAmount
+        this.estimateFee('buy');
+      } else {
+        this.buyMakerTotal = null;
+        this.buyMakerCost = 0;
+      }
+    }, 1000),
+    sellMakerPrice: debounce(function () {
+      if (this.sellMakerPrice && this.sellMakerAmount) {
+        this.sellMakerTotal = this.sellMakerPrice * this.sellMakerAmount
+        this.estimateFee('sell');
+      } else {
+        this.sellMakerCost = 0;
+        this.sellMakerTotal = null;
+      }
+    }, 1000),
+    sellMakerAmount: debounce(function () {
+      if (this.sellMakerPrice && this.sellMakerAmount) {
+        this.sellMakerTotal = this.sellMakerPrice * this.sellMakerAmount
+        this.estimateFee('sell');
+      } else {
+        this.sellMakerCost = 0;
+        this.sellMakerTotal = null;
+      }
+    }, 1000),
   },
   created() {
     this.client = new Web3(window.ethereum);
@@ -85,22 +117,34 @@ export default {
   },
   mounted() {},
   methods: {
-    async approveToken(type) {
+    async estimateFee(type) {
+      const tx = await this.approveToken(type, false);
+      const gas = await tx.estimateGas({from: this.currentAccountWallet});
+      const gasPrice = await this.client.eth.getGasPrice();
+      const gasCost = new BigNumber(gas).times(gasPrice).div(new BigNumber(10).pow(18));
       if (type === 'buy') {
-        await this.quoteTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, new BigNumber(this.buyMakerAmount).times(new BigNumber(10).pow(18)))
-        .send({
+        this.buyMakerCost = gasCost;
+      } else {
+        this.sellMakerCost = gasCost;
+      }
+    },
+    async approveToken(type, isSend = true) {
+      let tx;
+      if (type === 'buy') {
+        tx = this.quoteTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, new BigNumber(this.buyMakerAmount).times(new BigNumber(10).pow(18)))
+      } else {
+        tx = this.baseTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, new BigNumber(this.sellMakerAmount).times(new BigNumber(10).pow(18)))
+      }
+
+      if (isSend) {
+        await tx.send({
           from: this.currentAccountWallet,
           gas: 800000,
           gasPrice: 20e9
         });
-      } else {
-        await this.baseTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, new BigNumber(this.sellMakerAmount).times(new BigNumber(10).pow(18)))
-          .send({
-            from: this.currentAccountWallet,
-            gas: 800000,
-            gasPrice: 20e9
-          });
+        return;
       }
+      return tx;
     },
     async createLimitOrder(type = 'buy') {
       return new LimitOrder({
@@ -131,7 +175,8 @@ export default {
       const limitOrder = await this.createLimitOrder(type);
       const signature = await limitOrder.getSignatureWithProviderAsync(window.web3.currentProvider, SignatureType.EIP712, this.currentAccountWallet);
       await this.approveToken(type);
-      createOrder({...limitOrder, type, signature: JSON.stringify(signature)}).then(res => {
+      const price = new BigNumber(limitOrder.takerAmount).div(limitOrder.makerAmount).toString();
+      createOrder({...limitOrder, type, price, signature: JSON.stringify(signature)}).then(res => {
         notificationWithCustomMessage('success', this, res.data.message);
       }).catch(error => {
         notificationWithCustomMessage('warning', this, error.response.data.message);
