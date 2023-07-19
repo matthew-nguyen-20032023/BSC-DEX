@@ -14,7 +14,7 @@
     <b-container fluid>
       <b-row class="justify-content-center mb-3">
         <b-col class="custom-ticker-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
-          <ticker :pair-name="pairName" />
+          <ticker @pairChange="pairChange"/>
         </b-col>
       </b-row>
 
@@ -70,9 +70,7 @@ export default {
     return {
       walletAddress: '',
       sortWalletAddress: '',
-      baseTokenSymbol: 'TG',
-      quoteTokenSymbol: 'B',
-      pairName: "TG / B"
+      baseTokenSymbol: '',
     }
   },
   components: {
@@ -84,6 +82,9 @@ export default {
     OrderBook
   },
   methods: {
+    pairChange(newPair) {
+      this.baseTokenSymbol = newPair.name.split(" / ")[0];
+    },
     connectWallet() {
       if (typeof window.ethereum !== "undefined") {
         ethereum
@@ -121,12 +122,12 @@ export default {
 }
 
 .custom-trade-history-col {
-  flex-basis: calc((100% / 12) * 3.25);
-  max-width: calc((100% / 12) * 3.25);
+  flex-basis: calc((100% / 12) * 4.25);
+  max-width: calc((100% / 12) * 4.25);
 }
 
 .custom-order-col {
-  flex-basis: calc((100% / 12) * 3.25);
-  max-width: calc((100% / 12) * 3.25);
+  flex-basis: calc((100% / 12) * 2.25);
+  max-width: calc((100% / 12) * 2.25);
 }
 </style>

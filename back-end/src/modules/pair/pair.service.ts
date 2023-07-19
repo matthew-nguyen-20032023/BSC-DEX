@@ -3,7 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 
 import { PairRepository } from "src/models/repositories/pair.repository";
-import { Pair, PairDocument } from "src/models/schemas/pair.schema";
+import { Pair, PairDocument, PairStatus } from "src/models/schemas/pair.schema";
 import { Token, TokenDocument } from "src/models/schemas/token.schema";
 import { TokenRepository } from "src/models/repositories/token.repository";
 import { PairMessageError } from "src/modules/pair/pair.const";
@@ -69,6 +69,7 @@ export class PairService {
     newPair.name = pairName;
     newPair.baseTokenAddress = baseToken.address;
     newPair.quoteTokenAddress = quoteToken.address;
+    newPair.status = PairStatus.Active;
     return this.pairRepository.save(newPair);
   }
 
@@ -92,5 +93,12 @@ export class PairService {
       data,
       total,
     };
+  }
+
+  public async disablePair(pairId: string, status: PairStatus): Promise<Pair> {
+    const pair = await this.pairRepository.getPairById(pairId);
+    pair.status = status;
+    pair.updatedAt = new Date();
+    return this.pairRepository.save(pair);
   }
 }

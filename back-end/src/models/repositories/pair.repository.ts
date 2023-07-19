@@ -1,5 +1,5 @@
 import { Model } from "mongoose";
-import { Pair, PairDocument } from "src/models/schemas/pair.schema";
+import { Pair, PairDocument, PairStatus } from "src/models/schemas/pair.schema";
 
 export class PairRepository {
   constructor(private readonly model: Model<PairDocument>) {}
@@ -11,13 +11,13 @@ export class PairRepository {
 
   public async listPair(page: number, limit: number): Promise<Pair[]> {
     return this.model
-      .find()
+      .find({ status: PairStatus.Active })
       .skip((page - 1) * limit)
       .limit(limit);
   }
 
   public async countPair(): Promise<number> {
-    return this.model.count();
+    return this.model.count({ status: PairStatus.Active });
   }
 
   public async getPairByBaseQuoteToken(
@@ -27,6 +27,12 @@ export class PairRepository {
     return this.model.findOne({
       baseTokenAddress: baseToken,
       quoteTokenAddress: quoteToken,
+    });
+  }
+
+  public async getPairById(pairId: string): Promise<Pair> {
+    return this.model.findOne({
+      _id: pairId,
     });
   }
 }

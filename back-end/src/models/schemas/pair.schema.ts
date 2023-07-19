@@ -4,6 +4,11 @@ import { CreateUpdateSchema } from "src/models/schemas/create-update.schema";
 
 export type PairDocument = HydratedDocument<Pair>;
 
+export enum PairStatus {
+  Active = "active",
+  Disable = "disable",
+}
+
 @Schema({ collection: "pairs" })
 export class Pair extends CreateUpdateSchema {
   @Prop()
@@ -14,6 +19,9 @@ export class Pair extends CreateUpdateSchema {
 
   @Prop()
   quoteTokenAddress: string;
+
+  @Prop()
+  status: PairStatus;
 }
 
 export const PairSchema = SchemaFactory.createForClass(Pair);

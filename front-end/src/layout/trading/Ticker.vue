@@ -8,7 +8,11 @@
       <th>24h Volume</th>
     </tr>
     <tr>
-      <th>{{ pairName }}</th>
+      <th>
+        <select style="color: rgb(132, 142, 156); border-radius: 5px" v-model="pairSelected">
+          <option v-for="(data, i) in optionsPair" :key="i" :value="data.value">{{ data.text }}</option>
+        </select>
+      </th>
       <th>100</th>
       <th>115</th>
       <th>98</th>
@@ -18,23 +22,40 @@
 </template>
 
 <script>
+import { listPair } from "@/plugins/backend";
+
 export default {
-  props: {
-    pairName: {
-      type: String,
-      required: true,
-    }
-  },
+  props: {},
   data() {
     return {
+      pairSelected: null,
+      optionsPair: []
     };
+  },
+  created() {
+    this.listPair();
+  },
+  watch: {
+    pairSelected(newVal, oldVal) {
+      if (newVal !== null) {
+        this.$emit('pairChange', newVal);
+      }
+    }
   },
   mounted() {},
   methods: {
+    listPair() {
+      listPair().then(res => {
+        this.pairSelected = res.data.data[0];
+        this.$emit('pairChange', this.pairSelected);
+        this.optionsPair = res.data.data.map(e => {
+          return { value: e, text: e.name }
+        })
+      })
+    },
   }
 };
 </script>
 
-<style>
-/* Add your component styles here */
+<style scoped>
 </style>
