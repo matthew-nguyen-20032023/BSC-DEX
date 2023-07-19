@@ -6,4 +6,8 @@ that base on 0x Protocol and OpenZeppelin
 Back-end: NestJs, TypeScript, Nodejs </br>
 Front-end: VueJs, Html, Css, Javascript </br>
 Smart-contract: Solidity, Hardhat, Ganache </br>
-## Installation
+## Overview Installation
+First install and run smart-contract </br>
+Second install and run back-end </br>
+Third install and run front-end </br>
+### Smart Contract Installation

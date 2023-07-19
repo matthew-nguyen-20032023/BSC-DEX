@@ -1,77 +1,85 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
 const hre = require("hardhat");
 
+/**
+ * @description: Deploy smart contract and get contract address
+ * @param contractName: string
+ * @param constructorParams: any[]
+ * @returns {Promise<string>}
+ */
+async function deployContract(contractName, constructorParams) {
+  const contractFactory = await hre.ethers.deployContract(
+    contractName,
+    constructorParams
+  );
+  const contractDeployed = await contractFactory.waitForDeployment();
+  return await contractDeployed.getAddress();
+}
+
 async function main() {
+  // @description: Uncomment this for provide source code for tenderly to debug transaction error if needed
   // await hre.tenderly.persistArtifacts({
   //   name: "ZeroEx",
   //   address: "0x51Bfa0FCebd9a9F72b0523aa37968794F3C214a7",
   // });
   // return;
 
-  const zeroEx = await hre.ethers.deployContract("ZeroEx", [
-    "0x19Ef6AB7a5e9753C214462df01F77aD324dA645D",
+  const zeroAddress = await deployContract("ZeroEx", [
+    process.env.ADMIN_WALLET_ADDRESS,
   ]);
-  const zeroExDeployed = await zeroEx.waitForDeployment();
-  const zeroAddress = await zeroExDeployed.getAddress();
-
-  const weth = await hre.ethers.deployContract("WETH9");
-  const wethDeployed = await weth.waitForDeployment();
-  const wethAddress = await wethDeployed.getAddress();
-
-  const staking = await hre.ethers.deployContract("Staking", [wethAddress]);
-  const stakingDeployed = await staking.waitForDeployment();
-  const stakingAddress = await stakingDeployed.getAddress();
-
-  const birdToken = await hre.ethers.deployContract("ERC20TokenCreation", [
+  const wethAddress = await deployContract("WETH9", []);
+  const stakingAddress = await deployContract("Staking", [wethAddress]);
+  const erc20USDTAddress = await deployContract("ERC20TokenCreation", [
     100000000000,
-    "Bitcoin",
-    "BTC",
+    "Dollar",
+    "USDT",
   ]);
-  const birdTokenDeployed = await birdToken.waitForDeployment();
-  const birdAddress = await birdTokenDeployed.getAddress();
-
-  const tigerToken = await hre.ethers.deployContract("ERC20TokenCreation", [
+  const erc20EURAddress = await deployContract("ERC20TokenCreation", [
     100000000000,
-    "Ethereum",
-    "ETH",
+    "Euro",
+    "EUR",
   ]);
-  const tigerTokenDeployed = await tigerToken.waitForDeployment();
-  const tigerAddress = await tigerTokenDeployed.getAddress();
-
-  const feeCollectorController = await hre.ethers.deployContract(
+  const feeCollectorControllerAddress = await deployContract(
     "FeeCollectorController",
     [wethAddress, stakingAddress]
   );
-  const feeCollectorControllerDeployed =
-    await feeCollectorController.waitForDeployment();
-  const feeCollectorControllerAddress =
-    await feeCollectorControllerDeployed.getAddress();
-
-  const NativeOrdersFeature = await hre.ethers.deployContract(
+  const NativeOrdersFeatureAddress = await deployContract(
     "NativeOrdersFeature",
     [zeroAddress, wethAddress, stakingAddress, feeCollectorControllerAddress, 0]
   );
-  const NativeOrdersFeatureDeployed =
-    await NativeOrdersFeature.waitForDeployment();
-  const NativeOrdersFeatureAddress =
-    await NativeOrdersFeatureDeployed.getAddress();
 
-  console.log(zeroAddress, "zeroAddress");
-  console.log(wethAddress, "wethAddress");
-  console.log(stakingAddress, "stakingAddress");
-  console.log(birdAddress, "birdAddress");
-  console.log(tigerAddress, "tigerAddress");
-  console.log(feeCollectorControllerAddress, "feeCollectorControllerAddress");
-  console.log(NativeOrdersFeatureAddress, "NativeOrdersFeatureAddress");
+  console.log(
+    zeroAddress,
+    "== Verify Contract: using in field verifyContract when create limit order"
+  );
+  console.log(
+    wethAddress,
+    "== WETH Contract: using for fee custom and another"
+  );
+  console.log(
+    stakingAddress,
+    "== Stake Contract: using for stake and get fee reward"
+  );
+  console.log(
+    erc20USDTAddress,
+    "== USDT ERC20 Token Contract: using just for testing our own token"
+  );
+  console.log(
+    erc20EURAddress,
+    "== ERU ERC20 Token Contract: using just for testing our own token"
+  );
+  console.log(
+    feeCollectorControllerAddress,
+    "== Fee Contract: using for collect fee when user join for trade"
+  );
+  console.log(
+    NativeOrdersFeatureAddress,
+    "== Order Contract: using for create order and fill order for trade ERC20 token"
+  );
+  console.log(
+    "For more information, refer to https://0x.org/ for understand more how to use"
+  );
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
