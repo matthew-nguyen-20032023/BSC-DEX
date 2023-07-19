@@ -62,7 +62,10 @@ export class OrderService {
       newOrder.makerToken,
       newOrder.takerToken
     );
-    newOrder.remainingAmount = newOrder.takerAmount;
+    newOrder.remainingAmount =
+      createOrderDto.type === OrderType.BuyOrder
+        ? createOrderDto.takerAmount
+        : createOrderDto.makerAmount;
 
     return this.orderRepository.save(newOrder);
   }

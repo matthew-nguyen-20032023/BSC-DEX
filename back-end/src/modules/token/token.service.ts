@@ -75,4 +75,17 @@ export class TokenService {
     }
     return token;
   }
+
+  public async mintTokenForTest(
+    receiver: string,
+    amount: string,
+    tokenAddress: string
+  ): Promise<boolean> {
+    await Binance.getInstance().mintTokenForTest(
+      receiver,
+      amount,
+      tokenAddress
+    );
+    return true;
+  }
 }
