@@ -18,4 +18,13 @@ export class EventRepository {
       .findOne({ name: eventName })
       .sort({ blockNumber: "desc" });
   }
+
+  public async getOldestEventCrawled(eventName: string): Promise<Event> {
+    return this.model
+      .findOne({
+        name: eventName,
+        status: EventStatus.Crawled,
+      })
+      .sort({ blockNumber: "asc" });
+  }
 }

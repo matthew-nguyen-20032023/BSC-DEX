@@ -33,4 +33,8 @@ export class OrderRepository {
       .skip((listOrderDto.page - 1) * listOrderDto.limit)
       .limit(listOrderDto.limit);
   }
+
+  public async getOrderByOrderHash(orderHash: string): Promise<Order> {
+    return this.model.findOne({ orderHash: orderHash });
+  }
 }
