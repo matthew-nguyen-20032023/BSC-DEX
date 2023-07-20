@@ -19,20 +19,26 @@ import {
   OrderStatus,
   OrderType,
 } from "src/models/schemas/order.schema";
+import { Trade, TradeDocument } from "src/models/schemas/trade.schema";
+import { TradeRepository } from "src/models/repositories/trade.repository";
 
 @Console()
 export class OrderConsole {
   private readonly eventRepository: EventRepository;
   private readonly orderRepository: OrderRepository;
+  private readonly tradeRepository: TradeRepository;
 
   constructor(
     @InjectModel(Event.name)
     private readonly eventModel: Model<EventDocument>,
     @InjectModel(Order.name)
-    private readonly orderModel: Model<OrderDocument>
+    private readonly orderModel: Model<OrderDocument>,
+    @InjectModel(Trade.name)
+    private readonly tradeModel: Model<TradeDocument>
   ) {
     this.eventRepository = new EventRepository(this.eventModel);
     this.orderRepository = new OrderRepository(this.orderModel);
+    this.tradeRepository = new TradeRepository(this.tradeModel);
   }
 
   /**
@@ -50,6 +56,22 @@ export class OrderConsole {
       }
     } else startBlockCrawl = latestEventCrawled.blockNumber;
     return startBlockCrawl + 1;
+  }
+
+  private static async createTradeFromOrderAndEvent(
+    order: Order,
+    event: Event
+  ): Promise<Trade> {
+    const newTrade = new Trade();
+    newTrade.orderType = order.type;
+    newTrade.price = order.price;
+    newTrade.volume =
+      order.type === OrderType.BuyOrder
+        ? event.takerTokenFilledAmount
+        : new BigNumber(event.takerTokenFilledAmount).div(order.price);
+    newTrade.pairId = order.pairId;
+    newTrade.timestamp = Date.now();
+    return newTrade;
   }
 
   /**
@@ -158,25 +180,30 @@ export class OrderConsole {
               oldestEventCrawled.takerTokenFilledAmount
             );
 
+      // This must be happened
+      const newTrade = await OrderConsole.createTradeFromOrderAndEvent(
+        order,
+        oldestEventCrawled
+      );
+      order.updatedAt = new Date();
+      oldestEventCrawled.status = EventStatus.Complete;
+      oldestEventCrawled.updatedAt = new Date();
+
       // Fulfill
       if (remainingAmount.eq(0)) {
         order.remainingAmount = "0";
         order.status = OrderStatus.Completed;
-        order.updatedAt = new Date();
-        oldestEventCrawled.status = EventStatus.Complete;
-        oldestEventCrawled.updatedAt = new Date();
         await this.eventRepository.save(oldestEventCrawled);
         await this.orderRepository.save(order);
+        await this.tradeRepository.save(newTrade);
         continue;
       }
 
       // PartialFill
       order.remainingAmount = remainingAmount.toFixed();
-      order.updatedAt = new Date();
-      oldestEventCrawled.status = EventStatus.Complete;
-      oldestEventCrawled.updatedAt = new Date();
       await this.eventRepository.save(oldestEventCrawled);
       await this.orderRepository.save(order);
+      await this.tradeRepository.save(newTrade);
     }
   }
 }

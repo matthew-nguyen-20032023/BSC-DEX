@@ -6,6 +6,7 @@ import { Order, OrderSchema } from "src/models/schemas/order.schema";
 import { Pair, PairSchema } from "src/models/schemas/pair.schema";
 import { OrderConsole } from "src/modules/order/order.console";
 import { Event, EventSchema } from "src/models/schemas/event.schema";
+import { Trade, TradeSchema } from "src/models/schemas/trade.schema";
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { Event, EventSchema } from "src/models/schemas/event.schema";
       { name: Order.name, schema: OrderSchema },
       { name: Pair.name, schema: PairSchema },
       { name: Event.name, schema: EventSchema },
+      { name: Trade.name, schema: TradeSchema },
     ]),
   ],
   controllers: [OrderController],
