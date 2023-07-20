@@ -4,6 +4,18 @@ import { OrderType } from "src/models/schemas/order.schema";
 import { Type } from "class-transformer";
 
 export class CreateOrderDto {
+  // This order hash can be used for validate again order on backend side to make sure that trade fee
+  // sent directly to wallet you want to
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    description: "Order hash",
+    required: true,
+    example:
+      "0xc97cbbf373bdd7218f567e2a0298697c6e7c4b3c4ee5a85a7e146026f69da1ab",
+  })
+  orderHash: string;
+
   @IsString()
   @IsNotEmpty()
   @ApiProperty({

@@ -226,7 +226,7 @@ export default {
         new BigNumber(limitOrder.makerAmount).div(limitOrder.takerAmount).toString() :
         new BigNumber(limitOrder.takerAmount).div(limitOrder.makerAmount).toString();
 
-      createOrder({...limitOrder, type, price, signature: JSON.stringify(signature)}).then(res => {
+      createOrder({...limitOrder, type, orderHash: limitOrder.getHash(), price, signature: JSON.stringify(signature)}).then(res => {
         notificationWithCustomMessage('success', this, res.data.message);
       }).catch(error => {
         notificationWithCustomMessage('warning', this, error.response.data.message);

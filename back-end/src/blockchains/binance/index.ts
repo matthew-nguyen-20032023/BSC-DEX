@@ -1,12 +1,16 @@
 const Web3 = require("web3");
 import { erc20ABI } from "src/blockchains/binance/abi/erc20";
+import { exchangeABI } from "src/blockchains/binance/abi/exchange";
+import { Contract } from "web3-eth-contract";
 
 export class Binance {
   private client;
+  private ws;
   private static instance: Binance;
 
   constructor() {
-    this.client = new Web3(process.env.BSC_RPC);
+    this.client = new Web3(process.env.BSC_RPC); // This for http provider
+    this.ws = new Web3(process.env.BSC_WS); // This for websocket provider
   }
 
   public static getInstance(): Binance {
@@ -14,6 +18,13 @@ export class Binance {
       Binance.instance = new Binance();
     }
     return Binance.instance;
+  }
+
+  public async getOrderSmartContractWs(): Promise<Contract> {
+    return new this.ws.eth.Contract(
+      exchangeABI,
+      process.env.ORDER_SMART_CONTRACT_ADDRESS
+    );
   }
 
   public async getERC20TokenInfo(tokenAddress: string): Promise<{
