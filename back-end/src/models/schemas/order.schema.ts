@@ -16,6 +16,9 @@ export enum OrderStatus {
 @Schema({ collection: "orders" })
 export class Order extends CreateUpdateSchema {
   @Prop()
+  orderHash: string;
+
+  @Prop()
   pairId: string;
 
   @Prop()
