@@ -28,8 +28,9 @@ export class OrderConsole {
    */
   private async getStartBlockForEvent(eventName: string): Promise<number> {
     let startBlockCrawl = 0;
-    const latestEventCrawled =
-      await this.eventRepository.getLatestEventCrawled();
+    const latestEventCrawled = await this.eventRepository.getLatestEventCrawled(
+      eventName
+    );
     if (!latestEventCrawled) {
       if (process.env.ORDER_START_BLOCK) {
         startBlockCrawl = Number(process.env.ORDER_START_BLOCK);

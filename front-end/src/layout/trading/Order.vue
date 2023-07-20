@@ -186,11 +186,11 @@ export default {
         makerToken: type === 'buy' ? this.quoteTokenAddress : this.baseTokenAddress,
         takerToken: type === 'buy' ? this.baseTokenAddress : this.quoteTokenAddress,
         makerAmount: type === 'buy' ?
-          new BigNumber(this.buyMakerTotal).times(new BigNumber(10).pow(18)).toString() :
-          new BigNumber(this.sellMakerAmount).times(new BigNumber(10).pow(18)).toString(),
+          new BigNumber(this.buyMakerTotal).times(new BigNumber(10).pow(18)).toFixed() :
+          new BigNumber(this.sellMakerAmount).times(new BigNumber(10).pow(18)).toFixed(),
         takerAmount: type === 'buy' ?
-          new BigNumber(this.buyMakerAmount).times(new BigNumber(10).pow(18)).toString() :
-          new BigNumber(this.sellMakerTotal).times(new BigNumber(10).pow(18)).toString(),
+          new BigNumber(this.buyMakerAmount).times(new BigNumber(10).pow(18)).toFixed() :
+          new BigNumber(this.sellMakerTotal).times(new BigNumber(10).pow(18)).toFixed(),
         takerTokenFeeAmount: new BigNumber(0).toString(),
         sender: process.env.VUE_APP_ZERO_ADDRESS,
         feeRecipient: process.env.VUE_APP_ZERO_ADDRESS,

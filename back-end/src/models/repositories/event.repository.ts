@@ -13,7 +13,9 @@ export class EventRepository {
     return this.model.create(newEvent);
   }
 
-  public async getLatestEventCrawled(): Promise<Event> {
-    return this.model.findOne().sort({ blockNumber: "desc" });
+  public async getLatestEventCrawled(eventName: string): Promise<Event> {
+    return this.model
+      .findOne({ name: eventName })
+      .sort({ blockNumber: "desc" });
   }
 }
