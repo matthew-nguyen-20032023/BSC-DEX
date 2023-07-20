@@ -20,6 +20,7 @@
     "console:dev": "ts-node -r tsconfig-paths/register src/console.ts"
   },
   "dependencies": {
+    "bignumber.js": "9.0.2",
     "ethers": "5.6.9",
     "@hashgraph/hethers": "1.2.6",
     "@hashgraph/sdk": "2.19.2",
@@ -39,7 +40,7 @@
     "cardanocli-js": "4.1.6",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.0",
-    "crypto-js": "^4.1.1",
+    "crypto-js": "4.1.1",
     "dotenv": "14.3.2",
     "mongoose": "7.1.0",
     "passport": "0.6.0",

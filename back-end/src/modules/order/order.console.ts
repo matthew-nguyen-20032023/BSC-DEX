@@ -1,7 +1,10 @@
+const { MongoClient } = require("mongodb");
+const BigNumber = require("bignumber.js");
 import { Command, Console } from "nestjs-console";
 import { Binance } from "src/blockchains/binance";
-import { OrderEvent } from "./order.const";
+import { OrderEvent } from "src/modules/order/order.const";
 import { InjectModel } from "@nestjs/mongoose";
+import { sleep } from "src/helper/common";
 import { Model } from "mongoose";
 import {
   Event,
@@ -9,17 +12,33 @@ import {
   EventStatus,
 } from "src/models/schemas/event.schema";
 import { EventRepository } from "src/models/repositories/event.repository";
-const { MongoClient } = require("mongodb");
+import { OrderRepository } from "src/models/repositories/order.repository";
+import {
+  Order,
+  OrderDocument,
+  OrderStatus,
+  OrderType,
+} from "src/models/schemas/order.schema";
+import { Trade, TradeDocument } from "src/models/schemas/trade.schema";
+import { TradeRepository } from "src/models/repositories/trade.repository";
 
 @Console()
 export class OrderConsole {
   private readonly eventRepository: EventRepository;
+  private readonly orderRepository: OrderRepository;
+  private readonly tradeRepository: TradeRepository;
 
   constructor(
     @InjectModel(Event.name)
-    private readonly eventModel: Model<EventDocument>
+    private readonly eventModel: Model<EventDocument>,
+    @InjectModel(Order.name)
+    private readonly orderModel: Model<OrderDocument>,
+    @InjectModel(Trade.name)
+    private readonly tradeModel: Model<TradeDocument>
   ) {
     this.eventRepository = new EventRepository(this.eventModel);
+    this.orderRepository = new OrderRepository(this.orderModel);
+    this.tradeRepository = new TradeRepository(this.tradeModel);
   }
 
   /**
@@ -28,8 +47,9 @@ export class OrderConsole {
    */
   private async getStartBlockForEvent(eventName: string): Promise<number> {
     let startBlockCrawl = 0;
-    const latestEventCrawled =
-      await this.eventRepository.getLatestEventCrawled();
+    const latestEventCrawled = await this.eventRepository.getLatestEventCrawled(
+      eventName
+    );
     if (!latestEventCrawled) {
       if (process.env.ORDER_START_BLOCK) {
         startBlockCrawl = Number(process.env.ORDER_START_BLOCK);
@@ -38,11 +58,27 @@ export class OrderConsole {
     return startBlockCrawl + 1;
   }
 
+  private static async createTradeFromOrderAndEvent(
+    order: Order,
+    event: Event
+  ): Promise<Trade> {
+    const newTrade = new Trade();
+    newTrade.orderType = order.type;
+    newTrade.price = order.price;
+    newTrade.volume =
+      order.type === OrderType.BuyOrder
+        ? event.takerTokenFilledAmount
+        : new BigNumber(event.takerTokenFilledAmount).div(order.price);
+    newTrade.pairId = order.pairId;
+    newTrade.timestamp = Date.now();
+    return newTrade;
+  }
+
   /**
    * @description Crawl LimitOrderFilled event on smart contract
    */
   @Command({ command: "crawl-order-matched" })
-  public async orderMatched() {
+  public async orderMatched(): Promise<void> {
     const orderSmartContract =
       await Binance.getInstance().getOrderSmartContractWs();
 
@@ -97,5 +133,77 @@ export class OrderConsole {
         }
       }
     );
+  }
+
+  /**
+   * @description Handle order Crawled from LimitOrderFilled event on smart contract
+   */
+  @Command({ command: "handle-limit-order-filled-crawled" })
+  public async handleOrderCrawled(): Promise<void> {
+    while (1) {
+      const oldestEventCrawled =
+        await this.eventRepository.getOldestEventCrawled(
+          OrderEvent.LimitOrderFilled
+        );
+
+      if (!oldestEventCrawled) {
+        console.log(
+          "No new LimitOrderFilled event crawled found, waiting to get again!"
+        );
+        await sleep(3000);
+        continue;
+      }
+      console.log(
+        `Handle event crawled with id ${
+          oldestEventCrawled._id
+        } at ${new Date()}`
+      );
+
+      const order = await this.orderRepository.getOrderByOrderHash(
+        oldestEventCrawled.orderHash
+      );
+
+      if (!order) {
+        oldestEventCrawled.status = EventStatus.Failed;
+        oldestEventCrawled.updatedAt = new Date();
+        oldestEventCrawled.note = "No match order found in orders";
+        await this.eventRepository.save(oldestEventCrawled);
+        continue;
+      }
+
+      const remainingAmount =
+        order.type === OrderType.SellOrder
+          ? new BigNumber(order.takerAmount)
+              .minus(oldestEventCrawled.takerTokenFilledAmount)
+              .div(order.price)
+          : new BigNumber(order.takerAmount).minus(
+              oldestEventCrawled.takerTokenFilledAmount
+            );
+
+      // This must be happened
+      const newTrade = await OrderConsole.createTradeFromOrderAndEvent(
+        order,
+        oldestEventCrawled
+      );
+      order.updatedAt = new Date();
+      oldestEventCrawled.status = EventStatus.Complete;
+      oldestEventCrawled.updatedAt = new Date();
+
+      // Fulfill
+      if (remainingAmount.eq(0)) {
+        order.remainingAmount = "0";
+        order.status = OrderStatus.Completed;
+        await this.eventRepository.save(oldestEventCrawled);
+        await this.orderRepository.save(order);
+        await this.tradeRepository.save(newTrade);
+        continue;
+      }
+
+      // PartialFill
+      order.remainingAmount = remainingAmount.toFixed();
+      await this.eventRepository.save(oldestEventCrawled);
+      await this.orderRepository.save(order);
+      await this.tradeRepository.save(newTrade);
+    }
   }
 }
