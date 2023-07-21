@@ -10,6 +10,7 @@ import { JwtAuthGuard } from "src/modules/authentication/jwt-auth.guard";
 import { TokenModule } from "src/modules/token/token.module";
 import { PairModule } from "src/modules/pair/pair.module";
 import { OrderModule } from "src/modules/order/order.module";
+import { TradeModule } from "src/modules/trade/trade.module";
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { OrderModule } from "src/modules/order/order.module";
     PairModule,
     ConsoleModule,
     OrderModule,
+    TradeModule,
     MongooseModule.forRoot(
       `mongodb://${db.userName}:${db.password}@${db.host}:${db.port}/${db.databaseName}?authSource=${db.databaseName}`
     ),
