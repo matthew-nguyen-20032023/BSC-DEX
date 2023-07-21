@@ -35,7 +35,7 @@
         </b-col>
         <b-col style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
           <b-row class="mt-1  ml-1 mr-1 mb-1">
-            <market-trade />
+            <market-trade :pair-id="pairId" />
           </b-row>
         </b-col>
       </b-row>
