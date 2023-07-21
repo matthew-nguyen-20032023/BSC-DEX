@@ -36,6 +36,11 @@ export default {
       required: true
     },
   },
+  watch: {
+    pairId() {
+      this.listTrades();
+    }
+  },
   data() {
     return {
       a: 0,

@@ -19,4 +19,16 @@ export class TradeRepository {
       timestamp: { $gte: fromTimestamp, $lte: toTimestamp },
     });
   }
+
+  public async getLatestTradeHappenedByPair(
+    pairId: string,
+    limit: number
+  ): Promise<Trade[]> {
+    return this.model
+      .find({
+        pairId,
+      })
+      .sort({ timestamp: "desc" })
+      .limit(limit);
+  }
 }

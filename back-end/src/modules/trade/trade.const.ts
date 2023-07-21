@@ -1,5 +1,6 @@
 export enum TradeMessageSuccess {
   GetTradesSuccess = "Get trades successfully.",
+  GetOriginTradesSuccess = "Get current origin trades happened success.",
 }
 export enum TradeMessageError {
   InvalidIntervalType = "Interval type does not support.",

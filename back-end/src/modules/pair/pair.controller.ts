@@ -24,7 +24,8 @@ export class PairController {
 
   @Post()
   @ApiOperation({
-    summary: "Api to create pair",
+    summary:
+      "Api to create pair. Only support to add token that added on api token above",
   })
   public async createPair(
     @Body() createPairDto: CreatePairDto
@@ -64,7 +65,8 @@ export class PairController {
 
   @Put()
   @ApiOperation({
-    summary: "Update pair status",
+    summary:
+      "Update pair status. Use to disable one pair, the pair will disable not display, but all data still keep and you can active again for user to continue to trade",
   })
   @Public()
   public async disablePair(

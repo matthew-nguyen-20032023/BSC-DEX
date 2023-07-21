@@ -117,4 +117,11 @@ export class TradeService {
 
     return ohlcv;
   }
+
+  public async getOriginTradesHappened(
+    pairId: string,
+    limit: number
+  ): Promise<Trade[]> {
+    return this.tradeRepository.getLatestTradeHappenedByPair(pairId, limit);
+  }
 }
