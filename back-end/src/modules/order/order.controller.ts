@@ -6,6 +6,7 @@ import { CreateOrderDto } from "src/modules/order/dto/create-order.dto";
 import { OrderMessageSuccess } from "src/modules/order/order.const";
 import { Public } from "src/modules/authentication/auth.const";
 import { ListOrderDto } from "src/modules/order/dto/list-order.dto";
+import { ListOrderBookDto } from "src/modules/order/dto/list-order-book.dto";
 
 @Controller("order")
 @ApiBearerAuth()
@@ -40,6 +41,25 @@ export class OrderController {
     const data = await this.orderService.listOrder(listOrderDto);
     return {
       message: OrderMessageSuccess.ListOrderSuccess,
+      data,
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  @Get("order-book")
+  @Public()
+  @ApiOperation({
+    summary: "Api to get order-book",
+  })
+  public async listOrderBook(
+    @Query() listOrderBookDto: ListOrderBookDto
+  ): Promise<IResponseToClient> {
+    const data = await this.orderService.getOrderBook(
+      listOrderBookDto.pairId,
+      listOrderBookDto.limit
+    );
+    return {
+      message: OrderMessageSuccess.ListOrderBookSuccess,
       data,
       statusCode: HttpStatus.OK,
     };

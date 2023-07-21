@@ -3,6 +3,7 @@ import {
   Order,
   OrderDocument,
   OrderStatus,
+  OrderType,
 } from "src/models/schemas/order.schema";
 import { ListOrderDto } from "src/modules/order/dto/list-order.dto";
 
@@ -36,5 +37,31 @@ export class OrderRepository {
 
   public async getOrderByOrderHash(orderHash: string): Promise<Order> {
     return this.model.findOne({ orderHash: orderHash });
+  }
+
+  /**
+   * @description Get fill able order by pair and type order. For buy order get order from high price -> low
+   * @param pairId
+   * @param type
+   * @param limit
+   */
+  public getBestFillAbleOrder(
+    pairId: string,
+    type: OrderType,
+    limit: number
+  ): Promise<Order[]> {
+    if (1)
+      return this.model.find({
+        type,
+      });
+    return this.model
+      .find({
+        pairId,
+        type,
+        status: OrderStatus.FillAble,
+        expiry: { $gt: Date.now() / 1000 },
+      })
+      .sort({ price: type === OrderType.BuyOrder ? "desc" : "asc" })
+      .limit(limit);
   }
 }
