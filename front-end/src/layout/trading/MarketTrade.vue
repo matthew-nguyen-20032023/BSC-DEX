@@ -6,7 +6,7 @@
       <th>Time</th>
     </tr>
     <tr v-for="(trade, index) in data" :key="index">
-      <td :style="getTradeColor(trade.type)">{{ trade.price }}</td>
+      <td :style="getTradeColor(trade.orderType)">{{ trade.price }}</td>
       <td>{{ convertVolume(trade.volume) }}</td>
       <td>{{ convertToTime(trade.timestamp) }}</td>
     </tr>
