@@ -40,7 +40,7 @@ export class TradeService {
     dataConvert["2h"] = 7200000;
     dataConvert["4h"] = 14400000;
     dataConvert["8h"] = 28800000;
-    dataConvert["15h"] = 54000000;
+    dataConvert["12h"] = 43200000;
     dataConvert["1d"] = 86400000;
     dataConvert["3d"] = 259200000;
     dataConvert["1w"] = 604800000;
