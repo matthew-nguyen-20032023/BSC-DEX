@@ -35,8 +35,9 @@ export class TradeDto {
 
   @IsString()
   @ApiProperty({
-    description:
-      "ohlcv type interval such as 1m, 5m, 15m, 30m, 1h, 5h, 1d, 1w, 4w",
+    description: `ohlcv type interval such as ${Object.keys(
+      OHLCVTypeInterval
+    ).toString()}`,
     required: true,
     example: OHLCVTypeInterval.m15,
   })
