@@ -1,7 +1,7 @@
 <template>
   <div>
     <trading-vue
-      :data="getTrades()"
+      :data="chart"
       :width="getTradingViewWith()"
       :height="getTradingViewHeight()"
       @range-changed="rangeChange"
@@ -18,28 +18,34 @@
   </div>
 </template>
 <script>
-
 import TradingVue from 'trading-vue-js';
+import {listTrades} from "@/plugins/backend";
+import {notificationWithCustomMessage} from "@/plugins/notification";
+const debounce = require('debounce');
 
-const dataObjectFromFile = require('./data.json');
-delete dataObjectFromFile.offchart;
-delete dataObjectFromFile.onchart;
-
-dataObjectFromFile.chart = {
-  type: "Candles",
-  data: dataObjectFromFile.ohlcv,
-  settings: {},
-  // tf: "1D"
-};
-delete dataObjectFromFile.ohlcv;
 export default {
   name: 'app',
   components: { TradingVue },
+  props: {
+    tradingPair: {
+      type: String,
+      required: true
+    },
+    pairId: {
+      type: String,
+      required: true
+    },
+  },
   data() {
     return {
       a: 0,
-      tradingPair: "BTC/BUSD",
-      ohlcv: []
+      chart: {
+        chart: {
+          type: "Candles",
+          data: [],
+          settings: {},
+        }
+      }
     }
   },
   mounted() {
@@ -48,9 +54,23 @@ export default {
     //   this.$refs.tradingVue.setRange(t1, t2)
     // )
   },
+  created: debounce(function () {
+    this.listTrades();
+  }, 600),
   methods: {
-    getTrades() {
-      return dataObjectFromFile;
+    listTrades() {
+      listTrades(this.pairId, 1689870748784, 1689870983259, "1m").then(res => {
+        this.chart.chart.data = res.data.data.map(e => {
+          e.close = Number(e.close);
+          e.high = Number(e.high);
+          e.low = Number(e.low);
+          e.open = Number(e.open);
+          e.volume = Number(e.volume);
+          return Object.values(e)
+        });
+      }).catch(error => {
+        return notificationWithCustomMessage('warning', this, error.message);
+      })
     },
     rangeChange(data) {
       console.log(data[0] - this.a);

@@ -23,3 +23,13 @@ export const listOrder = async (
   if (maker !== null) url += `&maker=${maker}`;
   return axios.get(url);
 };
+
+export const listTrades = async (
+  pairId,
+  fromTimestamp,
+  toTimestamp,
+  ohlcvTypeInterval
+) => {
+  let url = `${process.env.VUE_APP_BACKEND_URL}/trade?pairId=${pairId}&fromTimestamp=${fromTimestamp}&toTimestamp=${toTimestamp}&ohlcvTypeInterval=${ohlcvTypeInterval}`;
+  return axios.get(url);
+};

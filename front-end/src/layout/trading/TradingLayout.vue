@@ -30,7 +30,7 @@
 
         <b-col class="custom-trading-col">
           <div style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
-            <TradingChart/>
+            <TradingChart :pair-id="pairId" :trading-pair="`${baseTokenSymbol} / ${quoteTokenSymbol}`"/>
           </div>
         </b-col>
         <b-col style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
