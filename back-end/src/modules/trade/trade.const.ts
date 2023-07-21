@@ -16,7 +16,7 @@ export enum OHLCVTypeInterval {
   h2 = "2h",
   h4 = "4h",
   h8 = "8h",
-  h15 = "15h",
+  h12 = "12h",
   d1 = "1d",
   d3 = "3d",
   w1 = "1w",
