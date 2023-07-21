@@ -21,10 +21,10 @@
       <b-row class="justify-content-center">
         <b-col style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
           <b-row class="mt-1  ml-1 mr-1 mb-1">
-            <order-book :order-book-type="'ask'"/>
+            <order-book :pair-id="pairId" :order-book-type="'sell'"/>
           </b-row>
           <b-row class="mt-1  ml-1 mr-1 mb-1">
-            <order-book :order-book-type="'bid'"/>
+            <order-book :pair-id="pairId" :order-book-type="'buy'"/>
           </b-row>
         </b-col>
 

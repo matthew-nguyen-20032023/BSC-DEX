@@ -1,3 +1,4 @@
+const BigNumber = require("bignumber.js");
 import { plainToClass } from "class-transformer";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
@@ -54,6 +55,27 @@ export class OrderService {
     return existPair._id.toString();
   }
 
+  private static async buildOrderBook(
+    orders: Order[]
+  ): Promise<{ price: string; amount: string }[]> {
+    const orderBook = [];
+    for (const order of orders) {
+      if (!orderBook[order.price]) {
+        orderBook[order.price] = {
+          price: order.price,
+          amount: order.remainingAmount,
+        };
+        continue;
+      }
+      orderBook[order.price].amount = new BigNumber(
+        orderBook[order.price].amount
+      )
+        .plus(order.remainingAmount)
+        .toFixed();
+    }
+    return Object.values(orderBook);
+  }
+
   public async createOrder(createOrderDto: CreateOrderDto): Promise<Order> {
     const newOrder = plainToClass(Order, createOrderDto);
     newOrder.status = OrderStatus.FillAble;
@@ -85,5 +107,18 @@ export class OrderService {
 
     listOrderDto.pairId = pair._id.toString();
     return this.orderRepository.listOrder(listOrderDto);
+  }
+
+  public async getOrderBook(
+    pairId: string,
+    limit: number,
+    type: OrderType
+  ): Promise<{ price: string; amount: string }[]> {
+    const orders = await this.orderRepository.getBestFillAbleOrder(
+      pairId,
+      type,
+      limit
+    );
+    return await OrderService.buildOrderBook(orders);
   }
 }

@@ -1,59 +1,77 @@
 <template>
   <table :id="orderBookType" style="position: relative; font-size: 12px">
-    <tr v-if="orderBookType === 'ask'" style="color: rgb(132, 142, 156)">
+    <tr v-if="orderBookType === 'sell'" style="color: rgb(132, 142, 156)">
       <th>Price</th>
       <th>Amount</th>
       <th>Total</th>
     </tr>
-    <tr v-if="orderBookType === 'bid'" style="color: rgb(132, 142, 156)">
-      <th>Math price</th>
-      <th>USD</th>
-      <th>More</th>
+    <tr v-if="orderBookType === 'buy'" style="color: rgb(132, 142, 156)">
+      <th>Price</th>
+      <th>Amount</th>
+      <th>Total</th>
     </tr>
     <tr v-for="(order, index) in orderBook" :key="index">
       <td>{{ order.price }}</td>
       <td>{{ order.amount }}</td>
-      <td>{{ order. price * order.amount }}</td>
+      <td>{{ order.total }}</td>
     </tr>
   </table>
 </template>
 
 <script>
+import {listOrderBook} from "@/plugins/backend";
+import {notificationWithCustomMessage} from "@/plugins/notification";
+const BigNumber = require('bignumber.js');
+const debounce = require('debounce');
+
 export default {
   props: {
     orderBookType: {
       type: String,
       required: true
+    },
+    pairId: {
+      type: String,
+      required: true
     }
   },
+  watch: {
+    pairId() {
+      this.getOrderBook();
+    },
+  },
+  created: debounce(function () {
+    this.getOrderBook();
+  }, 500),
   data() {
     return {
-      orderBook: [
-        { price: 100, amount: 10, total: 1000 },
-        { price: 99, amount: 5, total: 495 },
-        { price: 101, amount: 7, total: 700 },
-        { price: 101, amount: 7, total: 700 },
-        { price: 101, amount: 7, total: 700 },
-        { price: 101, amount: 7, total: 700 },
-        { price: 101, amount: 7, total: 700 },
-        { price: 101, amount: 7, total: 700 },
-        { price: 101, amount: 7, total: 700 },
-        { price: 101, amount: 7, total: 700 },
-        { price: 101, amount: 7, total: 700 },
-      ],
-      orderBookFields: ['Price', 'Amount', 'Total'],
+      orderBook: [],
     };
   },
   mounted() {
     const table = document.getElementById(this.orderBookType);
-    if (this.orderBookType === 'ask') {
+    if (this.orderBookType === 'sell') {
       table.style.color = '#e54150';
     }
-    if (this.orderBookType === 'bid') {
+    if (this.orderBookType === 'buy') {
       table.style.color = '#23a776';
     }
   },
   methods: {
+    getOrderBook() {
+      this.orderBook = []
+      listOrderBook(this.pairId, this.orderBookType, 15).then(res => {
+        this.orderBook = res.data.data.map(e => {
+          return {
+            price: e.price,
+            amount: new BigNumber(e.amount).div(new BigNumber(10).pow(18)),
+            total: new BigNumber(e.amount).times(e.price).div(new BigNumber(10).pow(18))
+          }
+        });
+      }).catch(error => {
+        return notificationWithCustomMessage('warning', this, `${error.message}`);
+      })
+    },
     calculateTotal(order) {
       // Calculate the total value for each order
       return order.price * order.size;

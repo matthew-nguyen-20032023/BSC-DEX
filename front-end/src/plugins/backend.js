@@ -38,3 +38,8 @@ export const listCurrentOriginTrades = async (pairId, limit) => {
   let url = `${process.env.VUE_APP_BACKEND_URL}/trade/origin?pairId=${pairId}&limit=${limit}`;
   return axios.get(url);
 };
+
+export const listOrderBook = async (pairId, type, limit) => {
+  let url = `${process.env.VUE_APP_BACKEND_URL}/order/order-book?pairId=${pairId}&limit=${limit}&type=${type}`;
+  return axios.get(url);
+};
