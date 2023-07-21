@@ -68,52 +68,51 @@ export class TradeService {
     }
 
     const ohlcv: IOHLCV[] = [];
-    let currentIntervalStart = trades[0].timestamp;
+    let currentIntervalStart = trades[0].timestamp + ohlcvInterval;
     let openPrice = trades[0].price;
     let highPrice = trades[0].price;
     let lowPrice = trades[0].price;
-    let volume = 0;
+    let closePrice = trades[0].price;
+    let volume = "0";
 
     for (const trade of trades) {
-      if (trade.timestamp >= currentIntervalStart) {
+      if (trade.timestamp <= currentIntervalStart) {
         highPrice = new BigNumber(highPrice).lt(trade.price)
           ? trade.price
           : highPrice;
         lowPrice = new BigNumber(lowPrice).gt(trade.price)
           ? trade.price
           : lowPrice;
+        closePrice = trade.price;
         volume = new BigNumber(volume).plus(trade.volume).toFixed();
       } else {
-        const closePrice = trades[trades.indexOf(trade) - 1].price;
         ohlcv.push({
           timestamp: currentIntervalStart,
           open: openPrice,
           high: highPrice,
           low: lowPrice,
           close: closePrice,
-          volume: trade.volume,
+          volume: new BigNumber(volume)
+            .div(new BigNumber(10).pow(18))
+            .toFixed(),
         });
 
-        // Reset for the next interval
-        currentIntervalStart = new Date(
-          Math.ceil(trade.timestamp / ohlcvInterval) * ohlcvInterval
-        ).getTime();
-
+        currentIntervalStart += ohlcvInterval;
         openPrice = trade.price;
         highPrice = trade.price;
         lowPrice = trade.price;
+        closePrice = trade.price;
         volume = new BigNumber(trade.volume).toFixed();
       }
     }
 
-    const lastTrade = trades[trades.length - 1];
     ohlcv.push({
       timestamp: currentIntervalStart,
       open: openPrice,
       high: highPrice,
       low: lowPrice,
-      close: lastTrade.price,
-      volume: new BigNumber(volume).toFixed(),
+      close: closePrice,
+      volume: new BigNumber(volume).div(new BigNumber(10).pow(18)).toFixed(),
     });
 
     return ohlcv;
