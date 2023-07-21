@@ -11,7 +11,7 @@ export class TradeDto {
   @ApiProperty({
     description: "Pair id",
     required: true,
-    example: "add-token.dto.ts",
+    example: "64b94a7ae40bacfe871a38a4",
   })
   pairId: string;
 
@@ -38,7 +38,7 @@ export class TradeDto {
     description:
       "ohlcv type interval such as 1m, 5m, 15m, 30m, 1h, 5h, 1d, 1w, 4w",
     required: true,
-    example: "add-token.dto.ts",
+    example: OHLCVTypeInterval.m15,
   })
   ohlcvTypeInterval: OHLCVTypeInterval;
 }
