@@ -45,6 +45,7 @@
           <history
             :base-token-address="baseTokenAddress"
             :quote-token-address="quoteTokenAddress"
+            :pair-id="pairId"
           />
         </b-col>
         <b-col cols="1" class="custom-order-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">

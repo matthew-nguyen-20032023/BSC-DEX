@@ -70,23 +70,27 @@ export default {
       type: String,
       required: true
     },
+    pairId: {
+      type: String,
+      required: true
+    },
   },
   data() {
     return {
       buyOffers: [],
       sellOffer: [],
-      historyTab: null,
+      historyTab: 0,
       currentAccountWallet: null,
     };
   },
   watch: {
-    baseTokenAddress() {
-      this.listBuyOffer()
-      this.listSellOffer()
-    },
-    quoteTokenAddress() {
-      this.listBuyOffer()
-      this.listSellOffer()
+    pairId() {
+      if (this.historyTab === 0) {
+        this.listBuyOffer();
+      }
+      if (this.historyTab === 1) {
+        this.listSellOffer();
+      }
     },
     historyTab(newVal, oldVal) {
       if (newVal === 0) {
