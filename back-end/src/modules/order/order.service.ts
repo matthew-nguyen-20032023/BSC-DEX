@@ -109,21 +109,16 @@ export class OrderService {
     return this.orderRepository.listOrder(listOrderDto);
   }
 
-  public async getOrderBook(pairId: string, limit: number): Promise<any> {
-    const buyOrders = await this.orderRepository.getBestFillAbleOrder(
+  public async getOrderBook(
+    pairId: string,
+    limit: number,
+    type: OrderType
+  ): Promise<{ price: string; amount: string }[]> {
+    const orders = await this.orderRepository.getBestFillAbleOrder(
       pairId,
-      OrderType.BuyOrder,
+      type,
       limit
     );
-    const sellOrders = await this.orderRepository.getBestFillAbleOrder(
-      pairId,
-      OrderType.SellOrder,
-      limit
-    );
-
-    return {
-      buyOrders: await OrderService.buildOrderBook(buyOrders),
-      sellOrders: await OrderService.buildOrderBook(sellOrders),
-    };
+    return await OrderService.buildOrderBook(orders);
   }
 }

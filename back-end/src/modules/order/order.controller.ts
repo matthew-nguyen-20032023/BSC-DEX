@@ -56,7 +56,8 @@ export class OrderController {
   ): Promise<IResponseToClient> {
     const data = await this.orderService.getOrderBook(
       listOrderBookDto.pairId,
-      listOrderBookDto.limit
+      listOrderBookDto.limit,
+      listOrderBookDto.type
     );
     return {
       message: OrderMessageSuccess.ListOrderBookSuccess,

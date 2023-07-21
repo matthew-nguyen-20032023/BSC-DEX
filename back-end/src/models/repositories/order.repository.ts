@@ -50,10 +50,6 @@ export class OrderRepository {
     type: OrderType,
     limit: number
   ): Promise<Order[]> {
-    if (1)
-      return this.model.find({
-        type,
-      });
     return this.model
       .find({
         pairId,
