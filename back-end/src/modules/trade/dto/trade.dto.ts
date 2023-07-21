@@ -1,0 +1,44 @@
+import { ApiProperty } from "@nestjs/swagger";
+import { IsNumber, IsString } from "class-validator";
+import { Type } from "class-transformer";
+import { OHLCVTypeInterval } from "src/modules/trade/trade.const";
+
+/**
+ * @description The address of ERC20 token on BSC network
+ */
+export class TradeDto {
+  @IsString()
+  @ApiProperty({
+    description: "Pair id",
+    required: true,
+    example: "add-token.dto.ts",
+  })
+  pairId: string;
+
+  @IsNumber()
+  @Type(() => Number)
+  @ApiProperty({
+    description: "Start time in timestamp format",
+    required: true,
+    example: 1689867821000,
+  })
+  fromTimestamp: number;
+
+  @IsNumber()
+  @Type(() => Number)
+  @ApiProperty({
+    description: "Start time in timestamp format",
+    required: true,
+    example: 1689967821000,
+  })
+  toTimestamp: number;
+
+  @IsString()
+  @ApiProperty({
+    description:
+      "ohlcv type interval such as 1m, 5m, 15m, 30m, 1h, 5h, 1d, 1w, 4w",
+    required: true,
+    example: "add-token.dto.ts",
+  })
+  ohlcvTypeInterval: OHLCVTypeInterval;
+}

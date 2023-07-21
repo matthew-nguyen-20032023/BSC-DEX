@@ -8,4 +8,15 @@ export class TradeRepository {
     const newTrade = new this.model(trade);
     return this.model.create(newTrade);
   }
+
+  public async getTradesFromToByPair(
+    pairId: string,
+    fromTimestamp: number,
+    toTimestamp: number
+  ): Promise<Trade[]> {
+    return this.model.find({
+      pairId,
+      timestamp: { $gte: fromTimestamp, $lte: toTimestamp },
+    });
+  }
 }
