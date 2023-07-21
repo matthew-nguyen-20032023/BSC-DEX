@@ -33,3 +33,8 @@ export const listTrades = async (
   let url = `${process.env.VUE_APP_BACKEND_URL}/trade?pairId=${pairId}&fromTimestamp=${fromTimestamp}&toTimestamp=${toTimestamp}&ohlcvTypeInterval=${ohlcvTypeInterval}`;
   return axios.get(url);
 };
+
+export const listCurrentOriginTrades = async (pairId, limit) => {
+  let url = `${process.env.VUE_APP_BACKEND_URL}/trade/origin?pairId=${pairId}&limit=${limit}`;
+  return axios.get(url);
+};

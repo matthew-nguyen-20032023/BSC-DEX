@@ -16,7 +16,7 @@ export class OrderController {
   @Post()
   @Public()
   @ApiOperation({
-    summary: "Api to create limit order",
+    summary: "Api to create limit order (use to create off-chain order only)",
   })
   public async createOrder(
     @Body() createOrderDto: CreateOrderDto

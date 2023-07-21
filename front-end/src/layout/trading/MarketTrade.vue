@@ -5,44 +5,60 @@
       <th>Amount</th>
       <th>Time</th>
     </tr>
-    <tr v-for="(order, index) in orderBook" :key="index">
-      <td :style="getTradeColor(order.type)">{{ order.price }}</td>
-      <td>{{ order.amount }}</td>
-      <td>16:09:09</td>
+    <tr v-for="(trade, index) in data" :key="index">
+      <td :style="getTradeColor(trade.type)">{{ trade.price }}</td>
+      <td>{{ convertVolume(trade.volume) }}</td>
+      <td>{{ convertToTime(trade.timestamp) }}</td>
     </tr>
   </table>
 </template>
 
 <script>
+import {listCurrentOriginTrades} from "@/plugins/backend";
+import {notificationWithCustomMessage} from "@/plugins/notification";
+const BigNumber = require("bignumber.js");
+const moment = require('moment');
+const debounce = require('debounce');
+
 export default {
   props: {
+    pairId: {
+      type: String,
+      required: true
+    },
   },
+  watch: {
+    pairId() {
+      this.listMarket();
+    }
+  },
+  created: debounce(function () {
+    this.listMarket();
+  }, 200),
   data() {
     return {
-      orderBook: [
-        { price: 100, amount: 10, type: 'bid' },
-        { price: 99, amount: 5, type: 'bid' },
-        { price: 101, amount: 7, type: 'ask' },
-        { price: 101, amount: 7, type: 'bid' },
-        { price: 101, amount: 7, type: 'ask' },
-        { price: 101, amount: 7, type: 'bid' },
-        { price: 101, amount: 7, type: 'ask' },
-        { price: 101, amount: 7, type: 'ask' },
-        { price: 101, amount: 7, type: 'ask' },
-        { price: 101, amount: 7, type: 'bid' },
-        { price: 101, amount: 7, type: 'bid' },
-      ],
-      orderBookFields: ['Price', 'Amount', 'Total'],
+      data: [],
     };
   },
   mounted() {},
   methods: {
-    getTradeColor(type) {
-      return type === 'bid' ? 'color: #23a776' : 'color: #e54150';
+    listMarket() {
+      this.data = [];
+      listCurrentOriginTrades(this.pairId, 20).then(res => {
+        this.data = res.data.data
+      }).catch(error => {
+        return notificationWithCustomMessage('warning', this, error.message);
+      })
     },
-    calculateTotal(order) {
-      // Calculate the total value for each order
-      return order.price * order.size;
+    getTradeColor(type) {
+      return type === 'buy' ? 'color: #23a776' : 'color: #e54150';
+    },
+    convertToTime(timestamp) {
+      const dateObject = new Date(timestamp);
+      return moment(dateObject).format('HH:mm:ss');
+    },
+    convertVolume(volume) {
+      return new BigNumber(volume).div(new BigNumber(10).pow(18)).toFixed();
     }
   }
 };

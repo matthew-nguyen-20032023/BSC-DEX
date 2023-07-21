@@ -17,7 +17,8 @@ export class TokenController {
 
   @Post()
   @ApiOperation({
-    summary: "Api to add new token.",
+    summary:
+      "Api to add new token. System designed to create pair only base on token created and added to database",
   })
   public async addToken(
     @Body() addTokenDto: AddTokenDto
@@ -72,7 +73,8 @@ export class TokenController {
 
   @Post("mint-token-for-test")
   @ApiOperation({
-    summary: "Api to mint token for test",
+    summary:
+      "Api to mint token for test. (Working only on ganache because ganache doesn't require authentication), can not work on testnet or mainet",
   })
   @Public()
   public async mintTokenForTest(
