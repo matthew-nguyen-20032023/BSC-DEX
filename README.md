@@ -8,6 +8,8 @@ https://0x.org/ and https://www.openzeppelin.com/
 Back-end: NestJs, TypeScript, Nodejs, MongoDB, Docker </br>
 Front-end: VueJs, Vue-Bootstrap, Html, Css, Javascript, Web3Js, Metamask </br>
 Smart-contract: Solidity, Hardhat, Ganache </br>
+## Quick Start Local
+Read and run ./setup_from_zero.sh script
 ## Overview Installation
 First install and run smart-contract, README at smart-contract folder </br>
 Second install and run back-end, README at back-end folder </br>

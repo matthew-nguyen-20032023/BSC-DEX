@@ -26,4 +26,11 @@ export class TokenRepository {
   public async countTotalToken(): Promise<number> {
     return this.model.count();
   }
+
+  /**
+   * @description Just you for seeding and testing in local version
+   */
+  public async deleteAll(): Promise<void> {
+    await this.model.deleteMany({});
+  }
 }

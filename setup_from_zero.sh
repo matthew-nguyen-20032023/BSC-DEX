@@ -1,6 +1,8 @@
 #!/bin/sh
 
 # Note (!IMPORTANT)
+# You must install docker and docker-compose
+# (Docker version 20.10.21, build 20.10.21-0ubuntu1~22.04.3) & (docker-compose version 1.29.2, build unknown)
 # You must install nvm version 0.39.3 (you can follow this doc https://tecadmin.net/how-to-install-nvm-on-ubuntu-20-04/)
 # This script used for quickly setup, build and run full smart contract, backend and frontend for testing only on local
 # For manual and update you own, you have to go detail through each smart-contract, back-end and front-end folder
@@ -58,6 +60,10 @@ npm install -g yarn
 yarn -v
 yarn # update new lib
 
+# Start mongo database and redis
+docker-compose up -d
+# Seeding data for test
+yarn console:dev seed-data-for-test
 # Start backend service
 pm2 start "yarn start:dev" --name="BSC_DEX_BACKEND"
 pm2 start "yarn console:dev crawl-order-matched" --name="BSC_DEX_JOB:craw-order-matched"
@@ -89,6 +95,7 @@ echo "Smart contract for matching order: $orderMatchingContractAddress"
 echo "Base token for testing: $baseTokenContractAddress"
 echo "Quote token for testing: $quoteTokenContractAddress"
 echo "Using pm2 ls to see all processes"
+echo "Admin account: email: admin@gmail.com | password: admin@123"
 echo "Blockchain node: http://127.0.0.1:8545"
 echo "Backend server: http://localhost:3000/api/docs"
 echo "Socket server: http://localhost:3001"

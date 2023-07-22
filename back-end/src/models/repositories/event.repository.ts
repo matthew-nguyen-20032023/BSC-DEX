@@ -27,4 +27,11 @@ export class EventRepository {
       })
       .sort({ blockNumber: "asc" });
   }
+
+  /**
+   * @description Just you for seeding and testing in local version
+   */
+  public async deleteAll(): Promise<void> {
+    await this.model.deleteMany({});
+  }
 }

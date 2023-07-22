@@ -35,4 +35,11 @@ export class PairRepository {
       _id: pairId,
     });
   }
+
+  /**
+   * @description Just you for seeding and testing in local version
+   */
+  public async deleteAll(): Promise<void> {
+    await this.model.deleteMany({});
+  }
 }

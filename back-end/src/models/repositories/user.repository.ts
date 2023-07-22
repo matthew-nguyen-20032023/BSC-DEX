@@ -12,4 +12,11 @@ export class UserRepository {
   public async getUserByEmail(email: string): Promise<User> {
     return this.model.findOne({ email: email });
   }
+
+  /**
+   * @description Just you for seeding and testing in local version
+   */
+  public async deleteAll(): Promise<void> {
+    await this.model.deleteMany({});
+  }
 }
