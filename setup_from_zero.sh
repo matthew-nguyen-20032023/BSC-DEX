@@ -1,6 +1,8 @@
 #!/bin/sh
 
 # Note (!IMPORTANT)
+# You must install docker and docker-compose
+# (Docker version 20.10.21, build 20.10.21-0ubuntu1~22.04.3) & (docker-compose version 1.29.2, build unknown)
 # You must install nvm version 0.39.3 (you can follow this doc https://tecadmin.net/how-to-install-nvm-on-ubuntu-20-04/)
 # This script used for quickly setup, build and run full smart contract, backend and frontend for testing only on local
 # For manual and update you own, you have to go detail through each smart-contract, back-end and front-end folder
@@ -59,6 +61,7 @@ yarn -v
 yarn # update new lib
 
 # Start backend service
+docker-compose up -d
 pm2 start "yarn start:dev" --name="BSC_DEX_BACKEND"
 pm2 start "yarn console:dev crawl-order-matched" --name="BSC_DEX_JOB:craw-order-matched"
 pm2 start "yarn console:dev handle-limit-order-filled-crawled" --name="BSC_DEX_JOB:handle-limit-order-filled-crawled"
