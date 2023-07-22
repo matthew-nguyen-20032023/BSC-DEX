@@ -15,6 +15,7 @@ import { PairRepository } from "src/models/repositories/pair.repository";
 import { OrderRepository } from "src/models/repositories/order.repository";
 import { EventRepository } from "src/models/repositories/event.repository";
 import { Binance } from "src/blockchains/binance";
+const BigNumber = require("bignumber.js");
 
 @Console()
 export class SeedConsole {
@@ -104,12 +105,72 @@ export class SeedConsole {
     await this.pairRepository.save(newPair);
   }
 
+  private async mintTokenForTestingAccounts(
+    tokenAddress: string
+  ): Promise<void> {
+    const testingAmountMint = new BigNumber(1000000)
+      .times(new BigNumber(10).pow(18))
+      .toFixed();
+    await Binance.getInstance().mintTokenForTest(
+      process.env.ACCOUNT_ADDRESS_TEST_1,
+      testingAmountMint,
+      tokenAddress
+    );
+    await Binance.getInstance().mintTokenForTest(
+      process.env.ACCOUNT_ADDRESS_TEST_2,
+      testingAmountMint,
+      tokenAddress
+    );
+    await Binance.getInstance().mintTokenForTest(
+      process.env.ACCOUNT_ADDRESS_TEST_3,
+      testingAmountMint,
+      tokenAddress
+    );
+    await Binance.getInstance().mintTokenForTest(
+      process.env.ACCOUNT_ADDRESS_TEST_4,
+      testingAmountMint,
+      tokenAddress
+    );
+    await Binance.getInstance().mintTokenForTest(
+      process.env.ACCOUNT_ADDRESS_TEST_5,
+      testingAmountMint,
+      tokenAddress
+    );
+    await Binance.getInstance().mintTokenForTest(
+      process.env.ACCOUNT_ADDRESS_TEST_6,
+      testingAmountMint,
+      tokenAddress
+    );
+    await Binance.getInstance().mintTokenForTest(
+      process.env.ACCOUNT_ADDRESS_TEST_7,
+      testingAmountMint,
+      tokenAddress
+    );
+    await Binance.getInstance().mintTokenForTest(
+      process.env.ACCOUNT_ADDRESS_TEST_8,
+      testingAmountMint,
+      tokenAddress
+    );
+    await Binance.getInstance().mintTokenForTest(
+      process.env.ACCOUNT_ADDRESS_TEST_9,
+      testingAmountMint,
+      tokenAddress
+    );
+    await Binance.getInstance().mintTokenForTest(
+      process.env.ACCOUNT_ADDRESS_TEST_10,
+      testingAmountMint,
+      tokenAddress
+    );
+  }
+
   @Command({ command: "seed-data-for-test" })
   async seedDataForTest(): Promise<void> {
     await this.deleteAllDataOnDatabase();
     await this.seedAdminUser();
     await this.seedTokens();
     await this.seedPair();
+    await this.mintTokenForTestingAccounts(process.env.BASE_TOKEN_FOR_TEST);
+    await this.mintTokenForTestingAccounts(process.env.QUOTE_TOKEN_FOR_TEST);
     console.log("Seeding data done. Exist process seeding");
     process.exit();
   }
