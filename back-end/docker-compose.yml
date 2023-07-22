@@ -23,5 +23,6 @@ services:
   redis:
     image: redis:7.0.8
     container_name: bsc_dex_redis
+    restart: always
     ports:
       - "${REDIS_PORT}:6379"

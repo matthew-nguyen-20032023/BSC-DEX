@@ -60,12 +60,12 @@ async function main() {
     "== Stake Contract: using for stake and get fee reward"
   );
   console.log(
-    erc20USDTAddress,
-    "== USDT ERC20 Token Contract: using just for testing our own token"
+    erc20EURAddress,
+    "=== ERU ERC20 Token Contract: using just for testing our own token"
   );
   console.log(
-    erc20EURAddress,
-    "== ERU ERC20 Token Contract: using just for testing our own token"
+    erc20USDTAddress,
+    "=== USDT ERC20 Token Contract: using just for testing our own token"
   );
   console.log(
     feeCollectorControllerAddress,
