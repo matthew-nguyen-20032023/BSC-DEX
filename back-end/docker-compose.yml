@@ -1,7 +1,7 @@
 version: '3.1'
 
 services:
-
+  # Mongo database
   bsc_dex:
     container_name: bsc_dex_database
     image: mongo:6.0.3
@@ -19,3 +19,9 @@ services:
     ports:
       - "${DATABASE_PORT}:27017"
 
+  # Redis
+  redis:
+    image: redis:7.0.8
+    container_name: bsc_dex_redis
+    ports:
+      - "${REDIS_PORT}:6379"
