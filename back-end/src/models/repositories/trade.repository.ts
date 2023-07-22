@@ -31,4 +31,11 @@ export class TradeRepository {
       .sort({ timestamp: "desc" })
       .limit(limit);
   }
+
+  /**
+   * @description Just you for seeding and testing in local version
+   */
+  public async deleteAll(): Promise<void> {
+    await this.model.deleteMany({});
+  }
 }

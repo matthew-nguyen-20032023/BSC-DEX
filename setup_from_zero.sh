@@ -60,8 +60,11 @@ npm install -g yarn
 yarn -v
 yarn # update new lib
 
-# Start backend service
+# Start mongo database and redis
 docker-compose up -d
+# Seeding data for test
+yarn console:dev seed-data-for-test
+# Start backend service
 pm2 start "yarn start:dev" --name="BSC_DEX_BACKEND"
 pm2 start "yarn console:dev crawl-order-matched" --name="BSC_DEX_JOB:craw-order-matched"
 pm2 start "yarn console:dev handle-limit-order-filled-crawled" --name="BSC_DEX_JOB:handle-limit-order-filled-crawled"
@@ -92,6 +95,7 @@ echo "Smart contract for matching order: $orderMatchingContractAddress"
 echo "Base token for testing: $baseTokenContractAddress"
 echo "Quote token for testing: $quoteTokenContractAddress"
 echo "Using pm2 ls to see all processes"
+echo "Admin account: email: admin@gmail.com | password: admin@123"
 echo "Blockchain node: http://127.0.0.1:8545"
 echo "Backend server: http://localhost:3000/api/docs"
 echo "Socket server: http://localhost:3001"

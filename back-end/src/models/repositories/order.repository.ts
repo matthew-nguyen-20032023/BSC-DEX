@@ -60,4 +60,11 @@ export class OrderRepository {
       .sort({ price: type === OrderType.BuyOrder ? "desc" : "asc" })
       .limit(limit);
   }
+
+  /**
+   * @description Just you for seeding and testing in local version
+   */
+  public async deleteAll(): Promise<void> {
+    await this.model.deleteMany({});
+  }
 }
