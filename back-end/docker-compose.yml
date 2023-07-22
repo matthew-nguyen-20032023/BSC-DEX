@@ -2,11 +2,20 @@ version: '3.1'
 
 services:
 
-  trial_nova_mongo:
-    image: mongo
+  bsc_dex:
+    container_name: bsc_dex_database
+    image: mongo:6.0.3
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      # For create root user to manage the whole of mongo
+      MONGO_INITDB_ROOT_USERNAME: $DATABASE_ROOT_USER
+      MONGO_INITDB_ROOT_PASSWORD: $DATABASE_ROOT_PASSWORD
+      # For create specific user and database then grant permission to user on that database
+      DATABASE_USER: $DATABASE_USER
+      DATABASE_PASS: $DATABASE_PASS
+      DATABASE_NAME: $DATABASE_NAME
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     ports:
-      - "27017:27017"
+      - "${DATABASE_PORT}:27017"
+
