@@ -42,7 +42,7 @@ export class SocketServer {
    * @description use getInstance() above to call this function
    * @param order: Order
    */
-  public async emitNewOrderCreated(order: Order): Promise<void> {
+  public emitNewOrderCreated(order: Order): void {
     this.io.emit(EventEmit.NewOrderCreated, order);
   }
 
@@ -50,7 +50,7 @@ export class SocketServer {
    * @description use getInstance() above to call this function
    * @param trade: Trade
    */
-  public async emitNewTradeCreated(trade: Trade): Promise<void> {
+  public emitNewTradeCreated(trade: Trade): void {
     this.io.emit(EventEmit.NewTradeCreated, trade);
   }
 }

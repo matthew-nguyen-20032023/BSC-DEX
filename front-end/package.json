@@ -32,7 +32,8 @@
     "vue-router": "3.6.5",
     "vue-router-prefetch": "1.6.3",
     "vue2-transitions": "0.3.0",
-    "web3": "1.7.5"
+    "web3": "1.7.5",
+    "socket.io-client": "4.7.1"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "4.5.19",

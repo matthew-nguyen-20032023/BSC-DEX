@@ -12,6 +12,7 @@ import {
   HttpStatus,
   ValidationPipe,
 } from "@nestjs/common";
+import { SocketServer } from "src/socket/socket-server";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -53,10 +54,14 @@ async function bootstrap() {
   app.useLogger(SentryService.SentryServiceInstance());
 
   await app.listen(process.env.NODE_PORT);
-
+  SocketServer.getInstance();
   console.log(
     `[${process.env.APP_NAME}]: `,
     `SERVICE BACKEND RUNNING ON PORT ${process.env.NODE_PORT}`
+  );
+  console.log(
+    `[${process.env.APP_NAME}]: `,
+    `SOCKET SERVER RUNNING ON PORT ${process.env.REDIS_SERVER_PORT}`
   );
 }
 bootstrap();

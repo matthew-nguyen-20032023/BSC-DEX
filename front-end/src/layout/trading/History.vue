@@ -56,9 +56,11 @@ import { LimitOrder } from "@0x/protocol-utils";
 import Web3 from "web3";
 import {exchangeABI} from "@/libs/abi/exchange.ts";
 import {erc20ABI} from "@/libs/abi/erc20.ts";
+import {socket} from "@/plugins/socket";
 const debounce = require('debounce');
 const BigNumber = require('bignumber.js');
 const moment = require('moment');
+
 
 export default {
   props: {
@@ -108,8 +110,17 @@ export default {
     this.listSellOffer();
     this.client = new Web3(window.ethereum);
     this.client.eth.getAccounts().then(res => { this.currentAccountWallet = res[0] });
+    this.initSocketNewOrderCreated();
   }, 500),
   methods: {
+    initSocketNewOrderCreated() {
+      socket.on("NewOrderCreated", (data) => {
+        if (data.pairId === this.pairId) {
+          if (data.type === 'buy') this.buyOffers.unshift(data);
+          if (data.type === 'sell') this.sellOffer.unshift(data);
+        }
+      });
+    },
     convertExpiryToDate(expiry) {
       const dateObject = new Date(expiry * 1000);
       return moment(dateObject).format('YYYY-MM-DDTHH:mm:ss.Z');

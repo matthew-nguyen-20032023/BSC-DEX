@@ -1,3 +1,5 @@
+import { SocketServer } from "../../socket/socket-server";
+
 const BigNumber = require("bignumber.js");
 import { plainToClass } from "class-transformer";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
@@ -56,7 +58,8 @@ export class OrderService {
   }
 
   private static async buildOrderBook(
-    orders: Order[]
+    orders: Order[],
+    orderType: OrderType
   ): Promise<{ price: string; amount: string }[]> {
     const orderBook = [];
     for (const order of orders) {
@@ -73,7 +76,13 @@ export class OrderService {
         .plus(order.remainingAmount)
         .toFixed();
     }
-    return Object.values(orderBook);
+    return Object.values(orderBook).sort((a, b) => {
+      const priceA = new Date(a.price);
+      const priceB = new Date(b.price);
+      // Compare the 2 dates
+      if (priceA > priceB) return -1;
+      if (priceA < priceB) return 1;
+    });
   }
 
   public async createOrder(createOrderDto: CreateOrderDto): Promise<Order> {
@@ -89,7 +98,9 @@ export class OrderService {
         ? createOrderDto.takerAmount
         : createOrderDto.makerAmount;
 
-    return this.orderRepository.save(newOrder);
+    const order = await this.orderRepository.save(newOrder);
+    SocketServer.getInstance().emitNewOrderCreated(order);
+    return order;
   }
 
   public async listOrder(listOrderDto: ListOrderDto): Promise<Order[]> {
@@ -119,6 +130,6 @@ export class OrderService {
       type,
       limit
     );
-    return await OrderService.buildOrderBook(orders);
+    return await OrderService.buildOrderBook(orders, type);
   }
 }
