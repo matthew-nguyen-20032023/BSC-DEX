@@ -1,6 +1,10 @@
 #!/bin/sh
 
-# Load nvm (nvm must be installed)
+# Require (!important)
+# You need to make a copy of .env.example to .env and update value on back-end folder before run this script
+# You need to make sure that nvm installed on your computer also
+# And you ready to go
+
 [ -s "$HOME/.nvm/nvm.sh" ] && \. "$HOME/.nvm/nvm.sh"  # This loads nvm
 [ -s "$HOME/.nvm/bash_completion" ] && \. "$HOME/.nvm/bash_completion"
 nvm install 18.13.0 # install node 18.13.0 if not installed yet
