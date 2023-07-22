@@ -13,12 +13,12 @@ module.exports = {
       accounts: [process.env.ACCOUNT_PRIVATE_KEY_1],
     },
     EthereumLocal: {
-      url: "http://127.0.0.1:7545",
-      chainId: 1337,
+      url: "http://127.0.0.1:8545",
+      chainId: 31337,
       gasPrice: 20000000000,
       accounts: [
-        "0x274aa78ffefcea2a84f444bcff6d360cbdd0610ffe29f444364b49e9d79bf125",
-        "0xb978fa91fbe0b60a49fdbc3affab2dc3b8395d7cc81af0bb9acbddf7d4a21c4c",
+        "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+        "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
       ],
     },
   },
