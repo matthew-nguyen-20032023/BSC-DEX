@@ -105,4 +105,8 @@ export class Binance {
     //   });
     return true;
   }
+
+  public async getLatestBlock(): Promise<number> {
+    return this.client.eth.getBlockNumber();
+  }
 }

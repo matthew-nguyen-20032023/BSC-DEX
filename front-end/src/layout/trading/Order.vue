@@ -35,7 +35,7 @@
 import { LimitOrder, SignatureType } from "@0x/protocol-utils";
 import { exchangeABI } from "@/libs/abi/exchange.ts";
 import { erc20ABI } from "@/libs/abi/erc20.ts";
-import { createOrder } from "@/plugins/backend";
+import {createOrder, estimateAllowance} from "@/plugins/backend";
 import { notificationWithCustomMessage } from "@/plugins/notification";
 const BigNumber = require('bignumber.js');
 const Web3 = require('web3');
@@ -160,11 +160,16 @@ export default {
       }
     },
     async approveToken(type, isSend = true) {
+      let estimateAmountApprove;
       let tx;
       if (type === 'buy') {
-        tx = this.quoteTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, new BigNumber(this.buyMakerTotal).times(new BigNumber(10).pow(18)))
+        estimateAmountApprove = (await estimateAllowance(this.currentAccountWallet, this.quoteTokenAddress)).data.data;
+        estimateAmountApprove = new BigNumber(estimateAmountApprove).plus(this.buyMakerTotal);
+        tx = this.quoteTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, estimateAmountApprove.times(new BigNumber(10).pow(18)))
       } else {
-        tx = this.baseTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, new BigNumber(this.sellMakerAmount).times(new BigNumber(10).pow(18)))
+        estimateAmountApprove = (await estimateAllowance(this.currentAccountWallet, this.baseTokenAddress)).data.data;
+        estimateAmountApprove = new BigNumber(estimateAmountApprove).plus(this.sellMakerAmount);
+        tx = this.baseTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, estimateAmountApprove.times(new BigNumber(10).pow(18)))
       }
 
       if (isSend) {
@@ -216,9 +221,6 @@ export default {
           return notificationWithCustomMessage('warning', this, `Not enough balance of ${this.baseTokenSymbol}`);
         }
       }
-      // await this.baseTokenContract.methods.mint(this.currentAccountWallet, '100000000000000000000000').send({from: this.currentAccountWallet});
-      // await this.quoteTokenContract.methods.mint(this.currentAccountWallet, '100000000000000000000000').send({from: this.currentAccountWallet});
-      // return;
       const limitOrder = await this.createLimitOrder(type);
       const signature = await limitOrder.getSignatureWithProviderAsync(window.web3.currentProvider, SignatureType.EIP712, this.currentAccountWallet);
       await this.approveToken(type);

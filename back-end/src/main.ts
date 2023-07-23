@@ -30,6 +30,8 @@ async function bootstrap() {
     })
   );
 
+  SocketServer.getInstance();
+
   app.useGlobalFilters(new AllExceptionsFilter());
 
   if (process.env.NODE_ENV !== "production") {
@@ -54,7 +56,6 @@ async function bootstrap() {
   app.useLogger(SentryService.SentryServiceInstance());
 
   await app.listen(process.env.NODE_PORT);
-  SocketServer.getInstance();
   console.log(
     `[${process.env.APP_NAME}]: `,
     `SERVICE BACKEND RUNNING ON PORT ${process.env.NODE_PORT}`
