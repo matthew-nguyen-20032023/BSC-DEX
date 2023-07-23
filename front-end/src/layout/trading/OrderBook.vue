@@ -39,6 +39,7 @@ export default {
   watch: {
     pairId() {
       this.getOrderBook();
+      this.initSocketForNewOrderBook();
     },
   },
   created: debounce(function () {
@@ -59,14 +60,31 @@ export default {
     }
   },
   methods: {
+    initSocketNewTrade() {
+      // socket.on('NewTradeCreated', (data) => {
+      //   if (data.orderType !== this.orderBookType) return;
+      //   if (this.orderBook.length === 0) return;
+      //   for (const order of this.orderBook) {
+      //     if (order.price === data.price) {
+      //       const volumeNoDecimal = new BigNumber(data.volume).div(new BigNumber(10).pow(18));
+      //       order.amount = new BigNumber(order.amount).minus(volumeNoDecimal).toFixed();
+      //       if (new BigNumber(order.amount).lte(0)) {
+      //         const indexOfOrder = this.orderBook.indexOf(order);
+      //         this.orderBook = this.orderBook.splice(indexOfOrder, 1);
+      //       }
+      //       break;
+      //     }
+      //   }
+      // })
+    },
     initSocketForNewOrderBook() {
       socket.on("NewOrderCreated", (data) => {
         if (data.type === this.orderBookType) {
           if (this.orderBook.length === 0) {
             const buildOrderBook = {
               price: data.price,
-              amount: new BigNumber(data.remainingAmount).div(new BigNumber(10).pow(18)),
-              total: new BigNumber(data.remainingAmount).times(data.price).div(new BigNumber(10).pow(18))
+              amount: new BigNumber(data.remainingAmount).div(new BigNumber(10).pow(18)).toFixed(),
+              total: new BigNumber(data.remainingAmount).times(data.price).div(new BigNumber(10).pow(18)).toFixed()
             }
             this.orderBook.push(buildOrderBook);
             return;
@@ -78,8 +96,10 @@ export default {
           let stop = false;
           for (const order of this.orderBook) {
             if (order.price === data.price) {
-              const totalNoDecimal = new BigNumber(data.remainingAmount).div(new BigNumber(10).pow(18));
-              order.total = totalNoDecimal.plus(order.total).toFixed();
+              const amountUpdate = new BigNumber(data.remainingAmount).div(new BigNumber(10).pow(18));
+              const totalUpdate = new BigNumber(data.remainingAmount).times(data.price).div(new BigNumber(10).pow(18));
+              order.amount = amountUpdate.plus(order.amount).toFixed();
+              order.total = totalUpdate.plus(order.total).toFixed();
               isAdded = true;
               break;
             }
@@ -103,8 +123,8 @@ export default {
           if (!isAdded) {
             const buildOrderBook = {
               price: data.price,
-              amount: new BigNumber(data.remainingAmount).div(new BigNumber(10).pow(18)),
-              total: new BigNumber(data.remainingAmount).times(data.price).div(new BigNumber(10).pow(18))
+              amount: new BigNumber(data.remainingAmount).div(new BigNumber(10).pow(18)).toFixed(),
+              total: new BigNumber(data.remainingAmount).times(data.price).div(new BigNumber(10).pow(18)).toFixed()
             }
             this.orderBook.splice(insertFrom, 0, buildOrderBook);
           }
@@ -121,7 +141,6 @@ export default {
             total: new BigNumber(e.amount).times(e.price).div(new BigNumber(10).pow(18))
           }
         });
-        this.initSocketForNewOrderBook();
       }).catch(error => {
         return notificationWithCustomMessage('warning', this, `${error.message}`);
       })
