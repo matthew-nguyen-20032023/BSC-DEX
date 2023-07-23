@@ -2155,6 +2155,15 @@
     notepack.io "~3.0.1"
     uid2 "1.0.0"
 
+"@socket.io/redis-emitter@5.1.0":
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/@socket.io/redis-emitter/-/redis-emitter-5.1.0.tgz#faab6dc363135e44a5a37b5ef5d4f723c80e0db1"
+  integrity sha512-QQUFPBq6JX7JIuM/X1811ymKlAfwufnQ8w6G2/59Jaqp09hdF1GJ/+e8eo/XdcmT0TqkvcSa2TT98ggTXa5QYw==
+  dependencies:
+    debug "~4.3.1"
+    notepack.io "~3.0.1"
+    socket.io-parser "~4.2.1"
+
 "@szmarczak/http-timer@^1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@szmarczak/http-timer/-/http-timer-1.1.2.tgz#b1665e2c461a2cd92f4c1bbf50d5454de0d4b421"

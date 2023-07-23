@@ -21,6 +21,7 @@ import {
 } from "src/models/schemas/order.schema";
 import { Trade, TradeDocument } from "src/models/schemas/trade.schema";
 import { TradeRepository } from "src/models/repositories/trade.repository";
+import { SocketEmitter } from "src/socket/socket-emitter";
 
 @Console()
 export class OrderConsole {
@@ -46,7 +47,7 @@ export class OrderConsole {
    * @eventName: event name from blockchain
    */
   private async getStartBlockForEvent(eventName: string): Promise<number> {
-    let startBlockCrawl = 0;
+    let startBlockCrawl;
     const latestEventCrawled = await this.eventRepository.getLatestEventCrawled(
       eventName
     );
@@ -186,6 +187,9 @@ export class OrderConsole {
       order.updatedAt = new Date();
       oldestEventCrawled.status = EventStatus.Complete;
       oldestEventCrawled.updatedAt = new Date();
+
+      // Emit trade to FE
+      SocketEmitter.getInstance().emitNewTradeCreated(newTrade);
 
       // Fulfill
       if (remainingAmount.eq(0)) {

@@ -1,4 +1,3 @@
-// @ts-ignore
 import { Server } from "socket.io";
 import { createClient } from "redis";
 import { createAdapter } from "@socket.io/redis-adapter";
@@ -36,21 +35,5 @@ export class SocketServer {
       SocketServer.instance = new SocketServer();
     }
     return SocketServer.instance;
-  }
-
-  /**
-   * @description use getInstance() above to call this function
-   * @param order: Order
-   */
-  public emitNewOrderCreated(order: Order): void {
-    this.io.emit(EventEmit.NewOrderCreated, order);
-  }
-
-  /**
-   * @description use getInstance() above to call this function
-   * @param trade: Trade
-   */
-  public emitNewTradeCreated(trade: Trade): void {
-    this.io.emit(EventEmit.NewTradeCreated, trade);
   }
 }

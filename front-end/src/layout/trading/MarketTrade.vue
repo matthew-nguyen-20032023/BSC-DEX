@@ -19,6 +19,7 @@ import {notificationWithCustomMessage} from "@/plugins/notification";
 const BigNumber = require("bignumber.js");
 const moment = require('moment');
 const debounce = require('debounce');
+import {socket} from "@/plugins/socket";
 
 export default {
   props: {
@@ -34,6 +35,7 @@ export default {
   },
   created: debounce(function () {
     this.listMarket();
+    this.initSocketTradeCreated()
   }, 200),
   data() {
     return {
@@ -42,6 +44,11 @@ export default {
   },
   mounted() {},
   methods: {
+    initSocketTradeCreated() {
+      socket.on("NewTradeCreated", (data) => {
+        this.data.unshift(data);
+      })
+    },
     listMarket() {
       this.data = [];
       listCurrentOriginTrades(this.pairId, 20).then(res => {

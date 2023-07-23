@@ -1,5 +1,3 @@
-import { SocketServer } from "../../socket/socket-server";
-
 const BigNumber = require("bignumber.js");
 import { plainToClass } from "class-transformer";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
@@ -18,6 +16,7 @@ import { PairRepository } from "src/models/repositories/pair.repository";
 import { Pair, PairDocument } from "src/models/schemas/pair.schema";
 import { PairMessageError } from "src/modules/pair/pair.const";
 import { ListOrderDto } from "src/modules/order/dto/list-order.dto";
+import { SocketEmitter } from "src/socket/socket-emitter";
 
 @Injectable()
 export class OrderService {
@@ -58,8 +57,7 @@ export class OrderService {
   }
 
   private static async buildOrderBook(
-    orders: Order[],
-    orderType: OrderType
+    orders: Order[]
   ): Promise<{ price: string; amount: string }[]> {
     const orderBook = [];
     for (const order of orders) {
@@ -99,7 +97,7 @@ export class OrderService {
         : createOrderDto.makerAmount;
 
     const order = await this.orderRepository.save(newOrder);
-    SocketServer.getInstance().emitNewOrderCreated(order);
+    SocketEmitter.getInstance().emitNewOrderCreated(order);
     return order;
   }
 
@@ -130,7 +128,7 @@ export class OrderService {
       type,
       limit
     );
-    return await OrderService.buildOrderBook(orders, type);
+    return await OrderService.buildOrderBook(orders);
   }
 
   public async estimateAllowances(
