@@ -71,9 +71,9 @@ export default {
             const totalUpdate = new BigNumber(data.volume).times(data.price).div(new BigNumber(10).pow(18));
             order.amount = new BigNumber(order.amount).minus(volumeNoDecimal).toFixed();
             order.total = new BigNumber(order.total).minus(totalUpdate).toFixed();
-            if (new BigNumber(order.amount).lte(0)) {
+            if (Number(order.amount) <= 0) {
               const indexOfOrder = this.orderBook.indexOf(order);
-              this.orderBook = this.orderBook.splice(indexOfOrder, 1);
+              this.orderBook = this.orderBook.slice(indexOfOrder + 1);
             }
             break;
           }
