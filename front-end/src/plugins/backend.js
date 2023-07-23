@@ -43,3 +43,8 @@ export const listOrderBook = async (pairId, type, limit) => {
   let url = `${process.env.VUE_APP_BACKEND_URL}/order/order-book?pairId=${pairId}&limit=${limit}&type=${type}`;
   return axios.get(url);
 };
+
+export const estimateAllowance = async (maker, makerToken) => {
+  let url = `${process.env.VUE_APP_BACKEND_URL}/order/estimate-allowance?maker=${maker}&makerToken=${makerToken}`;
+  return axios.get(url);
+};

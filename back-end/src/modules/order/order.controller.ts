@@ -7,6 +7,7 @@ import { OrderMessageSuccess } from "src/modules/order/order.const";
 import { Public } from "src/modules/authentication/auth.const";
 import { ListOrderDto } from "src/modules/order/dto/list-order.dto";
 import { ListOrderBookDto } from "src/modules/order/dto/list-order-book.dto";
+import { EstimateAllowanceDto } from "./dto/estimate-allowance.dto";
 
 @Controller("order")
 @ApiBearerAuth()
@@ -41,6 +42,26 @@ export class OrderController {
     const data = await this.orderService.listOrder(listOrderDto);
     return {
       message: OrderMessageSuccess.ListOrderSuccess,
+      data,
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  @Get("estimate-allowance")
+  @Public()
+  @ApiOperation({
+    summary:
+      "Api to estimate maker amount to approve when you create multiple order",
+  })
+  public async estimateAllowance(
+    @Query() estimateAllowanceDto: EstimateAllowanceDto
+  ): Promise<IResponseToClient> {
+    const data = await this.orderService.estimateAllowances(
+      estimateAllowanceDto.maker,
+      estimateAllowanceDto.makerToken
+    );
+    return {
+      message: OrderMessageSuccess.EstimateAllowanceSuccess,
       data,
       statusCode: HttpStatus.OK,
     };

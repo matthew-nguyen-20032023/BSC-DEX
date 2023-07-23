@@ -67,4 +67,16 @@ export class OrderRepository {
   public async deleteAll(): Promise<void> {
     await this.model.deleteMany({});
   }
+
+  public async getFillAbleOrdersToEstimateAllowance(
+    maker: string,
+    makerToken: string
+  ): Promise<Order[]> {
+    return this.model.find({
+      maker,
+      makerToken,
+      status: OrderStatus.FillAble,
+      expiry: { $gt: Date.now() / 1000 },
+    });
+  }
 }

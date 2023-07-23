@@ -51,9 +51,7 @@ export class OrderConsole {
       eventName
     );
     if (!latestEventCrawled) {
-      if (process.env.ORDER_START_BLOCK) {
-        startBlockCrawl = Number(process.env.ORDER_START_BLOCK);
-      }
+      startBlockCrawl = await Binance.getInstance().getLatestBlock();
     } else startBlockCrawl = latestEventCrawled.blockNumber;
     return startBlockCrawl + 1;
   }

@@ -4,6 +4,7 @@
 # You must install docker and docker-compose
 # (Docker version 20.10.21, build 20.10.21-0ubuntu1~22.04.3) & (docker-compose version 1.29.2, build unknown)
 # You must install nvm version 0.39.3 (you can follow this doc https://tecadmin.net/how-to-install-nvm-on-ubuntu-20-04/)
+# You must install ganache of truffle and run a blockchain node
 # This script used for quickly setup, build and run full smart contract, backend and frontend for testing only on local
 # For manual and update you own, you have to go detail through each smart-contract, back-end and front-end folder
 # All dex processes will be run in background by pm2, learn about pm2 at https://pm2.keymetrics.io/docs/usage/quick-start/
@@ -30,7 +31,6 @@ pm2 --version
 # Jump into smart contract folder, deploy to hardhat local node and get smart contract deployed
 cd smart-contract
 npm install
-pm2 start "npx hardhat node" --name="HARDHAT_NODE"
 resultDeployed=$(npx hardhat run ./scripts/deploy.js --network EthereumLocal)
 
 # Extract addresses of exchange deployed smart contract
@@ -55,6 +55,7 @@ env_file_backend=".env"
 sed -i "s/^ORDER_SMART_CONTRACT_ADDRESS=.*/ORDER_SMART_CONTRACT_ADDRESS=$orderMatchingContractAddress/" "$env_file_backend"
 sed -i "s/^BASE_TOKEN_FOR_TEST=.*/BASE_TOKEN_FOR_TEST=$baseTokenContractAddress/" "$env_file_backend"
 sed -i "s/^QUOTE_TOKEN_FOR_TEST=.*/QUOTE_TOKEN_FOR_TEST=$quoteTokenContractAddress/" "$env_file_backend"
+sed -i "s/^ORDER_START_BLOCK=.*/ORDER_START_BLOCK=$latestBlock/" "$env_file_backend"
 
 npm install -g yarn
 yarn -v
@@ -96,7 +97,7 @@ echo "Base token for testing: $baseTokenContractAddress"
 echo "Quote token for testing: $quoteTokenContractAddress"
 echo "Using pm2 ls to see all processes"
 echo "Admin account: email: admin@gmail.com | password: admin@123"
-echo "Blockchain node: http://127.0.0.1:8545"
+echo "Blockchain node: http://127.0.0.1:7545"
 echo "Backend server: http://localhost:3000/api/docs"
 echo "Socket server: http://localhost:3001"
 echo "Frontend server: http://localhost:8080"

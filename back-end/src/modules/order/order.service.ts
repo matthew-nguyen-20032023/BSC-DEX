@@ -132,4 +132,29 @@ export class OrderService {
     );
     return await OrderService.buildOrderBook(orders, type);
   }
+
+  public async estimateAllowances(
+    maker: string,
+    makerToken: string
+  ): Promise<string> {
+    const fillAbleOrders =
+      await this.orderRepository.getFillAbleOrdersToEstimateAllowance(
+        maker,
+        makerToken
+      );
+
+    let amount = new BigNumber(0);
+
+    for (const order of fillAbleOrders) {
+      if (order.type === OrderType.BuyOrder) {
+        amount = amount.plus(
+          new BigNumber(order.remainingAmount).times(order.price)
+        );
+      } else {
+        amount = amount.plus(order.remainingAmount);
+      }
+    }
+
+    return amount.div(new BigNumber(10).pow(18)).toFixed();
+  }
 }
