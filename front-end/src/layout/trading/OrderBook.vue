@@ -40,6 +40,7 @@ export default {
     pairId() {
       this.getOrderBook();
       this.initSocketForNewOrderBook();
+      this.initSocketNewTrade()
     },
   },
   created: debounce(function () {
@@ -61,21 +62,23 @@ export default {
   },
   methods: {
     initSocketNewTrade() {
-      // socket.on('NewTradeCreated', (data) => {
-      //   if (data.orderType !== this.orderBookType) return;
-      //   if (this.orderBook.length === 0) return;
-      //   for (const order of this.orderBook) {
-      //     if (order.price === data.price) {
-      //       const volumeNoDecimal = new BigNumber(data.volume).div(new BigNumber(10).pow(18));
-      //       order.amount = new BigNumber(order.amount).minus(volumeNoDecimal).toFixed();
-      //       if (new BigNumber(order.amount).lte(0)) {
-      //         const indexOfOrder = this.orderBook.indexOf(order);
-      //         this.orderBook = this.orderBook.splice(indexOfOrder, 1);
-      //       }
-      //       break;
-      //     }
-      //   }
-      // })
+      socket.on('NewTradeCreated', (data) => {
+        if (data.orderType !== this.orderBookType) return;
+        if (this.orderBook.length === 0) return;
+        for (const order of this.orderBook) {
+          if (order.price === data.price) {
+            const volumeNoDecimal = new BigNumber(data.volume).div(new BigNumber(10).pow(18));
+            const totalUpdate = new BigNumber(data.volume).times(data.price).div(new BigNumber(10).pow(18));
+            order.amount = new BigNumber(order.amount).minus(volumeNoDecimal).toFixed();
+            order.total = new BigNumber(order.total).minus(totalUpdate).toFixed();
+            if (new BigNumber(order.amount).lte(0)) {
+              const indexOfOrder = this.orderBook.indexOf(order);
+              this.orderBook = this.orderBook.splice(indexOfOrder, 1);
+            }
+            break;
+          }
+        }
+      })
     },
     initSocketForNewOrderBook() {
       socket.on("NewOrderCreated", (data) => {
