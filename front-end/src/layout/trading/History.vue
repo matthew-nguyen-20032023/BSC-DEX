@@ -111,8 +111,30 @@ export default {
     this.client = new Web3(window.ethereum);
     this.client.eth.getAccounts().then(res => { this.currentAccountWallet = res[0] });
     this.initSocketNewOrderCreated();
+    this.initOrderMatched();
   }, 500),
   methods: {
+    updateOrderMatched(offers, order) {
+      const orderFound = offers.find(e => e._id === order._id);
+      const orderFoundIndex = offers.indexOf(orderFound);
+      if (new BigNumber(order.remainingAmount).gt(0)) {
+        // Replace new order if new order has remainingAmount > 0
+        offers.splice(orderFoundIndex, 0, order);
+      } else {
+        // Remove order because full match
+        offers = offers.slice(orderFoundIndex + 1);
+      }
+      return offers;
+    },
+    initOrderMatched() {
+      socket.on("OrderMatched", (order) => {
+        if (order.type === 'buy') {
+          this.buyOffers = this.updateOrderMatched(this.buyOffers, order);
+        } else {
+          this.sellOffer = this.updateOrderMatched(this.sellOffer, order);
+        }
+      });
+    },
     initSocketNewOrderCreated() {
       socket.on("NewOrderCreated", (data) => {
         if (data.pairId === this.pairId) {

@@ -40,4 +40,12 @@ export class SocketEmitter {
   public emitNewTradeCreated(trade: Trade): void {
     this.emitter.emit(EventEmit.NewTradeCreated, trade);
   }
+
+  /**
+   * @description use getInstance() above to call this function
+   * @param order: Order
+   */
+  public emitOrderMatched(order: Order): void {
+    this.emitter.emit(EventEmit.OrderMatched, order);
+  }
 }

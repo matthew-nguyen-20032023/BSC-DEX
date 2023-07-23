@@ -191,21 +191,22 @@ export class OrderConsole {
       // Emit trade to FE
       SocketEmitter.getInstance().emitNewTradeCreated(newTrade);
 
-      // Fulfill
       if (remainingAmount.eq(0)) {
+        // Fulfill
         order.remainingAmount = "0";
         order.status = OrderStatus.Completed;
         await this.eventRepository.save(oldestEventCrawled);
         await this.orderRepository.save(order);
         await this.tradeRepository.save(newTrade);
-        continue;
+      } else {
+        // PartialFill
+        order.remainingAmount = remainingAmount.toFixed();
+        await this.eventRepository.save(oldestEventCrawled);
+        await this.orderRepository.save(order);
+        await this.tradeRepository.save(newTrade);
       }
 
-      // PartialFill
-      order.remainingAmount = remainingAmount.toFixed();
-      await this.eventRepository.save(oldestEventCrawled);
-      await this.orderRepository.save(order);
-      await this.tradeRepository.save(newTrade);
+      SocketEmitter.getInstance().emitOrderMatched(order);
     }
   }
 }
