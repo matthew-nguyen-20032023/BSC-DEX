@@ -23,7 +23,7 @@ import { Binance } from "src/blockchains/binance";
 const BigNumber = require("bignumber.js");
 import { LimitOrder, SignatureType } from "@0x/protocol-utils";
 import { randomIntFromInterval, sleep } from "src/helper/common";
-import { SocketEmitter } from "../../socket/socket-emitter";
+import { SocketEmitter } from "src/socket/socket-emitter";
 const {
   RPCSubprovider,
   Web3ProviderEngine,
