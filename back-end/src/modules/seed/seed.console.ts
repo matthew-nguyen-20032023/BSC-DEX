@@ -347,8 +347,8 @@ export class SeedConsole {
         pair._id.toString()
       );
 
-      SocketEmitter.getInstance().emitNewOrderCreated(orderForBackend);
-      await this.orderRepository.save(orderForBackend);
+      const orderCreated = await this.orderRepository.save(orderForBackend);
+      SocketEmitter.getInstance().emitNewOrderCreated(orderCreated);
 
       if (orderType === OrderType.BuyOrder) {
         await quoteTokenSmartContract.methods
