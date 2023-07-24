@@ -27,6 +27,19 @@ export class Binance {
     );
   }
 
+  public async createERC20ContractByToken(
+    tokenAddress: string
+  ): Promise<Contract> {
+    return new this.client.eth.Contract(erc20ABI, tokenAddress);
+  }
+
+  public async getMatchingOrderContract(): Promise<Contract> {
+    return new this.client.eth.Contract(
+      exchangeABI,
+      process.env.ORDER_SMART_CONTRACT_ADDRESS
+    );
+  }
+
   public async getERC20TokenInfo(tokenAddress: string): Promise<{
     name: string;
     symbol: string;
