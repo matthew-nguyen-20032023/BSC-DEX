@@ -132,7 +132,6 @@ export default {
     this.zeroExContract = new this.client.eth.Contract(exchangeABI, process.env.VUE_APP_ZERO_CONTRACT_ADDRESS);
     this.orderContract = new this.client.eth.Contract(exchangeABI, process.env.VUE_APP_ORDER_ADDRESS);
     this.client.eth.getAccounts().then(res => { this.currentAccountWallet = res[0] });
-    this.getBalances();
   }, 500),
   mounted() {},
   methods: {
