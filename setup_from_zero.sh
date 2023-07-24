@@ -55,7 +55,7 @@ env_file_backend=".env"
 sed -i "s/^ORDER_SMART_CONTRACT_ADDRESS=.*/ORDER_SMART_CONTRACT_ADDRESS=$orderMatchingContractAddress/" "$env_file_backend"
 sed -i "s/^BASE_TOKEN_FOR_TEST=.*/BASE_TOKEN_FOR_TEST=$baseTokenContractAddress/" "$env_file_backend"
 sed -i "s/^QUOTE_TOKEN_FOR_TEST=.*/QUOTE_TOKEN_FOR_TEST=$quoteTokenContractAddress/" "$env_file_backend"
-sed -i "s/^ORDER_START_BLOCK=.*/ORDER_START_BLOCK=$latestBlock/" "$env_file_backend"
+sed -i "s/^VERIFY_SMART_CONTRACT_ADDRESS=.*/VERIFY_SMART_CONTRACT_ADDRESS=$verifyContractAddress/" "$env_file_backend"
 
 npm install -g yarn
 yarn -v

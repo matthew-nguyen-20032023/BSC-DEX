@@ -98,7 +98,7 @@ export class TradeService {
         });
 
         currentIntervalStart += ohlcvInterval;
-        openPrice = trade.price;
+        openPrice = closePrice;
         highPrice = trade.price;
         lowPrice = trade.price;
         closePrice = trade.price;

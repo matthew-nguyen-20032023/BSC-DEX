@@ -55,7 +55,11 @@
     "socket.io": "4.6.1",
     "@socket.io/redis-adapter":  "8.2.1",
     "redis":  "4.6.7",
-    "@socket.io/redis-emitter": "5.1.0"
+    "@socket.io/redis-emitter": "5.1.0",
+    "@0x/protocol-utils": "11.22.2",
+    "@0x/subproviders": "6.6.0",
+    "@0x/utils": "6.4.4",
+    "@0x/web3-wrapper": "7.6.1"
   },
   "devDependencies": {
     "@nestjs/cli": "9.0.0",
@@ -71,7 +75,6 @@
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-prettier": "4.2.1",
     "jest": "28.1.2",
-    "prettier": "2.7.1",
     "source-map-support": "0.5.21",
     "supertest": "6.2.4",
     "ts-jest": "28.0.5",

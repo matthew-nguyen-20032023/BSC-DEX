@@ -63,14 +63,6 @@ export default {
       required: true
     },
   },
-  watch: {
-    pairId() {
-      this.listTrades();
-    },
-    intervalType() {
-      this.listTrades();
-    }
-  },
   data() {
     return {
       a: 0,
@@ -108,6 +100,14 @@ export default {
     //   this.$refs.tradingVue.setRange(t1, t2)
     // )
   },
+  watch: {
+    pairId() {
+      this.listTrades();
+    },
+    intervalType() {
+      this.listTrades();
+    }
+  },
   created: debounce(function () {
     this.listTrades();
   }, 600),
@@ -116,6 +116,7 @@ export default {
       this.intervalType = intervalType;
       this.millisecondStep = millisecondStep;
       this.chart.chart.tf = tf;
+      this.chart.chart.data = [];
     },
     listTrades() {
       const toTimestamp = Date.now();

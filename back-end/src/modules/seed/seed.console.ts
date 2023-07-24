@@ -7,7 +7,12 @@ import * as bcrypt from "bcrypt";
 import { Trade, TradeDocument } from "src/models/schemas/trade.schema";
 import { Token, TokenDocument } from "src/models/schemas/token.schema";
 import { Pair, PairDocument, PairStatus } from "src/models/schemas/pair.schema";
-import { Order, OrderDocument } from "src/models/schemas/order.schema";
+import {
+  Order,
+  OrderDocument,
+  OrderStatus,
+  OrderType,
+} from "src/models/schemas/order.schema";
 import { EventDocument } from "src/models/schemas/event.schema";
 import { TradeRepository } from "src/models/repositories/trade.repository";
 import { TokenRepository } from "src/models/repositories/token.repository";
@@ -16,6 +21,16 @@ import { OrderRepository } from "src/models/repositories/order.repository";
 import { EventRepository } from "src/models/repositories/event.repository";
 import { Binance } from "src/blockchains/binance";
 const BigNumber = require("bignumber.js");
+import { LimitOrder, SignatureType } from "@0x/protocol-utils";
+import { randomIntFromInterval, sleep } from "src/helper/common";
+import { SocketEmitter } from "src/socket/socket-emitter";
+const {
+  RPCSubprovider,
+  Web3ProviderEngine,
+  PrivateKeyWalletSubprovider,
+} = require("@0x/subproviders");
+const { providerUtils } = require("@0x/utils");
+const { Web3Wrapper } = require("@0x/web3-wrapper");
 
 @Console()
 export class SeedConsole {
@@ -105,7 +120,7 @@ export class SeedConsole {
     await this.pairRepository.save(newPair);
   }
 
-  private async mintTokenForTestingAccounts(
+  public static async mintTokenForTestingAccounts(
     tokenAddress: string
   ): Promise<void> {
     const testingAmountMint = new BigNumber(1000000)
@@ -169,9 +184,220 @@ export class SeedConsole {
     await this.seedAdminUser();
     await this.seedTokens();
     await this.seedPair();
-    await this.mintTokenForTestingAccounts(process.env.BASE_TOKEN_FOR_TEST);
-    await this.mintTokenForTestingAccounts(process.env.QUOTE_TOKEN_FOR_TEST);
+    await SeedConsole.mintTokenForTestingAccounts(
+      process.env.BASE_TOKEN_FOR_TEST
+    );
+    await SeedConsole.mintTokenForTestingAccounts(
+      process.env.QUOTE_TOKEN_FOR_TEST
+    );
     console.log("Seeding data done. Exist process seeding");
     process.exit();
+  }
+
+  private static async createRandomOrder(): Promise<{
+    limitOrder: LimitOrder;
+    orderType: OrderType;
+  }> {
+    // 1 for buying and 2 for selling
+    const randomNumber = randomIntFromInterval(1, 2);
+    // random quantity and price for order
+    const price = randomIntFromInterval(1, 10);
+    const amount = randomIntFromInterval(1, 20);
+    const total = price * amount;
+
+    const limitOrder = new LimitOrder({
+      chainId: Number(process.env.BSC_CHAIN_ID),
+      verifyingContract: process.env.VERIFY_SMART_CONTRACT_ADDRESS,
+      maker: process.env.ACCOUNT_ADDRESS_TEST_10,
+      taker: "0x0000000000000000000000000000000000000000",
+      makerToken:
+        randomNumber === 1
+          ? process.env.QUOTE_TOKEN_FOR_TEST
+          : process.env.BASE_TOKEN_FOR_TEST,
+      takerToken:
+        randomNumber === 1
+          ? process.env.BASE_TOKEN_FOR_TEST
+          : process.env.QUOTE_TOKEN_FOR_TEST,
+      makerAmount:
+        randomNumber === 1
+          ? new BigNumber(total).times(new BigNumber(10).pow(18)).toFixed()
+          : new BigNumber(amount).times(new BigNumber(10).pow(18)).toFixed(),
+      takerAmount:
+        randomNumber === 1
+          ? new BigNumber(amount).times(new BigNumber(10).pow(18)).toFixed()
+          : new BigNumber(total).times(new BigNumber(10).pow(18)).toFixed(),
+      takerTokenFeeAmount: new BigNumber(0).toString(),
+      sender: "0x0000000000000000000000000000000000000000",
+      feeRecipient: "0x0000000000000000000000000000000000000000",
+      // @ts-ignore
+      expiry: Math.floor(Date.now() / 1000 + 3000),
+      pool: "0x0000000000000000000000000000000000000000000000000000000000000000",
+      // @ts-ignore
+      salt: Date.now().toString(),
+    });
+    return {
+      limitOrder: limitOrder,
+      orderType: randomNumber === 1 ? OrderType.BuyOrder : OrderType.SellOrder,
+    };
+  }
+
+  private static async prepareOrderToBackend(
+    limitOrder: LimitOrder,
+    orderType: OrderType,
+    signature: string,
+    pairId: string
+  ): Promise<Order> {
+    const newOrder = new Order();
+    newOrder.orderHash = limitOrder.getHash();
+    newOrder.type = orderType;
+    newOrder.chainId = Number(process.env.BSC_CHAIN_ID);
+    newOrder.verifyingContract = process.env.VERIFY_SMART_CONTRACT_ADDRESS;
+    newOrder.price =
+      orderType === OrderType.BuyOrder
+        ? new BigNumber(limitOrder.makerAmount)
+            .div(limitOrder.takerAmount)
+            .toString()
+        : new BigNumber(limitOrder.takerAmount)
+            .div(limitOrder.makerAmount)
+            .toString();
+    newOrder.maker = limitOrder.maker;
+    newOrder.taker = limitOrder.taker;
+    newOrder.makerToken = limitOrder.makerToken;
+    newOrder.takerToken = limitOrder.takerToken;
+    newOrder.makerAmount = limitOrder.makerAmount.toString();
+    newOrder.takerAmount = limitOrder.takerAmount.toString();
+    newOrder.takerTokenFeeAmount = limitOrder.takerTokenFeeAmount.toString();
+    newOrder.sender = limitOrder.sender;
+    newOrder.feeRecipient = limitOrder.feeRecipient;
+    newOrder.expiry = Number(limitOrder.expiry);
+    newOrder.pool = limitOrder.pool;
+    newOrder.salt = limitOrder.salt.toString();
+    newOrder.signature = signature;
+
+    newOrder.status = OrderStatus.FillAble;
+    newOrder.pairId = pairId;
+    newOrder.remainingAmount =
+      orderType === OrderType.BuyOrder
+        ? limitOrder.takerAmount.toString()
+        : limitOrder.makerAmount.toString();
+
+    return newOrder;
+  }
+
+  private static async getProviderEngine() {
+    const wallet = new PrivateKeyWalletSubprovider(
+      process.env.ACCOUNT_PRIVATE_TEST_10,
+      Number(process.env.BSC_CHAIN_ID)
+    );
+    const pe = new Web3ProviderEngine();
+    pe.addProvider(wallet);
+    pe.addProvider(new RPCSubprovider(process.env.BSC_RPC));
+    providerUtils.startProviderEngine(pe);
+    return pe;
+  }
+
+  @Command({ command: "auto-bot-trading" })
+  async autoBotTrading(): Promise<void> {
+    let count = 0;
+    const pe = await SeedConsole.getProviderEngine();
+    const web3Wrapper = new Web3Wrapper(pe);
+    const baseTokenSmartContract =
+      await Binance.getInstance().createERC20ContractByToken(
+        process.env.BASE_TOKEN_FOR_TEST
+      );
+    const quoteTokenSmartContract =
+      await Binance.getInstance().createERC20ContractByToken(
+        process.env.QUOTE_TOKEN_FOR_TEST
+      );
+    const matchingOrderSmartContract =
+      await Binance.getInstance().getMatchingOrderContract();
+
+    while (1) {
+      const { limitOrder, orderType } = await SeedConsole.createRandomOrder();
+      const signature = await limitOrder.getSignatureWithProviderAsync(
+        web3Wrapper.getProvider(),
+        SignatureType.EIP712,
+        process.env.ACCOUNT_ADDRESS_TEST_10
+      );
+
+      const baseTokenAddress =
+        orderType === OrderType.BuyOrder
+          ? limitOrder.takerToken
+          : limitOrder.makerToken;
+      const quoteTokenAddress =
+        orderType === OrderType.BuyOrder
+          ? limitOrder.makerToken
+          : limitOrder.takerToken;
+
+      const pair = await this.pairRepository.getPairByBaseQuoteToken(
+        baseTokenAddress.toLowerCase(),
+        quoteTokenAddress.toLowerCase()
+      );
+
+      if (!pair) {
+        console.log("No pair found");
+        await sleep(3000);
+        continue;
+      }
+
+      const orderForBackend = await SeedConsole.prepareOrderToBackend(
+        limitOrder,
+        orderType,
+        JSON.stringify(signature),
+        pair._id.toString()
+      );
+
+      SocketEmitter.getInstance().emitNewOrderCreated(orderForBackend);
+      await this.orderRepository.save(orderForBackend);
+
+      if (orderType === OrderType.BuyOrder) {
+        await quoteTokenSmartContract.methods
+          .approve(
+            process.env.ORDER_SMART_CONTRACT_ADDRESS,
+            limitOrder.makerAmount
+          )
+          .send({
+            from: process.env.ACCOUNT_ADDRESS_TEST_10,
+          });
+
+        await baseTokenSmartContract.methods
+          .approve(
+            process.env.ORDER_SMART_CONTRACT_ADDRESS,
+            limitOrder.takerAmount
+          )
+          .send({
+            from: process.env.ACCOUNT_ADDRESS_TEST_9,
+          });
+      } else {
+        await baseTokenSmartContract.methods
+          .approve(
+            process.env.ORDER_SMART_CONTRACT_ADDRESS,
+            limitOrder.makerAmount
+          )
+          .send({
+            from: process.env.ACCOUNT_ADDRESS_TEST_10,
+          });
+
+        await quoteTokenSmartContract.methods
+          .approve(
+            process.env.ORDER_SMART_CONTRACT_ADDRESS,
+            limitOrder.takerAmount
+          )
+          .send({
+            from: process.env.ACCOUNT_ADDRESS_TEST_9,
+          });
+      }
+
+      await matchingOrderSmartContract.methods
+        .fillLimitOrder(limitOrder, signature, limitOrder.takerAmount)
+        .send({
+          from: process.env.ACCOUNT_ADDRESS_TEST_9,
+          value: 0,
+          gas: 800000,
+          gasPrice: 20e9,
+        });
+      console.log(`Bot trading complete process ${count++}`);
+      await sleep(4000);
+    }
   }
 }
