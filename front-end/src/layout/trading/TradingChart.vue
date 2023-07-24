@@ -131,7 +131,8 @@ export default {
           );
           lastTrade = this.chart.chart.data[lastTradeIndex];
         }
-        if (lastTrade && trade.timestamp <= lastTrade[0]) {
+        const roundDownTradeTimestamp = Math.floor(trade.timestamp / (60 * 1000)) * 60 * 1000;
+        if (lastTrade && roundDownTradeTimestamp <= lastTrade[0]) {
           let high = new BigNumber(this.chart.chart.data[lastTradeIndex][2]);
           let low = new BigNumber(this.chart.chart.data[lastTradeIndex][3]);
 
@@ -192,8 +193,8 @@ export default {
       this.chart.chart.tf = tf;
     },
     listTrades() {
-      const toTimestamp = Math.ceil(Date.now() / (60 * 1000)) * 60 * 1000;
-      const fromTimestamp= Date.now() - (this.millisecondStep * this.candleLength);
+      const toTimestamp = Math.floor(Date.now() / (60 * 1000)) * 60 * 1000;
+      const fromTimestamp= toTimestamp - (this.millisecondStep * this.candleLength);
       listTrades(this.pairId, fromTimestamp, toTimestamp, this.intervalType).then(res => {
         this.chart.chart.data = [];
         this.chart.chart.data = res.data.data.map(e => {
