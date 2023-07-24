@@ -49,6 +49,8 @@ import TradingVue from 'trading-vue-js';
 import {listTrades} from "@/plugins/backend";
 import {notificationWithCustomMessage} from "@/plugins/notification";
 const debounce = require('debounce');
+import {socket} from "@/plugins/socket";
+const BigNumber = require('bignumber.js');
 
 export default {
   name: 'app',
@@ -110,18 +112,90 @@ export default {
   },
   created: debounce(function () {
     this.listTrades();
+    this.initSocketNewTradeCreated();
   }, 600),
   methods: {
+    initSocketNewTradeCreated: debounce(function () {
+      let lastTradeIndex = this.chart.chart.data.length - 1;
+      let ohlcvInterval = this.convertToMilliseconds(
+        this.intervalType
+      );
+      let lastTrade = this.chart.chart.data[lastTradeIndex];
+      let oldIntervalType = this.intervalType;
+      let oldPairId = this.pairId;
+      socket.on('NewTradeCreated', (trade) => {
+        if (this.intervalType !== oldIntervalType || oldPairId !== this.pairId) {
+          lastTradeIndex = this.chart.chart.data.length - 1;
+          ohlcvInterval = this.convertToMilliseconds(
+            this.intervalType
+          );
+          lastTrade = this.chart.chart.data[lastTradeIndex];
+        }
+        if (lastTrade && trade.timestamp <= lastTrade[0]) {
+          let high = new BigNumber(this.chart.chart.data[lastTradeIndex][2]);
+          let low = new BigNumber(this.chart.chart.data[lastTradeIndex][3]);
+
+          if (lastTrade[2] < trade.price) high = new BigNumber(trade.price);
+          if (lastTrade[3] > trade.price) low = new BigNumber(trade.price);
+
+          this.chart.chart.data[lastTradeIndex][4] = new BigNumber(trade.price);
+          let volume = new BigNumber(trade.volume).div(new BigNumber(10).pow(18));
+          volume = volume.plus(this.chart.chart.data[lastTradeIndex][5]);
+
+          let tradeUpdate = [];
+          tradeUpdate[0] = this.chart.chart.data[lastTradeIndex][0];
+          tradeUpdate[1] = new BigNumber(this.chart.chart.data[lastTradeIndex][1]);
+          tradeUpdate[2] = high;
+          tradeUpdate[3] = low;
+          tradeUpdate[4] = new BigNumber(trade.price);
+          tradeUpdate[5] = volume;
+          this.chart.chart.data.splice(lastTradeIndex, 1);
+          this.chart.chart.data.push(tradeUpdate);
+        } else {
+          let newTrade = [];
+          newTrade[0] = trade.timestamp + ohlcvInterval;
+          newTrade[1] = new BigNumber(lastTrade[1]);
+          newTrade[2] = new BigNumber(trade.price);
+          newTrade[3] = new BigNumber(trade.price);
+          newTrade[4] = new BigNumber(trade.price);
+          newTrade[5] = new BigNumber(trade.volume).div(new BigNumber(10).pow(18));
+          this.chart.chart.data.push(newTrade);
+          lastTrade = newTrade;
+          lastTradeIndex++;
+        }
+      })
+    },1000),
+    convertToMilliseconds(
+      ohlcvTypeInterval
+    ) {
+      const dataConvert = [];
+      dataConvert["1m"] = 60000;
+      dataConvert["3m"] = 180000;
+      dataConvert["5m"] = 300000;
+      dataConvert["15m"] = 900000;
+      dataConvert["30m"] = 1800000;
+      dataConvert["1h"] = 3600000;
+      dataConvert["2h"] = 7200000;
+      dataConvert["4h"] = 14400000;
+      dataConvert["8h"] = 28800000;
+      dataConvert["12h"] = 43200000;
+      dataConvert["1d"] = 86400000;
+      dataConvert["3d"] = 259200000;
+      dataConvert["1w"] = 604800000;
+      return dataConvert[ohlcvTypeInterval]
+        ? dataConvert[ohlcvTypeInterval]
+        : null;
+    },
     changeIntervalType(tf, intervalType, millisecondStep) {
       this.intervalType = intervalType;
       this.millisecondStep = millisecondStep;
       this.chart.chart.tf = tf;
-      this.chart.chart.data = [];
     },
     listTrades() {
-      const toTimestamp = Date.now();
+      const toTimestamp = Math.ceil(Date.now() / (60 * 1000)) * 60 * 1000;
       const fromTimestamp= Date.now() - (this.millisecondStep * this.candleLength);
       listTrades(this.pairId, fromTimestamp, toTimestamp, this.intervalType).then(res => {
+        this.chart.chart.data = [];
         this.chart.chart.data = res.data.data.map(e => {
           e.close = Number(e.close);
           e.high = Number(e.high);
