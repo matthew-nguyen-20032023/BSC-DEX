@@ -13,13 +13,13 @@
     </b-nav>
     <b-container fluid>
       <b-row class="justify-content-center mb-3">
-        <b-col class="custom-ticker-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
+        <b-col id="ticker" class="custom-ticker-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
           <ticker @pairChange="pairChange"/>
         </b-col>
       </b-row>
 
       <b-row class="justify-content-center">
-        <b-col style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
+        <b-col id="order-book" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
           <b-row class="mt-1  ml-1 mr-1 mb-1">
             <order-book :pair-id="pairId" :order-book-type="'sell'"/>
           </b-row>
@@ -28,12 +28,12 @@
           </b-row>
         </b-col>
 
-        <b-col class="custom-trading-col">
+        <b-col class="custom-trading-col" id="chart-trading">
           <div style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
             <TradingChart :pair-id="pairId" :trading-pair="`${baseTokenSymbol} / ${quoteTokenSymbol}`"/>
           </div>
         </b-col>
-        <b-col style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
+        <b-col id="market-trade" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
           <b-row class="mt-1  ml-1 mr-1 mb-1">
             <market-trade :pair-id="pairId" />
           </b-row>
@@ -72,6 +72,7 @@ import MarketTrade from "@/layout/trading/MarketTrade";
 import Ticker from "@/layout/trading/Ticker";
 import History from "@/layout/trading/History";
 import Order from "@/layout/trading/Order";
+const debounce = require('debounce');
 
 export default {
   data() {
@@ -93,7 +94,21 @@ export default {
     TradingChart,
     OrderBook
   },
+  created: debounce(function () {
+    this.onResize()
+  },500),
+  mounted() {
+    window.addEventListener('resize', this.onResize)
+    this.onResize()
+  },
   methods: {
+    onResize() {
+      const chartTrading = document.getElementById('trading-vue-js');
+      const myTrade = document.getElementById('market-trade');
+      const myOrderBook = document.getElementById('order-book');
+      myTrade.style.maxHeight = chartTrading.style.height;
+      myOrderBook.style.maxHeight = chartTrading.style.height;
+    },
     pairChange(newPair) {
       this.baseTokenSymbol = newPair.name.split(" / ")[0];
       this.quoteTokenSymbol = newPair.name.split(" / ")[1];
@@ -128,18 +143,18 @@ export default {
 
 <style lang="scss" scoped>
 .custom-trading-col {
-  flex-basis: calc((100% / 12) * 4.5);
-  max-width: calc((100% / 12) * 4.5);
+  flex-basis: calc((100% / 12) * 4);
+  max-width: calc((100% / 12) * 4);
 }
 
 .custom-ticker-col {
-  flex-basis: calc((100% / 12) * 6.5);
-  max-width: calc((100% / 12) * 6.5);
+  flex-basis: calc((100% / 12) * 6);
+  max-width: calc((100% / 12) * 6);
 }
 
 .custom-trade-history-col {
-  flex-basis: calc((100% / 12) * 4.25);
-  max-width: calc((100% / 12) * 4.25);
+  flex-basis: calc((100% / 12) * 3.75);
+  max-width: calc((100% / 12) * 3.75);
 }
 
 .custom-order-col {

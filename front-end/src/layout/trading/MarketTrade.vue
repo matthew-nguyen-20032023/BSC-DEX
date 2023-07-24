@@ -47,14 +47,14 @@ export default {
     initSocketTradeCreated() {
       socket.on("NewTradeCreated", (data) => {
         this.data.unshift(data);
-        if (this.data.length > 33) {
+        if (this.data.length > 21) {
           this.data.pop()
         }
       })
     },
     listMarket() {
       this.data = [];
-      listCurrentOriginTrades(this.pairId, 33).then(res => {
+      listCurrentOriginTrades(this.pairId, 21).then(res => {
         this.data = res.data.data
       }).catch(error => {
         return notificationWithCustomMessage('warning', this, error.message);

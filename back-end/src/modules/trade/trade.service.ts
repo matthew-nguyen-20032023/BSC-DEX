@@ -68,7 +68,9 @@ export class TradeService {
     }
 
     const ohlcv: IOHLCV[] = [];
-    let currentIntervalStart = trades[0].timestamp + ohlcvInterval;
+    let roundDownTradeTimestamp =
+      Math.floor(trades[0].timestamp / (60 * 1000)) * 60 * 1000;
+    let currentIntervalStart = roundDownTradeTimestamp;
     let openPrice = trades[0].price;
     let highPrice = trades[0].price;
     let lowPrice = trades[0].price;
@@ -76,7 +78,9 @@ export class TradeService {
     let volume = "0";
 
     for (const trade of trades) {
-      if (trade.timestamp <= currentIntervalStart) {
+      roundDownTradeTimestamp =
+        Math.floor(trade.timestamp / (60 * 1000)) * 60 * 1000;
+      if (roundDownTradeTimestamp <= currentIntervalStart) {
         highPrice = new BigNumber(highPrice).lt(trade.price)
           ? trade.price
           : highPrice;
@@ -87,7 +91,7 @@ export class TradeService {
         volume = new BigNumber(volume).plus(trade.volume).toFixed();
       } else {
         ohlcv.push({
-          timestamp: currentIntervalStart,
+          timestamp: roundDownTradeTimestamp,
           open: openPrice,
           high: highPrice,
           low: lowPrice,
