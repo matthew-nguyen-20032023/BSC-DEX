@@ -194,7 +194,7 @@ export class SeedConsole {
     process.exit();
   }
 
-  private static async createRandomOrder(): Promise<{
+  private static async createRandomOrder(makerAddress: string): Promise<{
     limitOrder: LimitOrder;
     orderType: OrderType;
   }> {
@@ -208,7 +208,7 @@ export class SeedConsole {
     const limitOrder = new LimitOrder({
       chainId: Number(process.env.BSC_CHAIN_ID),
       verifyingContract: process.env.VERIFY_SMART_CONTRACT_ADDRESS,
-      maker: process.env.ACCOUNT_ADDRESS_TEST_10,
+      maker: makerAddress,
       taker: "0x0000000000000000000000000000000000000000",
       makerToken:
         randomNumber === 1
@@ -296,8 +296,13 @@ export class SeedConsole {
     return pe;
   }
 
-  @Command({ command: "auto-bot-trading" })
-  async autoBotTrading(): Promise<void> {
+  @Command({ command: "auto-bot-trading <makerNumber> <takerNumber>" })
+  async autoBotTrading(
+    makerNumber: string,
+    takerNumber: string
+  ): Promise<void> {
+    const makerAddress = process.env[`ACCOUNT_ADDRESS_TEST_${makerNumber}`];
+    const takerAddress = process.env[`ACCOUNT_ADDRESS_TEST_${takerNumber}`];
     let count = 0;
     const pe = await SeedConsole.getProviderEngine();
     const web3Wrapper = new Web3Wrapper(pe);
@@ -313,11 +318,13 @@ export class SeedConsole {
       await Binance.getInstance().getMatchingOrderContract();
 
     while (1) {
-      const { limitOrder, orderType } = await SeedConsole.createRandomOrder();
+      const { limitOrder, orderType } = await SeedConsole.createRandomOrder(
+        makerAddress
+      );
       const signature = await limitOrder.getSignatureWithProviderAsync(
         web3Wrapper.getProvider(),
         SignatureType.EIP712,
-        process.env.ACCOUNT_ADDRESS_TEST_10
+        makerAddress
       );
 
       const baseTokenAddress =
@@ -357,7 +364,7 @@ export class SeedConsole {
             limitOrder.makerAmount
           )
           .send({
-            from: process.env.ACCOUNT_ADDRESS_TEST_10,
+            from: makerAddress,
           });
 
         await baseTokenSmartContract.methods
@@ -366,7 +373,7 @@ export class SeedConsole {
             limitOrder.takerAmount
           )
           .send({
-            from: process.env.ACCOUNT_ADDRESS_TEST_9,
+            from: takerAddress,
           });
       } else {
         await baseTokenSmartContract.methods
@@ -375,7 +382,7 @@ export class SeedConsole {
             limitOrder.makerAmount
           )
           .send({
-            from: process.env.ACCOUNT_ADDRESS_TEST_10,
+            from: makerAddress,
           });
 
         await quoteTokenSmartContract.methods
@@ -384,14 +391,14 @@ export class SeedConsole {
             limitOrder.takerAmount
           )
           .send({
-            from: process.env.ACCOUNT_ADDRESS_TEST_9,
+            from: takerAddress,
           });
       }
 
       await matchingOrderSmartContract.methods
         .fillLimitOrder(limitOrder, signature, limitOrder.takerAmount)
         .send({
-          from: process.env.ACCOUNT_ADDRESS_TEST_9,
+          from: takerAddress,
           value: 0,
           gas: 800000,
           gasPrice: 20e9,
