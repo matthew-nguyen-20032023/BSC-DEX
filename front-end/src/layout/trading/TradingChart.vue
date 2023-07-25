@@ -74,7 +74,7 @@ export default {
     this.initSocketNewTradeCreated();
   }, 600),
   methods: {
-    onResize(event) {
+    onResize() {
       this.width = window.innerWidth / 3.2
       this.height = window.innerHeight / 2.8 - 50
     },
@@ -96,7 +96,7 @@ export default {
       this.data.set('data.chart.tf', tf.tf)
     },
     listTrades() {
-      const toTimestamp = Math.floor(Date.now() / (60 * 1000)) * 60 * 1000;
+      const toTimestamp = Math.floor(Date.now() / (60 * 1000)) * 60 * 1000 + 60 * 1000;
       const fromTimestamp= toTimestamp - (this.millisecondStep * this.candleLength);
       listTrades(this.pairId, fromTimestamp, toTimestamp, this.intervalType).then(res => {
         this.data.data.chart.data = res.data.data.map(e => {
