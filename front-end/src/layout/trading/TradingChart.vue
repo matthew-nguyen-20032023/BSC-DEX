@@ -84,8 +84,8 @@ export default {
         const roundDownTradeTimestamp = Math.floor(trade.timestamp / (60 * 1000)) * 60 * 1000;
         this.data.update({
           t: roundDownTradeTimestamp,
-          price: parseFloat(trade.price),   // Trade price
-          volume: parseFloat(tradeVolume),  // Trade amount
+          price: parseFloat(trade.price),
+          volume: parseFloat(tradeVolume),
         })
         this.$refs.tradingVue.resetChart()
       })
@@ -100,11 +100,11 @@ export default {
       const fromTimestamp= toTimestamp - (this.millisecondStep * this.candleLength);
       listTrades(this.pairId, fromTimestamp, toTimestamp, this.intervalType).then(res => {
         this.data.data.chart.data = res.data.data.map(e => {
-          e.close = Number(e.close);
-          e.high = Number(e.high);
-          e.low = Number(e.low);
-          e.open = Number(e.open);
-          e.volume = Number(e.volume);
+          e.close = parseFloat(e.close);
+          e.high = parseFloat(e.high);
+          e.low = parseFloat(e.low);
+          e.open = parseFloat(e.open);
+          e.volume = parseFloat(e.volume);
           return Object.values(e)
         });
         this.$refs.tradingVue.resetChart()
