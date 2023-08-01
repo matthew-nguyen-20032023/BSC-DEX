@@ -1,5 +1,5 @@
 <template>
-  <table :id="orderBookType" style="position: relative; font-size: 12px">
+  <table :id="orderBookType" style="font-size: 12px">
     <tr v-if="orderBookType === 'sell'" style="color: rgb(132, 142, 156)">
       <th>Price</th>
       <th>Amount</th>
