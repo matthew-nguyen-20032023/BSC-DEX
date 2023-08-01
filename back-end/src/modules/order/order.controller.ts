@@ -1,13 +1,14 @@
 import { Body, Controller, Get, HttpStatus, Post, Query } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { Public } from "src/modules/authentication/auth.const";
 import { IResponseToClient } from "src/configs/response-to-client.config";
 import { OrderService } from "src/modules/order/order.service";
-import { CreateOrderDto } from "src/modules/order/dto/create-order.dto";
 import { OrderMessageSuccess } from "src/modules/order/order.const";
-import { Public } from "src/modules/authentication/auth.const";
+import { CreateOrderDto } from "src/modules/order/dto/create-order.dto";
 import { ListOrderDto } from "src/modules/order/dto/list-order.dto";
 import { ListOrderBookDto } from "src/modules/order/dto/list-order-book.dto";
-import { EstimateAllowanceDto } from "./dto/estimate-allowance.dto";
+import { EstimateAllowanceDto } from "src/modules/order/dto/estimate-allowance.dto";
+import { GetMatchOrdersDto } from "src/modules/order/dto/get-match-orders.dto";
 
 @Controller("order")
 @ApiBearerAuth()
@@ -62,6 +63,28 @@ export class OrderController {
     );
     return {
       message: OrderMessageSuccess.EstimateAllowanceSuccess,
+      data,
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  @Get("match-orders")
+  @Public()
+  @ApiOperation({
+    summary: "Api to get match order",
+  })
+  public async getMatchOrders(
+    @Query() getMatchOrdersDto: GetMatchOrdersDto
+  ): Promise<IResponseToClient> {
+    const data = await this.orderService.getMatchOrders(
+      getMatchOrdersDto.makerToken,
+      getMatchOrdersDto.takerToken,
+      getMatchOrdersDto.price,
+      getMatchOrdersDto.amount,
+      getMatchOrdersDto.orderType
+    );
+    return {
+      message: OrderMessageSuccess.GetMatchOrderSuccess,
       data,
       statusCode: HttpStatus.OK,
     };

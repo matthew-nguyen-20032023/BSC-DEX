@@ -194,14 +194,17 @@ export class SeedConsole {
     process.exit();
   }
 
-  private static async createRandomOrder(makerAddress: string): Promise<{
+  private static async createRandomOrder(
+    makerAddress: string,
+    maxPrice: number
+  ): Promise<{
     limitOrder: LimitOrder;
     orderType: OrderType;
   }> {
     // 1 for buying and 2 for selling
     const randomNumber = randomIntFromInterval(1, 2);
     // random quantity and price for order
-    const price = randomIntFromInterval(1, 10);
+    const price = randomIntFromInterval(1, maxPrice);
     const amount = randomIntFromInterval(1, 20);
     const total = price * amount;
 
@@ -296,10 +299,15 @@ export class SeedConsole {
     return pe;
   }
 
-  @Command({ command: "auto-bot-trading <makerNumber> <takerNumber>" })
+  @Command({
+    command:
+      "auto-bot-trading <makerNumber> <takerNumber> <maxPrice> <sleepTime>",
+  })
   async autoBotTrading(
     makerNumber: string,
-    takerNumber: string
+    takerNumber: string,
+    maxPrice: number,
+    sleepTime: number
   ): Promise<void> {
     const makerAddress = process.env[`ACCOUNT_ADDRESS_TEST_${makerNumber}`];
     const takerAddress = process.env[`ACCOUNT_ADDRESS_TEST_${takerNumber}`];
@@ -319,7 +327,8 @@ export class SeedConsole {
 
     while (1) {
       const { limitOrder, orderType } = await SeedConsole.createRandomOrder(
-        makerAddress
+        makerAddress,
+        maxPrice
       );
       const signature = await limitOrder.getSignatureWithProviderAsync(
         web3Wrapper.getProvider(),
@@ -404,7 +413,7 @@ export class SeedConsole {
           gasPrice: 20e9,
         });
       console.log(`Bot trading complete process ${count++}`);
-      await sleep(4000);
+      await sleep(sleepTime);
     }
   }
 }
