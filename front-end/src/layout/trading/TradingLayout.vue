@@ -23,7 +23,7 @@
           <b-row class="mt-1  ml-1 mr-1 mb-1">
             <order-book :pair-id="pairId" :order-book-type="'sell'"/>
           </b-row>
-          <b-row class="mt-1  ml-1 mr-1 mb-1">
+          <b-row class="mt-1  ml-1 mr-1 mb-1" style="position: fixed; top: 25%;">
             <order-book :pair-id="pairId" :order-book-type="'buy'"/>
           </b-row>
         </b-col>

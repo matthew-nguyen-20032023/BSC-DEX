@@ -194,21 +194,24 @@ export class SeedConsole {
     process.exit();
   }
 
-  private static async createRandomOrder(): Promise<{
+  private static async createRandomOrder(
+    makerAddress: string,
+    maxPrice: number
+  ): Promise<{
     limitOrder: LimitOrder;
     orderType: OrderType;
   }> {
     // 1 for buying and 2 for selling
     const randomNumber = randomIntFromInterval(1, 2);
     // random quantity and price for order
-    const price = randomIntFromInterval(1, 10);
+    const price = randomIntFromInterval(1, maxPrice);
     const amount = randomIntFromInterval(1, 20);
     const total = price * amount;
 
     const limitOrder = new LimitOrder({
       chainId: Number(process.env.BSC_CHAIN_ID),
       verifyingContract: process.env.VERIFY_SMART_CONTRACT_ADDRESS,
-      maker: process.env.ACCOUNT_ADDRESS_TEST_10,
+      maker: makerAddress,
       taker: "0x0000000000000000000000000000000000000000",
       makerToken:
         randomNumber === 1
@@ -296,8 +299,18 @@ export class SeedConsole {
     return pe;
   }
 
-  @Command({ command: "auto-bot-trading" })
-  async autoBotTrading(): Promise<void> {
+  @Command({
+    command:
+      "auto-bot-trading <makerNumber> <takerNumber> <maxPrice> <sleepTime>",
+  })
+  async autoBotTrading(
+    makerNumber: string,
+    takerNumber: string,
+    maxPrice: number,
+    sleepTime: number
+  ): Promise<void> {
+    const makerAddress = process.env[`ACCOUNT_ADDRESS_TEST_${makerNumber}`];
+    const takerAddress = process.env[`ACCOUNT_ADDRESS_TEST_${takerNumber}`];
     let count = 0;
     const pe = await SeedConsole.getProviderEngine();
     const web3Wrapper = new Web3Wrapper(pe);
@@ -313,11 +326,14 @@ export class SeedConsole {
       await Binance.getInstance().getMatchingOrderContract();
 
     while (1) {
-      const { limitOrder, orderType } = await SeedConsole.createRandomOrder();
+      const { limitOrder, orderType } = await SeedConsole.createRandomOrder(
+        makerAddress,
+        maxPrice
+      );
       const signature = await limitOrder.getSignatureWithProviderAsync(
         web3Wrapper.getProvider(),
         SignatureType.EIP712,
-        process.env.ACCOUNT_ADDRESS_TEST_10
+        makerAddress
       );
 
       const baseTokenAddress =
@@ -357,7 +373,7 @@ export class SeedConsole {
             limitOrder.makerAmount
           )
           .send({
-            from: process.env.ACCOUNT_ADDRESS_TEST_10,
+            from: makerAddress,
           });
 
         await baseTokenSmartContract.methods
@@ -366,7 +382,7 @@ export class SeedConsole {
             limitOrder.takerAmount
           )
           .send({
-            from: process.env.ACCOUNT_ADDRESS_TEST_9,
+            from: takerAddress,
           });
       } else {
         await baseTokenSmartContract.methods
@@ -375,7 +391,7 @@ export class SeedConsole {
             limitOrder.makerAmount
           )
           .send({
-            from: process.env.ACCOUNT_ADDRESS_TEST_10,
+            from: makerAddress,
           });
 
         await quoteTokenSmartContract.methods
@@ -384,20 +400,20 @@ export class SeedConsole {
             limitOrder.takerAmount
           )
           .send({
-            from: process.env.ACCOUNT_ADDRESS_TEST_9,
+            from: takerAddress,
           });
       }
 
       await matchingOrderSmartContract.methods
         .fillLimitOrder(limitOrder, signature, limitOrder.takerAmount)
         .send({
-          from: process.env.ACCOUNT_ADDRESS_TEST_9,
+          from: takerAddress,
           value: 0,
           gas: 800000,
           gasPrice: 20e9,
         });
       console.log(`Bot trading complete process ${count++}`);
-      await sleep(4000);
+      await sleep(sleepTime);
     }
   }
 }

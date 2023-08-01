@@ -118,6 +118,45 @@ export class OrderService {
     return this.orderRepository.listOrder(listOrderDto);
   }
 
+  public async getMatchOrders(
+    makerToken: string,
+    takerToken: string,
+    price: string,
+    expectAmount: string,
+    orderType: OrderType
+  ): Promise<Order[]> {
+    const matchedOrders = [];
+    let totalRemainingAmount = new BigNumber(0);
+    let page = 1;
+    let stop = false;
+
+    while (!stop) {
+      const matchOrders = await this.orderRepository.getMatchOrders(
+        makerToken,
+        takerToken,
+        price,
+        orderType,
+        page
+      );
+
+      if (matchedOrders.length === 0) break;
+
+      for (const order of matchOrders) {
+        if (totalRemainingAmount.gte(expectAmount)) {
+          stop = true;
+          break;
+        }
+        totalRemainingAmount = totalRemainingAmount.plus(order.remainingAmount);
+        matchOrders.push(order);
+      }
+
+      // Increase the page if totalRemainingAmount not reach to expectAmount
+      page = 2;
+    }
+
+    return matchedOrders;
+  }
+
   public async getOrderBook(
     pairId: string,
     limit: number,

@@ -79,4 +79,37 @@ export class OrderRepository {
       expiry: { $gt: Date.now() / 1000 },
     });
   }
+
+  /**
+   * @description Get best offers for user want to buy or sell order
+   * @param makerToken token user want to give
+   * @param takerToken token user want to receive
+   * @param price
+   * @param orderType // if user is buyer, so find the sell offers for, and opposite
+   * @param page
+   * @param limit
+   */
+  public async getMatchOrders(
+    makerToken: string,
+    takerToken: string,
+    price: string,
+    orderType: OrderType,
+    page = 1,
+    limit = 20
+  ): Promise<Order[]> {
+    const priceCondition =
+      orderType === OrderType.BuyOrder
+        ? { $lte: price } // find best for buyer will get order low or equal expect price
+        : { $gte: price }; // find best for seller will get order high or equal expect price
+    return this.model
+      .find({
+        makerToken: takerToken,
+        takerToken: makerToken,
+        status: OrderStatus.FillAble,
+        expiry: { $gt: Date.now() / 1000 },
+        price: priceCondition,
+      })
+      .skip((page - 1) * limit)
+      .limit(limit);
+  }
 }
