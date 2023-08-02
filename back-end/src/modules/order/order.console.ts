@@ -172,10 +172,12 @@ export class OrderConsole {
 
       const remainingAmount =
         order.type === OrderType.SellOrder
-          ? new BigNumber(order.takerAmount)
-              .minus(oldestEventCrawled.takerTokenFilledAmount)
-              .div(order.price)
-          : new BigNumber(order.takerAmount).minus(
+          ? new BigNumber(order.remainingAmount).minus(
+              new BigNumber(oldestEventCrawled.takerTokenFilledAmount).div(
+                order.price
+              )
+            )
+          : new BigNumber(order.remainingAmount).minus(
               oldestEventCrawled.takerTokenFilledAmount
             );
 
