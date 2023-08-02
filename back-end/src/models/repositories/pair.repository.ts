@@ -36,6 +36,13 @@ export class PairRepository {
     });
   }
 
+  public async getActivePairByName(name: string): Promise<Pair> {
+    return this.model.findOne({
+      name,
+      status: PairStatus.Active,
+    });
+  }
+
   /**
    * @description Just you for seeding and testing in local version
    */
