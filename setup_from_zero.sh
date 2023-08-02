@@ -75,6 +75,7 @@ pm2 start "yarn start:dev" --name="BSC_DEX_BACKEND"
 pm2 start "yarn console:dev crawl-order-matched" --name="BSC_DEX_JOB:craw-order-matched"
 pm2 start "yarn console:dev handle-limit-order-filled-crawled" --name="BSC_DEX_JOB:handle-limit-order-filled-crawled"
 pm2 start "yarn console:dev migrate-batch-order" --name="BSC_DEX_BACKEND:migrate-batch-match-order-feature"
+pm2 start 'yarn console:dev calculate-ticker24h "BTC / USD"' --name="BSC_DEX_BACKEND:calculate-ticker24h"
 #=================================================FRONTEND=============================================================#
 
 # Start front end
