@@ -1,5 +1,4 @@
 const hre = require("hardhat");
-const { AbiEncoder } = require("@0x/utils");
 const contractsDeployed = [];
 /**
  * @description: Deploy smart contract and get contract address
@@ -59,10 +58,6 @@ async function main() {
     "BatchFillNativeOrdersFeature",
     [ZeroEx.address]
   );
-  const BatchFillNativeOrdersFeatureSelector = AbiEncoder.createMethod(
-    "migrate()",
-    []
-  ).getSelector();
 
   const WETH9 = await deployContract("WETH9", []);
   const OtcOrdersFeatureContract = await deployContract("OtcOrdersFeature", [
@@ -70,16 +65,8 @@ async function main() {
     WETH9.address,
   ]);
   const Staking = await deployContract("Staking", [WETH9.address]);
-  const ERC20BitcoinContract = await deployContract("ERC20TokenCreation", [
-    100000000000,
-    "Bitcoin",
-    "BTC",
-  ]);
-  const ERC20DollarContract = await deployContract("ERC20TokenCreation", [
-    100000000000,
-    "Dollar",
-    "USD",
-  ]);
+  await deployContract("ERC20TokenCreation", [100000000000, "Bitcoin", "BTC"]);
+  await deployContract("ERC20TokenCreation", [100000000000, "Dollar", "USD"]);
   const FeeCollectorController = await deployContract(
     "FeeCollectorController",
     [WETH9.address, Staking.address]
