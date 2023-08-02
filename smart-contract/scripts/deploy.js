@@ -1,10 +1,11 @@
 const hre = require("hardhat");
-
+const { AbiEncoder } = require("@0x/utils");
+const contractsDeployed = [];
 /**
  * @description: Deploy smart contract and get contract address
  * @param contractName: string
  * @param constructorParams: any[]
- * @returns {Promise<string>}
+ * @returns {Promise<{address: string, contract: Contract}>}
  */
 async function deployContract(contractName, constructorParams) {
   const contractFactory = await hre.ethers.deployContract(
@@ -12,7 +13,19 @@ async function deployContract(contractName, constructorParams) {
     constructorParams
   );
   const contractDeployed = await contractFactory.waitForDeployment();
-  return await contractDeployed.getAddress();
+  const address = await contractDeployed.getAddress();
+
+  contractsDeployed.push({
+    name:
+      contractName === "ERC20TokenCreation"
+        ? constructorParams[1]
+        : contractName,
+    address: address,
+  });
+  return {
+    contract: contractDeployed,
+    address: address,
+  };
 }
 
 async function main() {
@@ -23,58 +36,85 @@ async function main() {
   // });
   // return;
 
-  const zeroAddress = await deployContract("ZeroEx", [
+  const SimpleFunctionRegistryFeature = await deployContract(
+    "SimpleFunctionRegistryFeature",
+    []
+  );
+  const OwnableFeature = await deployContract("OwnableFeature", []);
+  const TransformERC20Feature = await deployContract(
+    "TransformERC20Feature",
+    []
+  );
+  const FullMigration = await deployContract("FullMigration", [
     process.env.ADMIN_WALLET_ADDRESS,
   ]);
-  const wethAddress = await deployContract("WETH9", []);
-  const stakingAddress = await deployContract("Staking", [wethAddress]);
-  const erc20USDTAddress = await deployContract("ERC20TokenCreation", [
-    100000000000,
-    "Dollar",
-    "USDT",
-  ]);
-  const erc20EURAddress = await deployContract("ERC20TokenCreation", [
-    100000000000,
-    "Euro",
-    "EUR",
-  ]);
-  const feeCollectorControllerAddress = await deployContract(
-    "FeeCollectorController",
-    [wethAddress, stakingAddress]
-  );
-  const NativeOrdersFeatureAddress = await deployContract(
-    "NativeOrdersFeature",
-    [zeroAddress, wethAddress, stakingAddress, feeCollectorControllerAddress, 0]
+  const bootstrapper = await FullMigration.contract.getBootstrapper();
+  const ZeroEx = await deployContract("ZeroEx", [bootstrapper]);
+  const MetaTransactionsFeatureContract = await deployContract(
+    "MetaTransactionsFeature",
+    [ZeroEx.address]
   );
 
-  console.log(
-    zeroAddress,
-    "== Verify Contract: using in field verifyContract when create limit order"
+  const BatchFillNativeOrdersFeature = await deployContract(
+    "BatchFillNativeOrdersFeature",
+    [ZeroEx.address]
   );
-  console.log(
-    wethAddress,
-    "== WETH Contract: using for fee custom and another"
+  const BatchFillNativeOrdersFeatureSelector = AbiEncoder.createMethod(
+    "migrate()",
+    []
+  ).getSelector();
+
+  const WETH9 = await deployContract("WETH9", []);
+  const OtcOrdersFeatureContract = await deployContract("OtcOrdersFeature", [
+    ZeroEx.address,
+    WETH9.address,
+  ]);
+  const Staking = await deployContract("Staking", [WETH9.address]);
+  const ERC20BitcoinContract = await deployContract("ERC20TokenCreation", [
+    100000000000,
+    "Bitcoin",
+    "BTC",
+  ]);
+  const ERC20DollarContract = await deployContract("ERC20TokenCreation", [
+    100000000000,
+    "Dollar",
+    "USD",
+  ]);
+  const FeeCollectorController = await deployContract(
+    "FeeCollectorController",
+    [WETH9.address, Staking.address]
   );
-  console.log(
-    stakingAddress,
-    "== Stake Contract: using for stake and get fee reward"
+  const NativeOrdersFeature = await deployContract("NativeOrdersFeature", [
+    ZeroEx.address,
+    WETH9.address,
+    Staking.address,
+    FeeCollectorController.address,
+    0,
+  ]);
+
+  /**
+   * @description migrate feature to ZeroEx contract
+   */
+  await FullMigration.contract.migrateZeroEx(
+    process.env.ADMIN_WALLET_ADDRESS,
+    ZeroEx.address,
+    {
+      registry: SimpleFunctionRegistryFeature.address,
+      ownable: OwnableFeature.address,
+      transformERC20: TransformERC20Feature.address,
+      metaTransactions: MetaTransactionsFeatureContract.address,
+      nativeOrders: NativeOrdersFeature.address,
+      otcOrders: OtcOrdersFeatureContract.address,
+    },
+    {
+      transformerDeployer: process.env.ADMIN_WALLET_ADDRESS,
+      zeroExAddress: ZeroEx.address,
+      protocolFeeMultiplier: 70e3,
+    }
   );
-  console.log(
-    erc20EURAddress,
-    "=== ERU ERC20 Token Contract: using just for testing our own token"
-  );
-  console.log(
-    erc20USDTAddress,
-    "=== USDT ERC20 Token Contract: using just for testing our own token"
-  );
-  console.log(
-    feeCollectorControllerAddress,
-    "== Fee Contract: using for collect fee when user join for trade"
-  );
-  console.log(
-    NativeOrdersFeatureAddress,
-    "== Order Contract: using for create order and fill order for trade ERC20 token"
-  );
+  for (const contractDeployed of contractsDeployed) {
+    console.log(contractDeployed.address, contractDeployed.name);
+  }
   console.log(
     "For more information, refer to https://0x.org/ for understand more how to use"
   );

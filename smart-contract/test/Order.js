@@ -28,11 +28,49 @@ describe("Exchange Smart Contract", function () {
 
     const [owner, otherAccount] = await ethers.getSigners();
 
+    const SimpleFunctionRegistryFeature = await ethers.getContractFactory(
+      "SimpleFunctionRegistryFeature"
+    );
+    const SimpleFunctionRegistryFeatureContract =
+      await SimpleFunctionRegistryFeature.deploy();
+
+    const OwnableFeature = await ethers.getContractFactory("OwnableFeature");
+    const OwnableFeatureContract = await OwnableFeature.deploy();
+
+    const TransformERC20Feature = await ethers.getContractFactory(
+      "TransformERC20Feature"
+    );
+    const TransformERC20FeatureContract = await TransformERC20Feature.deploy();
+
+    const FullMigration = await ethers.getContractFactory("FullMigration");
+    const FullMigrationContract = await FullMigration.deploy(owner.address);
+    const bootstrapper = await FullMigrationContract.getBootstrapper();
+
     const ZeroEx = await ethers.getContractFactory("ZeroEx");
-    const ZeroExContract = await ZeroEx.deploy(owner.address);
+    const ZeroExContract = await ZeroEx.deploy(bootstrapper);
+
+    const MetaTransactionsFeature = await ethers.getContractFactory(
+      "MetaTransactionsFeature"
+    );
+    const MetaTransactionsFeatureContract =
+      await MetaTransactionsFeature.deploy(ZeroExContract.target);
+
+    const BatchFillNativeOrdersFeature = await ethers.getContractFactory(
+      "BatchFillNativeOrdersFeature"
+    );
+    const BatchFillNativeOrdersFeatureContract =
+      await BatchFillNativeOrdersFeature.deploy(ZeroExContract.target);
 
     const WETH9 = await ethers.getContractFactory("WETH9");
     const WETH9Contract = await WETH9.deploy();
+
+    const OtcOrdersFeature = await ethers.getContractFactory(
+      "OtcOrdersFeature"
+    );
+    const OtcOrdersFeatureContract = await OtcOrdersFeature.deploy(
+      ZeroExContract.target,
+      WETH9Contract.target
+    );
 
     const Staking = await ethers.getContractFactory("Staking");
     const StakingContract = await Staking.deploy(WETH9Contract.target);
@@ -60,6 +98,28 @@ describe("Exchange Smart Contract", function () {
       StakingContract.target,
       FeeCollectorControllerContract.target,
       0
+    );
+
+    const protocolFeeMultiplier = 70e3;
+    const config = { protocolFeeMultiplier };
+    const _config = { ...config, zeroExAddress: ZeroExContract.target };
+    const migrateOpts = {
+      transformerDeployer: owner.address,
+      ..._config,
+    };
+
+    await FullMigrationContract.migrateZeroEx(
+      owner.address,
+      ZeroExContract.target,
+      {
+        registry: SimpleFunctionRegistryFeatureContract.target,
+        ownable: OwnableFeatureContract.target,
+        transformERC20: TransformERC20FeatureContract.target,
+        metaTransactions: MetaTransactionsFeatureContract.target,
+        nativeOrders: NativeOrdersFeatureContract.target,
+        otcOrders: OtcOrdersFeatureContract.target,
+      },
+      migrateOpts
     );
 
     return {
@@ -118,6 +178,30 @@ describe("Exchange Smart Contract", function () {
         owner.address
       );
 
+      const limitOrder1 = new LimitOrder({
+        chainId: Number(process.env.CHAIN_ID),
+        verifyingContract: ZeroExContract.target,
+        maker: owner.address,
+        taker: otherAccount.address,
+        makerToken: BTCContract.target,
+        takerToken: USDTContract.target,
+        makerAmount: makerAmount,
+        takerAmount: takerAmount,
+        takerTokenFeeAmount: new BigNumber(0).toString(),
+        sender: "0x0000000000000000000000000000000000000000",
+        feeRecipient: "0x0000000000000000000000000000000000000000",
+        expiry: Math.floor(Date.now() / 1000 + 300),
+        pool: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        salt: Date.now().toString(),
+      });
+
+      // Signature will save with limit order above and used for other account fill order
+      const signature1 = await limitOrder1.getSignatureWithProviderAsync(
+        web3Wrapper.getProvider(),
+        SignatureType.EIP712,
+        owner.address
+      );
+
       // Use owner to mint token for owner and otherAccount for test
       const tokenAmountMintForTest = "100000000000000000000000";
       await BTCContract.mint(owner.address, tokenAmountMintForTest); // Mint BTC for owner
@@ -126,7 +210,7 @@ describe("Exchange Smart Contract", function () {
       // Owner approve for smart contract to use BTC of owner
       await BTCContract.approve(
         NativeOrdersFeatureContract.target,
-        makerAmount
+        tokenAmountMintForTest
       );
 
       let ownerBTCBalance = await BTCContract.balanceOf(owner.address);
@@ -148,15 +232,18 @@ describe("Exchange Smart Contract", function () {
       // Other account approve for smart contract to use USDT of other account
       await USDTContract.connect(otherAccount).approve(
         NativeOrdersFeatureContract.target,
-        takerAmount
+        tokenAmountMintForTest
       );
 
       // Fill order above
       // This is other account accept to take 200 BTC with 600 USDT spent
-      await NativeOrdersFeatureContract.connect(otherAccount).fillLimitOrder(
-        limitOrder,
-        signature,
-        takerAmount
+      await NativeOrdersFeatureContract.connect(
+        otherAccount
+      ).batchFillLimitOrders(
+        [limitOrder, limitOrder1],
+        [signature, signature1],
+        [takerAmount, 500],
+        false
       );
 
       ownerBTCBalance = await BTCContract.balanceOf(owner.address);

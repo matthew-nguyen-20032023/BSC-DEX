@@ -33,17 +33,17 @@ cd smart-contract
 npm install
 resultDeployed=$(npx hardhat run ./scripts/deploy.js --network EthereumLocal)
 
-# Extract addresses of exchange deployed smart contract
-matchingExchangeContract=$(echo "$resultDeployed" | grep "==")
-exchangeAddresses=$(echo "$matchingExchangeContract" | awk '{print $1}')
-verifyContractAddress=$(echo "$exchangeAddresses" | head -n 1)
-orderMatchingContractAddress=$(echo "$exchangeAddresses" | tail -n 1)
+# Extract ZeroEx address
+ZeroExOutput=$(echo "$resultDeployed" | grep "ZeroEx")
+ZeroExAddress=$(echo "$ZeroExOutput" | awk '{print $1}')
 
-# Extract addresses of erc20 deployed smart contract for test
-matchingERC20Contract=$(echo "$resultDeployed" | grep "===")
-erc20Addresses=$(echo "$matchingERC20Contract" | awk '{print $1}')
-baseTokenContractAddress=$(echo "$erc20Addresses" | head -n 1)
-quoteTokenContractAddress=$(echo "$erc20Addresses" | tail -n 1)
+# Extract base token for test
+BitcoinOutput=$(echo "$resultDeployed" | grep "Bitcoin")
+BitcoinAddress=$(echo "$BitcoinOutput" | awk '{print $1}')
+
+# Extract quote token for test
+DollarOutput=$(echo "$resultDeployed" | grep "Dollar")
+DollarAddress=$(echo "$DollarOutput" | awk '{print $1}')
 
 #=================================================BACKEND==============================================================#
 
@@ -52,10 +52,10 @@ cd ../back-end
 # Create and update env file for backend
 cp .env.example .env
 env_file_backend=".env"
-sed -i "s/^ORDER_SMART_CONTRACT_ADDRESS=.*/ORDER_SMART_CONTRACT_ADDRESS=$orderMatchingContractAddress/" "$env_file_backend"
-sed -i "s/^BASE_TOKEN_FOR_TEST=.*/BASE_TOKEN_FOR_TEST=$baseTokenContractAddress/" "$env_file_backend"
-sed -i "s/^QUOTE_TOKEN_FOR_TEST=.*/QUOTE_TOKEN_FOR_TEST=$quoteTokenContractAddress/" "$env_file_backend"
-sed -i "s/^VERIFY_SMART_CONTRACT_ADDRESS=.*/VERIFY_SMART_CONTRACT_ADDRESS=$verifyContractAddress/" "$env_file_backend"
+sed -i "s/^ORDER_SMART_CONTRACT_ADDRESS=.*/ORDER_SMART_CONTRACT_ADDRESS=$ZeroExAddress/" "$env_file_backend"
+sed -i "s/^BASE_TOKEN_FOR_TEST=.*/BASE_TOKEN_FOR_TEST=$BitcoinAddress/" "$env_file_backend"
+sed -i "s/^QUOTE_TOKEN_FOR_TEST=.*/QUOTE_TOKEN_FOR_TEST=$DollarAddress/" "$env_file_backend"
+sed -i "s/^VERIFY_SMART_CONTRACT_ADDRESS=.*/VERIFY_SMART_CONTRACT_ADDRESS=$ZeroExAddress/" "$env_file_backend"
 
 npm install -g yarn
 yarn -v
@@ -82,8 +82,8 @@ npm install
 # Create and update env file
 cp .env.example .env
 env_file_frontend=".env"
-sed -i "s/^VUE_APP_ZERO_CONTRACT_ADDRESS=.*/VUE_APP_ZERO_CONTRACT_ADDRESS=$verifyContractAddress/" "$env_file_frontend"
-sed -i "s/^VUE_APP_ORDER_ADDRESS=.*/VUE_APP_ORDER_ADDRESS=$orderMatchingContractAddress/" "$env_file_frontend"
+sed -i "s/^VUE_APP_ZERO_CONTRACT_ADDRESS=.*/VUE_APP_ZERO_CONTRACT_ADDRESS=$ZeroExAddress/" "$env_file_frontend"
+sed -i "s/^VUE_APP_ORDER_ADDRESS=.*/VUE_APP_ORDER_ADDRESS=$ZeroExAddress/" "$env_file_frontend"
 
 pm2 start "npm run serve" --name="BSC_DEX_FRONTEND"
 
@@ -91,10 +91,10 @@ pm2 start "npm run serve" --name="BSC_DEX_FRONTEND"
 
 # Those important information gonna print to screen
 echo "============================================IMPORTANT INFORMATION================================================"
-echo "Smart contract to verify order: $verifyContractAddress"
-echo "Smart contract for matching order: $orderMatchingContractAddress"
-echo "Base token for testing: $baseTokenContractAddress"
-echo "Quote token for testing: $quoteTokenContractAddress"
+echo "Smart contract to verify order: $ZeroExAddress"
+echo "Smart contract for matching order: $ZeroExAddress"
+echo "Base token for testing: $BitcoinAddress"
+echo "Quote token for testing: $DollarAddress"
 echo "Using pm2 ls to see all processes"
 echo "Admin account: email: admin@gmail.com | password: admin@123"
 echo "Blockchain node: http://127.0.0.1:7545"
