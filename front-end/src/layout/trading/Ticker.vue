@@ -13,21 +13,69 @@
           <option v-for="(data, i) in optionsPair" :key="i" :value="data.value">{{ data.text }}</option>
         </select>
       </th>
-      <th v-if="change >= 0" style="color: rgb(35, 167, 118)">{{ Math.abs(change) }}</th>
-      <th v-if="high >= 0" style="color: rgb(35, 167, 118)">{{ Math.abs(high) }}</th>
-      <th v-if="low >= 0" style="color: rgb(35, 167, 118)">{{ Math.abs(low) }}</th>
-      <th v-if="volume >= 0" style="color: rgb(35, 167, 118)">{{ removeDecimal(volume) }}</th>
+      <th v-if="change >= 0" style="color: rgb(35, 167, 118)">
+        {{ Math.abs(change) }}
+        <b-icon
+          :icon="'arrow-up-circle'"
+          :class="{'grow-up': true, 'growing': true}"
+        />
+      </th>
+      <th v-if="high >= 0" style="color: rgb(35, 167, 118)">
+        {{ Math.abs(high) }}
+        <b-icon
+          :icon="'arrow-up-circle'"
+          :class="{'grow-up': true, 'growing': true}"
+        />
+      </th>
+      <th v-if="low >= 0" style="color: rgb(35, 167, 118)">
+        {{ Math.abs(low) }}
+        <b-icon
+          :icon="'arrow-up-circle'"
+          :class="{'grow-up': true, 'growing': true}"
+        />
+      </th>
+      <th v-if="volume >= 0" style="color: rgb(35, 167, 118)">
+        {{ removeDecimal(volume) }}
+        <b-icon
+          :icon="'arrow-up-circle'"
+          :class="{'grow-up': true, 'growing': true}"
+        />
+      </th>
 
-      <th v-if="change < 0" style="color: rgb(229, 65, 80)">{{ Math.abs(change) }}</th>
-      <th v-if="high < 0" style="color: rgb(229, 65, 80)">{{ Math.abs(high) }}</th>
-      <th v-if="low < 0" style="color: rgb(229, 65, 80)">{{ Math.abs(low) }}</th>
-      <th v-if="volume < 0" style="color: rgb(229, 65, 80)">{{ removeDecimal(volume) }}</th>
+      <th v-if="change < 0" style="color: rgb(229, 65, 80)">
+        {{ Math.abs(change) }}
+         <b-icon
+          :icon="'arrow-down-circle'"
+          :class="{'grow-up': true, 'growing': true}"
+        />
+      </th>
+      <th v-if="high < 0" style="color: rgb(229, 65, 80)">
+        {{ Math.abs(high) }}
+         <b-icon
+          :icon="'arrow-down-circle'"
+          :class="{'grow-up': false, 'growing': false}"
+        />
+      </th>
+      <th v-if="low < 0" style="color: rgb(229, 65, 80)">
+        {{ Math.abs(low) }}
+         <b-icon
+          :icon="'arrow-down-circle'"
+          :class="{'grow-up': false, 'growing': false}"
+        />
+      </th>
+      <th v-if="volume < 0" style="color: rgb(229, 65, 80)">
+        {{ removeDecimal(volume) }}
+        <b-icon
+          :icon="'arrow-down-circle'"
+          :class="{'grow-up': false, 'growing': false}"
+        />
+      </th>
     </tr>
   </table>
 </template>
 
 <script>
-import { listPair } from "@/plugins/backend";
+import {getTicker24H, listPair} from "@/plugins/backend";
 import {socket} from "@/plugins/socket";
 import BigNumber from "bignumber.js";
 
@@ -53,6 +101,7 @@ export default {
       if (newVal !== null) {
         this.$emit('pairChange', newVal);
       }
+      this.getTicker();
     }
   },
   mounted() {},
@@ -66,6 +115,14 @@ export default {
           this.volume = ticker.volume;
         } else {}
       });
+    },
+    async getTicker() {
+      if (this.pairId === null) return;
+      const ticker = await getTicker24H(this.pairId);
+      this.change = ticker.data.data.change;
+      this.high = ticker.data.data.high;
+      this.low = ticker.data.data.low;
+      this.volume = ticker.data.data.volume;
     },
     removeDecimal(value) {
       return new BigNumber(Math.abs(value)).div(new BigNumber(10).pow(18)).toFixed();

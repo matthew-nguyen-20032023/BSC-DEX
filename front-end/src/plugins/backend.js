@@ -59,3 +59,8 @@ export const getMatchOffers = async (
   let url = `${process.env.VUE_APP_BACKEND_URL}/order/match-orders?makerToken=${makerToken}&takerToken=${takerToken}&price=${price}&amount=${amount}&orderType=${orderType}`;
   return axios.get(url);
 };
+
+export const getTicker24H = async (pairId) => {
+  let url = `${process.env.VUE_APP_BACKEND_URL}/ticker?pairId=${pairId}`;
+  return axios.get(url);
+};

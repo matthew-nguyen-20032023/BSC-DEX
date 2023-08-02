@@ -3,12 +3,17 @@ import { InjectModel } from "@nestjs/mongoose";
 import { sleep } from "src/helper/common";
 import { SocketEmitter } from "src/socket/socket-emitter";
 import { Model } from "mongoose";
+import { Inject } from "@nestjs/common";
+const BigNumber = require("bignumber.js");
+import { Cache } from "cache-manager";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+
 import { Trade, TradeDocument } from "src/models/schemas/trade.schema";
 import { TradeRepository } from "src/models/repositories/trade.repository";
 import { PairRepository } from "src/models/repositories/pair.repository";
 import { Pair, PairDocument } from "src/models/schemas/pair.schema";
 import { Ticker24H } from "src/modules/ticker/ticker.interface";
-const BigNumber = require("bignumber.js");
+import { TickerRedisKey } from "src/modules/ticker/ticker.const";
 
 @Console()
 export class TickerConsole {
@@ -19,7 +24,8 @@ export class TickerConsole {
     @InjectModel(Trade.name)
     private readonly tradeModel: Model<TradeDocument>,
     @InjectModel(Pair.name)
-    private readonly pairModel: Model<PairDocument>
+    private readonly pairModel: Model<PairDocument>,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache
   ) {
     this.tradeRepository = new TradeRepository(this.tradeModel);
     this.pairRepository = new PairRepository(this.pairModel);
@@ -39,13 +45,19 @@ export class TickerConsole {
       throw Error(`No pair name found for: ${pairName}`);
     }
 
-    let oldTicker: Ticker24H = {
-      change: "0",
-      low: "0",
-      high: "0",
-      volume: "0",
-      pairId: pair._id.toString(),
-    };
+    const oldTickerRedis = await this.cacheManager.get(
+      `${TickerRedisKey.Ticker24h}_${pair._id.toString()}`
+    );
+    let oldTicker: Ticker24H = oldTickerRedis
+      ? // @ts-ignore
+        JSON.parse(oldTickerRedis)
+      : {
+          change: "0",
+          low: "0",
+          high: "0",
+          volume: "0",
+          pairId: pair._id.toString(),
+        };
 
     while (1) {
       console.log(`${TickerConsole.name}: Calculate ticker at ${new Date()}`);
@@ -78,6 +90,7 @@ export class TickerConsole {
         .div(price24hAgo)
         .times(100)
         .toFixed();
+      ticker24h.low = trades24h[0].price;
 
       // calculate 24h low, high and volume
       for (const trade of trades24h) {
@@ -95,6 +108,8 @@ export class TickerConsole {
           .plus(trade.volume)
           .toFixed();
       }
+
+      const tickerAbsValue = JSON.stringify(ticker24h);
 
       ticker24h.change = new BigNumber(ticker24h.change)
         .minus(oldTicker.change)
@@ -114,7 +129,12 @@ export class TickerConsole {
         .gt("0")
         ? ticker24h.volume
         : `-${ticker24h.volume}`;
-      oldTicker = ticker24h;
+      oldTicker = JSON.parse(tickerAbsValue);
+
+      await this.cacheManager.set(
+        `${TickerRedisKey.Ticker24h}_${pair._id.toString()}`,
+        JSON.stringify(ticker24h)
+      );
 
       SocketEmitter.getInstance().emitTicker24h(ticker24h);
       await sleep(60000);
