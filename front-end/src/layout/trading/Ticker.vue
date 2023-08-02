@@ -13,15 +13,63 @@
           <option v-for="(data, i) in optionsPair" :key="i" :value="data.value">{{ data.text }}</option>
         </select>
       </th>
-      <th v-if="change >= 0" style="color: rgb(35, 167, 118)">{{ Math.abs(change) }}</th>
-      <th v-if="high >= 0" style="color: rgb(35, 167, 118)">{{ Math.abs(high) }}</th>
-      <th v-if="low >= 0" style="color: rgb(35, 167, 118)">{{ Math.abs(low) }}</th>
-      <th v-if="volume >= 0" style="color: rgb(35, 167, 118)">{{ removeDecimal(volume) }}</th>
+      <th v-if="change >= 0" style="color: rgb(35, 167, 118)">
+        {{ Math.abs(change) }}
+        <b-icon
+          :icon="'arrow-up-circle'"
+          :class="{'grow-up': true, 'growing': true}"
+        />
+      </th>
+      <th v-if="high >= 0" style="color: rgb(35, 167, 118)">
+        {{ Math.abs(high) }}
+        <b-icon
+          :icon="'arrow-up-circle'"
+          :class="{'grow-up': true, 'growing': true}"
+        />
+      </th>
+      <th v-if="low >= 0" style="color: rgb(35, 167, 118)">
+        {{ Math.abs(low) }}
+        <b-icon
+          :icon="'arrow-up-circle'"
+          :class="{'grow-up': true, 'growing': true}"
+        />
+      </th>
+      <th v-if="volume >= 0" style="color: rgb(35, 167, 118)">
+        {{ removeDecimal(volume) }}
+        <b-icon
+          :icon="'arrow-up-circle'"
+          :class="{'grow-up': true, 'growing': true}"
+        />
+      </th>
 
-      <th v-if="change < 0" style="color: rgb(229, 65, 80)">{{ Math.abs(change) }}</th>
-      <th v-if="high < 0" style="color: rgb(229, 65, 80)">{{ Math.abs(high) }}</th>
-      <th v-if="low < 0" style="color: rgb(229, 65, 80)">{{ Math.abs(low) }}</th>
-      <th v-if="volume < 0" style="color: rgb(229, 65, 80)">{{ removeDecimal(volume) }}</th>
+      <th v-if="change < 0" style="color: rgb(229, 65, 80)">
+        {{ Math.abs(change) }}
+         <b-icon
+          :icon="'arrow-down-circle'"
+          :class="{'grow-up': true, 'growing': true}"
+        />
+      </th>
+      <th v-if="high < 0" style="color: rgb(229, 65, 80)">
+        {{ Math.abs(high) }}
+         <b-icon
+          :icon="'arrow-down-circle'"
+          :class="{'grow-up': false, 'growing': false}"
+        />
+      </th>
+      <th v-if="low < 0" style="color: rgb(229, 65, 80)">
+        {{ Math.abs(low) }}
+         <b-icon
+          :icon="'arrow-down-circle'"
+          :class="{'grow-up': false, 'growing': false}"
+        />
+      </th>
+      <th v-if="volume < 0" style="color: rgb(229, 65, 80)">
+        {{ removeDecimal(volume) }}
+        <b-icon
+          :icon="'arrow-down-circle'"
+          :class="{'grow-up': false, 'growing': false}"
+        />
+      </th>
     </tr>
   </table>
 </template>
