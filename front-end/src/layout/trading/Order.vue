@@ -272,9 +272,6 @@ export default {
             salt: order.salt
           }));
         }
-        console.log(limitOrders, "limitOrders");
-        console.log(signatures, "signatures");
-        console.log(takerTokenFillAmounts, "takerTokenFillAmounts");
         await this.zeroExContract.methods.batchFillLimitOrders(
           limitOrders,
           signatures,
