@@ -46,7 +46,7 @@ export class TickerConsole {
     }
 
     const oldTickerRedis = await this.cacheManager.get(
-      TickerRedisKey.Ticker24h
+      `${TickerRedisKey.Ticker24h}_${pair._id.toString()}`
     );
     let oldTicker: Ticker24H = oldTickerRedis
       ? // @ts-ignore
@@ -109,6 +109,8 @@ export class TickerConsole {
           .toFixed();
       }
 
+      const tickerAbsValue = JSON.stringify(ticker24h);
+
       ticker24h.change = new BigNumber(ticker24h.change)
         .minus(oldTicker.change)
         .gt("0")
@@ -127,10 +129,10 @@ export class TickerConsole {
         .gt("0")
         ? ticker24h.volume
         : `-${ticker24h.volume}`;
-      oldTicker = ticker24h;
+      oldTicker = JSON.parse(tickerAbsValue);
 
       await this.cacheManager.set(
-        TickerRedisKey.Ticker24h,
+        `${TickerRedisKey.Ticker24h}_${pair._id.toString()}`,
         JSON.stringify(ticker24h)
       );
 
