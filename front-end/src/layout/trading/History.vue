@@ -119,7 +119,7 @@ export default {
       const orderFoundIndex = offers.indexOf(orderFound);
       if (new BigNumber(order.remainingAmount).gt(0)) {
         // Replace new order if new order has remainingAmount > 0
-        offers.splice(orderFoundIndex, 0, order);
+        offers.splice(orderFoundIndex, 1, order);
       } else {
         // Remove order because full match
         offers = offers.slice(orderFoundIndex + 1);
