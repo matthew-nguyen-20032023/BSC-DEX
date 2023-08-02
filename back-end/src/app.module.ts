@@ -12,6 +12,7 @@ import { PairModule } from "src/modules/pair/pair.module";
 import { OrderModule } from "src/modules/order/order.module";
 import { TradeModule } from "src/modules/trade/trade.module";
 import { SeedModule } from "src/modules/seed/seed.module";
+import { TickerModule } from "src/modules/ticker/ticker.module";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SeedModule } from "src/modules/seed/seed.module";
     ConsoleModule,
     OrderModule,
     TradeModule,
+    TickerModule,
     SeedModule,
     MongooseModule.forRoot(
       `mongodb://${db.userName}:${db.password}@${db.host}:${db.port}/${db.databaseName}?authSource=${db.databaseName}`

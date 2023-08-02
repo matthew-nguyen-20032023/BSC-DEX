@@ -3,6 +3,7 @@ import { createClient } from "redis";
 import { Order } from "src/models/schemas/order.schema";
 import { EventEmit } from "src/socket/socket-server.const";
 import { Trade } from "src/models/schemas/trade.schema";
+import { Ticker24H } from "src/modules/ticker/ticker.interface";
 
 export class SocketEmitter {
   private static instance: SocketEmitter;
@@ -47,5 +48,13 @@ export class SocketEmitter {
    */
   public emitOrderMatched(order: Order): void {
     this.emitter.emit(EventEmit.OrderMatched, order);
+  }
+
+  /**
+   * @description for emit ticker 24h change for UI
+   * @param ticker
+   */
+  public emitTicker24h(ticker: Ticker24H): void {
+    this.emitter.emit(EventEmit.TickerChange, ticker);
   }
 }
