@@ -75,7 +75,7 @@
 </template>
 
 <script>
-import { listPair } from "@/plugins/backend";
+import {getTicker24H, listPair} from "@/plugins/backend";
 import {socket} from "@/plugins/socket";
 import BigNumber from "bignumber.js";
 
@@ -101,6 +101,7 @@ export default {
       if (newVal !== null) {
         this.$emit('pairChange', newVal);
       }
+      this.getTicker();
     }
   },
   mounted() {},
@@ -114,6 +115,14 @@ export default {
           this.volume = ticker.volume;
         } else {}
       });
+    },
+    async getTicker() {
+      if (this.pairId === null) return;
+      const ticker = await getTicker24H(this.pairId);
+      this.change = ticker.data.data.change;
+      this.high = ticker.data.data.high;
+      this.low = ticker.data.data.low;
+      this.volume = ticker.data.data.volume;
     },
     removeDecimal(value) {
       return new BigNumber(Math.abs(value)).div(new BigNumber(10).pow(18)).toFixed();
