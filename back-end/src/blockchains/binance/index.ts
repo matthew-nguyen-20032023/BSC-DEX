@@ -1,3 +1,5 @@
+import { BatchMatchOrderABI } from "./abi/batch-match-order";
+
 const Web3 = require("web3");
 import { erc20ABI } from "src/blockchains/binance/abi/erc20";
 import { exchangeABI } from "src/blockchains/binance/abi/exchange";
@@ -37,6 +39,13 @@ export class Binance {
     return new this.client.eth.Contract(
       exchangeABI,
       process.env.ORDER_SMART_CONTRACT_ADDRESS
+    );
+  }
+
+  public async getBatchMatchOrderContract(): Promise<Contract> {
+    return new this.client.eth.Contract(
+      BatchMatchOrderABI,
+      process.env.BATCH_MATCH_ORDER_ADDRESS
     );
   }
 
