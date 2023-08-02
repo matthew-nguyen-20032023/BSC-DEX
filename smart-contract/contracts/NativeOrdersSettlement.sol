@@ -119,6 +119,58 @@ abstract contract NativeOrdersSettlement is
         NativeOrdersProtocolFees(weth, staking, feeCollectorController, protocolFeeMultiplier)
     {}
 
+    /// @dev Fills multiple limit orders.
+    /// @param orders Array of limit orders.
+    /// @param signatures Array of signatures corresponding to each order.
+    /// @param takerTokenFillAmounts Array of desired amounts to fill each order.
+    /// @param revertIfIncomplete If true, reverts if this function fails to
+    ///        fill the full fill amount for any individual order.
+    /// @return takerTokenFilledAmounts Array of amounts filled, in taker token.
+    /// @return makerTokenFilledAmounts Array of amounts filled, in maker token.
+    function batchFillLimitOrders(
+        LibNativeOrder.LimitOrder[] calldata orders,
+        LibSignature.Signature[] calldata signatures,
+        uint128[] calldata takerTokenFillAmounts,
+        bool revertIfIncomplete
+    )
+    external
+    payable
+    returns (uint128[] memory takerTokenFilledAmounts, uint128[] memory makerTokenFilledAmounts)
+    {
+        require(
+            orders.length == signatures.length && orders.length == takerTokenFillAmounts.length,
+            "BatchFillNativeOrdersFeature::batchFillLimitOrders/MISMATCHED_ARRAY_LENGTHS"
+        );
+        takerTokenFilledAmounts = new uint128[](orders.length);
+        makerTokenFilledAmounts = new uint128[](orders.length);
+        uint256 ethProtocolFeePaid;
+        for (uint256 i = 0; i != orders.length; i++) {
+            FillNativeOrderResults memory results = _fillLimitOrderPrivate(
+                FillLimitOrderPrivateParams({
+                    order: orders[i],
+                    signature: signatures[i],
+                    takerTokenFillAmount: takerTokenFillAmounts[i],
+                    taker: msg.sender,
+                    sender: msg.sender
+                })
+            );
+            (takerTokenFilledAmounts[i], makerTokenFilledAmounts[i]) = (
+            results.takerTokenFilledAmount,
+            results.makerTokenFilledAmount
+            );
+            ethProtocolFeePaid = ethProtocolFeePaid.safeAdd(results.ethProtocolFeePaid);
+
+            if (revertIfIncomplete && takerTokenFilledAmounts[i] < takerTokenFillAmounts[i]) {
+                bytes32 orderHash = _getEIP712Hash(LibNativeOrder.getLimitOrderStructHash(orders[i]));
+                // Did not fill the amount requested.
+                LibNativeOrdersRichErrors
+                .BatchFillIncompleteError(orderHash, takerTokenFilledAmounts[i], takerTokenFillAmounts[i])
+                .rrevert();
+            }
+        }
+        LibNativeOrder.refundExcessProtocolFeeToSender(ethProtocolFeePaid);
+    }
+
     /// @dev Fill a limit order. The taker and sender will be the caller.
     /// @param order The limit order. ETH protocol fees can be
     ///      attached to this call. Any unspent ETH will be refunded to

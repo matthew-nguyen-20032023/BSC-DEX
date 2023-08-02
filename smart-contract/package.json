@@ -1,18 +1,21 @@
 {
   "name": "hardhat-project",
   "devDependencies": {
-    "bignumber.js": "9.0.2",
-    "@0x/protocol-utils": "11.22.2",
+    "@0x/contract-wrappers": "13.18.2",
     "@0x/contracts-erc20": "3.3.57",
     "@0x/contracts-utils": "4.8.46",
-    "@nomicfoundation/hardhat-toolbox": "3.0.0",
-    "@openzeppelin/contracts": "4.9.2",
-    "@tenderly/hardhat-tenderly": "1.7.7",
-    "hardhat": "2.16.1",
+    "@0x/protocol-utils": "11.22.2",
     "@0x/subproviders": "6.6.0",
     "@0x/utils": "6.4.4",
     "@0x/web3-wrapper": "7.6.1",
-    "@0x/contract-wrappers": "13.18.2"
+    "@nomicfoundation/hardhat-ethers": "3.0.4",
+    "@nomicfoundation/hardhat-toolbox": "3.0.0",
+    "@openzeppelin/contracts": "4.9.2",
+    "@openzeppelin/hardhat-upgrades": "2.0.2",
+    "@tenderly/hardhat-tenderly": "1.7.7",
+    "bignumber.js": "9.0.2",
+    "ethers": "^6.6.7",
+    "hardhat": "2.16.1"
   },
   "dependencies": {
     "dotenv": "16.3.1"
