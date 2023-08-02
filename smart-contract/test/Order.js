@@ -178,30 +178,6 @@ describe("Exchange Smart Contract", function () {
         owner.address
       );
 
-      const limitOrder1 = new LimitOrder({
-        chainId: Number(process.env.CHAIN_ID),
-        verifyingContract: ZeroExContract.target,
-        maker: owner.address,
-        taker: otherAccount.address,
-        makerToken: BTCContract.target,
-        takerToken: USDTContract.target,
-        makerAmount: makerAmount,
-        takerAmount: takerAmount,
-        takerTokenFeeAmount: new BigNumber(0).toString(),
-        sender: "0x0000000000000000000000000000000000000000",
-        feeRecipient: "0x0000000000000000000000000000000000000000",
-        expiry: Math.floor(Date.now() / 1000 + 300),
-        pool: "0x0000000000000000000000000000000000000000000000000000000000000000",
-        salt: Date.now().toString(),
-      });
-
-      // Signature will save with limit order above and used for other account fill order
-      const signature1 = await limitOrder1.getSignatureWithProviderAsync(
-        web3Wrapper.getProvider(),
-        SignatureType.EIP712,
-        owner.address
-      );
-
       // Use owner to mint token for owner and otherAccount for test
       const tokenAmountMintForTest = "100000000000000000000000";
       await BTCContract.mint(owner.address, tokenAmountMintForTest); // Mint BTC for owner
@@ -237,13 +213,10 @@ describe("Exchange Smart Contract", function () {
 
       // Fill order above
       // This is other account accept to take 200 BTC with 600 USDT spent
-      await NativeOrdersFeatureContract.connect(
-        otherAccount
-      ).batchFillLimitOrders(
-        [limitOrder, limitOrder1],
-        [signature, signature1],
-        [takerAmount, 500],
-        false
+      await NativeOrdersFeatureContract.connect(otherAccount).fillLimitOrder(
+        limitOrder,
+        signature,
+        takerAmount
       );
 
       ownerBTCBalance = await BTCContract.balanceOf(owner.address);
