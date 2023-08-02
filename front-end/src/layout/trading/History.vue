@@ -14,14 +14,14 @@
               <th>Remaining Amount</th>
               <th>Expiry</th>
               <th>Created</th>
-              <th>Action</th>
+<!--              <th>Action</th>-->
             </tr>
             <tr v-for="(data, i) in buyOffers" :key="i">
               <td>{{ data.price }}</td>
               <td>{{ removeDecimal(data.remainingAmount) }}</td>
               <td>{{ convertExpiryToDate(data.expiry) }}</td>
               <td>{{ data.createdAt }}</td>
-              <td><b-button size="sm" variant="warning" @click="fillOrder(data)">Fill</b-button></td>
+<!--              <td><b-button size="sm" variant="warning" @click="fillOrder(data)">Fill</b-button></td>-->
             </tr>
           </table>
         </b-card-text>
@@ -34,14 +34,14 @@
               <th>Remaining Amount</th>
               <th>Expiry</th>
               <th>Created</th>
-              <th>Action</th>
+<!--              <th>Action</th>-->
             </tr>
             <tr v-for="(data, i) in sellOffer" :key="i">
               <td>{{ data.price }}</td>
               <td>{{ removeDecimal(data.remainingAmount) }}</td>
               <td>{{ convertExpiryToDate(data.expiry) }}</td>
               <td>{{ data.createdAt }}</td>
-              <td><b-button size="sm" variant="success" @click="fillOrder(data)">Fill</b-button></td>
+<!--              <td><b-button size="sm" variant="success" @click="fillOrder(data)">Fill</b-button></td>-->
             </tr>
           </table>
         </b-card-text>
