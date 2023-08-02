@@ -39,6 +39,14 @@ export class TickerConsole {
       throw Error(`No pair name found for: ${pairName}`);
     }
 
+    let oldTicker: Ticker24H = {
+      change: "0",
+      low: "0",
+      high: "0",
+      volume: "0",
+      pairId: pair._id.toString(),
+    };
+
     while (1) {
       console.log(`${TickerConsole.name}: Calculate ticker at ${new Date()}`);
       const ticker24h: Ticker24H = {
@@ -87,6 +95,26 @@ export class TickerConsole {
           .plus(trade.volume)
           .toFixed();
       }
+
+      ticker24h.change = new BigNumber(ticker24h.change)
+        .minus(oldTicker.change)
+        .gt("0")
+        ? ticker24h.change
+        : `-${ticker24h.change}`;
+      ticker24h.high = new BigNumber(ticker24h.high)
+        .minus(oldTicker.high)
+        .gt("0")
+        ? ticker24h.high
+        : `-${ticker24h.high}`;
+      ticker24h.low = new BigNumber(ticker24h.low).minus(oldTicker.low).gt("0")
+        ? ticker24h.low
+        : `-${ticker24h.low}`;
+      ticker24h.volume = new BigNumber(ticker24h.volume)
+        .minus(oldTicker.volume)
+        .gt("0")
+        ? ticker24h.volume
+        : `-${ticker24h.volume}`;
+      oldTicker = ticker24h;
 
       SocketEmitter.getInstance().emitTicker24h(ticker24h);
       await sleep(60000);
