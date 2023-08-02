@@ -37,6 +37,10 @@ resultDeployed=$(npx hardhat run ./scripts/deploy.js --network EthereumLocal)
 ZeroExOutput=$(echo "$resultDeployed" | grep "ZeroEx")
 ZeroExAddress=$(echo "$ZeroExOutput" | awk '{print $1}')
 
+# Extract BatchMatchOrder address
+BatchFillNativeOrdersOutput=$(echo "$resultDeployed" | grep "BatchFillNativeOrdersFeature")
+BatchFillNativeOrdersAddress=$(echo "$BatchFillNativeOrdersOutput" | awk '{print $1}')
+
 # Extract base token for test
 BitcoinOutput=$(echo "$resultDeployed" | grep "Bitcoin")
 BitcoinAddress=$(echo "$BitcoinOutput" | awk '{print $1}')
@@ -56,6 +60,7 @@ sed -i "s/^ORDER_SMART_CONTRACT_ADDRESS=.*/ORDER_SMART_CONTRACT_ADDRESS=$ZeroExA
 sed -i "s/^BASE_TOKEN_FOR_TEST=.*/BASE_TOKEN_FOR_TEST=$BitcoinAddress/" "$env_file_backend"
 sed -i "s/^QUOTE_TOKEN_FOR_TEST=.*/QUOTE_TOKEN_FOR_TEST=$DollarAddress/" "$env_file_backend"
 sed -i "s/^VERIFY_SMART_CONTRACT_ADDRESS=.*/VERIFY_SMART_CONTRACT_ADDRESS=$ZeroExAddress/" "$env_file_backend"
+sed -i "s/^BATCH_MATCH_ORDER_ADDRESS=.*/BATCH_MATCH_ORDER_ADDRESS=$BatchFillNativeOrdersAddress/" "$env_file_backend"
 
 npm install -g yarn
 yarn -v
@@ -69,7 +74,7 @@ yarn console:dev seed-data-for-test
 pm2 start "yarn start:dev" --name="BSC_DEX_BACKEND"
 pm2 start "yarn console:dev crawl-order-matched" --name="BSC_DEX_JOB:craw-order-matched"
 pm2 start "yarn console:dev handle-limit-order-filled-crawled" --name="BSC_DEX_JOB:handle-limit-order-filled-crawled"
-
+pm2 start "yarn console:dev migrate-batch-order" --name="BSC_DEX_BACKEND:migrate-batch-match-order-feature"
 #=================================================FRONTEND=============================================================#
 
 # Start front end
@@ -91,8 +96,7 @@ pm2 start "npm run serve" --name="BSC_DEX_FRONTEND"
 
 # Those important information gonna print to screen
 echo "============================================IMPORTANT INFORMATION================================================"
-echo "Smart contract to verify order: $ZeroExAddress"
-echo "Smart contract for matching order: $ZeroExAddress"
+echo "ZeroEx smart contract: $ZeroExAddress"
 echo "Base token for testing: $BitcoinAddress"
 echo "Quote token for testing: $DollarAddress"
 echo "Using pm2 ls to see all processes"
