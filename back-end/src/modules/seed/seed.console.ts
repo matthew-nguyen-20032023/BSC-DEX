@@ -31,7 +31,6 @@ const {
 } = require("@0x/subproviders");
 const { providerUtils } = require("@0x/utils");
 const { Web3Wrapper } = require("@0x/web3-wrapper");
-const { AbiEncoder } = require("@0x/utils");
 
 @Console()
 export class SeedConsole {
