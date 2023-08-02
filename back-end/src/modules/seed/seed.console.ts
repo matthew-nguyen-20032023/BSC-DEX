@@ -31,6 +31,7 @@ const {
 } = require("@0x/subproviders");
 const { providerUtils } = require("@0x/utils");
 const { Web3Wrapper } = require("@0x/web3-wrapper");
+const { AbiEncoder } = require("@0x/utils");
 
 @Console()
 export class SeedConsole {
@@ -415,5 +416,30 @@ export class SeedConsole {
       console.log(`Bot trading complete process ${count++}`);
       await sleep(sleepTime);
     }
+  }
+
+  /**
+   * @description This migrate batch match order feature to ZeroEx contract, so that we can call batchFillLimitOrders
+   */
+  @Command({
+    command: "migrate-batch-order",
+  })
+  async migrateBatchOrder(): Promise<void> {
+    const BatchMatchOrderContract =
+      await Binance.getInstance().getBatchMatchOrderContract();
+    const selector = BatchMatchOrderContract.methods.migrate().encodeABI();
+    const ZeroContract = await Binance.getInstance().getMatchingOrderContract();
+    await ZeroContract.methods
+      .migrate(
+        process.env.BATCH_MATCH_ORDER_ADDRESS,
+        selector,
+        process.env.ADMIN_WALLET_ADDRESS
+      )
+      .send({
+        from: process.env.ADMIN_WALLET_ADDRESS,
+        value: 0,
+        gas: 800000,
+        gasPrice: 20e9,
+      });
   }
 }

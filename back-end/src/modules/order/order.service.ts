@@ -139,7 +139,7 @@ export class OrderService {
         page
       );
 
-      if (matchedOrders.length === 0) break;
+      if (matchOrders.length === 0) break;
 
       for (const order of matchOrders) {
         if (totalRemainingAmount.gte(expectAmount)) {
@@ -147,7 +147,7 @@ export class OrderService {
           break;
         }
         totalRemainingAmount = totalRemainingAmount.plus(order.remainingAmount);
-        matchOrders.push(order);
+        matchedOrders.push(order);
       }
 
       // Increase the page if totalRemainingAmount not reach to expectAmount

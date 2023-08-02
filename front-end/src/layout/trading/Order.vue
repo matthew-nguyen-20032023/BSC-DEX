@@ -35,7 +35,7 @@
 import { LimitOrder, SignatureType } from "@0x/protocol-utils";
 import { exchangeABI } from "@/libs/abi/exchange.ts";
 import { erc20ABI } from "@/libs/abi/erc20.ts";
-import {createOrder, estimateAllowance} from "@/plugins/backend";
+import {createOrder, estimateAllowance, getMatchOffers} from "@/plugins/backend";
 import { notificationWithCustomMessage } from "@/plugins/notification";
 const BigNumber = require('bignumber.js');
 const Web3 = require('web3');
@@ -221,8 +221,81 @@ export default {
         }
       }
       const limitOrder = await this.createLimitOrder(type);
-      const signature = await limitOrder.getSignatureWithProviderAsync(window.web3.currentProvider, SignatureType.EIP712, this.currentAccountWallet);
       await this.approveToken(type);
+
+      const matchOrders = await getMatchOffers(
+        limitOrder.makerToken,
+        limitOrder.takerToken,
+        type === 'buy' ? this.buyMakerPrice : this.sellMakerPrice,
+        limitOrder.takerAmount,
+        type
+      );
+
+      if (matchOrders.data.data.length > 0) {
+        const signatures = [];
+        const limitOrders = [];
+        const takerTokenFillAmounts = [];
+        const revertIfNotFullFill = false;
+        let remainingBaseAmount = type === 'buy' ?
+          new BigNumber(limitOrder.takerAmount) : new BigNumber(limitOrder.makerAmount);
+
+        for (const order of matchOrders.data.data) {
+          let takerTokenFillAmount;
+          if (remainingBaseAmount.minus(order.remainingAmount).gte(0)) {
+            takerTokenFillAmount = type === 'buy' ?
+              new BigNumber(order.remainingAmount).times(this.buyMakerPrice).toFixed() :
+              new BigNumber(order.remainingAmount).toFixed();
+            remainingBaseAmount = remainingBaseAmount.minus(order.remainingAmount);
+          } else {
+            takerTokenFillAmount = type === 'buy' ?
+              remainingBaseAmount.times(this.buyMakerPrice).toFixed() :
+              remainingBaseAmount.toFixed();
+            remainingBaseAmount = new BigNumber('0')
+          }
+          takerTokenFillAmounts.push(takerTokenFillAmount);
+
+          signatures.push(JSON.parse(order.signature));
+          limitOrders.push(new LimitOrder({
+            chainId: Number(order.chainId),
+            verifyingContract: order.verifyingContract,
+            maker: order.maker,
+            taker: order.taker,
+            makerToken: order.makerToken,
+            takerToken: order.takerToken,
+            makerAmount: order.makerAmount,
+            takerAmount: order.takerAmount,
+            takerTokenFeeAmount: order.takerTokenFeeAmount,
+            sender: order.sender,
+            feeRecipient: order.feeRecipient,
+            expiry: Number(order.expiry),
+            pool: order.pool,
+            salt: order.salt
+          }));
+        }
+        await this.zeroExContract.methods.batchFillLimitOrders(
+          limitOrders,
+          signatures,
+          takerTokenFillAmounts,
+          revertIfNotFullFill
+        ).send({
+          from: this.currentAccountWallet,
+          value: 0,
+          gas: 800000,
+          gasPrice: 20e9
+        });
+
+        if (remainingBaseAmount.eq('0')) return;
+        else {
+          limitOrder.makerAmount = type === 'buy' ?
+            remainingBaseAmount.times(this.buyMakerPrice).toFixed() :
+            remainingBaseAmount.toFixed()
+          limitOrder.takerAmount = type === 'buy' ?
+            remainingBaseAmount.toFixed() :
+            remainingBaseAmount.times(this.sellMakerPrice).toFixed();
+        }
+      }
+
+      const signature = await limitOrder.getSignatureWithProviderAsync(window.web3.currentProvider, SignatureType.EIP712, this.currentAccountWallet);
       const price = type === 'buy' ?
         new BigNumber(limitOrder.makerAmount).div(limitOrder.takerAmount).toString() :
         new BigNumber(limitOrder.takerAmount).div(limitOrder.makerAmount).toString();
