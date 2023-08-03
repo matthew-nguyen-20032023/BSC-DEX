@@ -88,6 +88,7 @@ export class TickerConsole {
       const price24hAgo = trades24h[0].price;
       ticker24h.change = new BigNumber(currentPrice)
         .minus(price24hAgo)
+        .abs()
         .div(price24hAgo)
         .times(100)
         .toFixed();
