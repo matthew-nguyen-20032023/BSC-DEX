@@ -6,7 +6,7 @@
       <th>Time</th>
     </tr>
     <tr v-for="(trade, index) in data" :key="index">
-      <td :style="getTradeColor(trade.orderType)">{{ trade.price }}</td>
+      <td :style="getTradeColor(trade.orderType)">{{ Math.abs(trade.price).toFixed(2) }}</td>
       <td>{{ convertVolume(trade.volume) }}</td>
       <td>{{ convertToTime(trade.timestamp) }}</td>
     </tr>
@@ -68,7 +68,7 @@ export default {
       return moment(dateObject).format('HH:mm:ss');
     },
     convertVolume(volume) {
-      return new BigNumber(volume).div(new BigNumber(10).pow(18)).toFixed();
+      return new BigNumber(volume).div(new BigNumber(10).pow(18)).toFixed(2);
     }
   }
 };

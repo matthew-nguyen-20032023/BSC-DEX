@@ -1,3 +1,5 @@
+import { MyTradeDto } from "./dto/my-trade.dto";
+
 const BigNumber = require("bignumber.js");
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
@@ -127,5 +129,24 @@ export class TradeService {
     limit: number
   ): Promise<Trade[]> {
     return this.tradeRepository.getLatestTradeHappenedByPair(pairId, limit);
+  }
+
+  public async getMyTrades(
+    myTradeDto: MyTradeDto
+  ): Promise<{ data: Trade[]; total: number }> {
+    const data = await this.tradeRepository.getLastTradesByWallet(
+      myTradeDto.wallet,
+      myTradeDto.pairId,
+      myTradeDto.page,
+      myTradeDto.limit
+    );
+    const total = await this.tradeRepository.countGetLastTradesByWallet(
+      myTradeDto.wallet,
+      myTradeDto.pairId
+    );
+    return {
+      data,
+      total,
+    };
   }
 }

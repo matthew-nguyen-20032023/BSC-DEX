@@ -8,13 +8,12 @@ import { TickerService } from "src/modules/ticker/ticker.service";
 import { GetTickerDto } from "src/modules/ticker/dto/get-ticker.dto";
 
 @Controller("ticker")
-@ApiBearerAuth()
+@Public()
 @ApiTags("Ticker")
 export class TickerController {
   constructor(private readonly tickerService: TickerService) {}
 
   @Get()
-  @Public()
   @ApiOperation({
     summary: "Api get ticker by pair id",
   })

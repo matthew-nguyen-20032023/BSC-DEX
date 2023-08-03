@@ -32,6 +32,35 @@ export class TradeRepository {
       .limit(limit);
   }
 
+  public async getLastTradesByWallet(
+    wallet: string,
+    pairId: string,
+    page: number,
+    limit: number
+  ): Promise<Trade[]> {
+    return this.model
+      .find({
+        $or: [
+          { maker: wallet, pairId: pairId },
+          { taker: wallet, pairId: pairId },
+        ],
+      })
+      .sort({ createdAt: "desc" })
+      .skip((page - 1) * limit)
+      .limit(limit);
+  }
+  public async countGetLastTradesByWallet(
+    wallet: string,
+    pairId: string
+  ): Promise<number> {
+    return this.model.count({
+      $or: [
+        { maker: wallet, pairId: pairId },
+        { taker: wallet, pairId: pairId },
+      ],
+    });
+  }
+
   /**
    * @description Just you for seeding and testing in local version
    */

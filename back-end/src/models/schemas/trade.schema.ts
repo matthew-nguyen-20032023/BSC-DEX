@@ -21,6 +21,15 @@ export class Trade extends CreateUpdateSchema {
 
   @Prop()
   timestamp: number;
+
+  @Prop()
+  transactionId: string;
+
+  @Prop()
+  maker: string;
+
+  @Prop()
+  taker: string;
 }
 
 export const TradeSchema = SchemaFactory.createForClass(Trade);

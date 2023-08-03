@@ -6,42 +6,49 @@
       small
       v-model="historyTab"
     >
-      <b-tab title="Open Buy Offers" :title-link-class="'text-light'">
+      <b-tab title="My Orders" :title-link-class="'text-light'">
         <b-card-text>
           <table class="w-100 mt-1">
             <tr>
+              <th>Type</th>
               <th>Price</th>
-              <th>Remaining Amount</th>
+              <th>Amount</th>
+              <th>Remaining</th>
               <th>Expiry</th>
-              <th>Created</th>
-<!--              <th>Action</th>-->
+              <th></th>
             </tr>
-            <tr v-for="(data, i) in buyOffers" :key="i">
-              <td>{{ data.price }}</td>
+            <tr v-for="(data, i) in myOrders" :key="i">
+              <td>{{ data.type }}</td>
+              <td>{{ Math.abs(data.price).toFixed(2) }}</td>
+              <td>{{ removeDecimal(data.makerAmount) }}</td>
               <td>{{ removeDecimal(data.remainingAmount) }}</td>
               <td>{{ convertExpiryToDate(data.expiry) }}</td>
-              <td>{{ data.createdAt }}</td>
-<!--              <td><b-button size="sm" variant="warning" @click="fillOrder(data)">Fill</b-button></td>-->
+              <td>
+                <b-button v-if="data.status === 'fill-able'" size="sm" variant="warning">Cancel</b-button>
+                <p style="color: rgb(35, 167, 118)" v-if="data.status !== 'fill-able'">{{ data.status.charAt(0).toUpperCase() + data.status.slice(1) }}</p>
+              </td>
             </tr>
           </table>
         </b-card-text>
       </b-tab>
-      <b-tab title="Open Sell Offers" :title-link-class="'text-light'">
+      <b-tab title="My Trades" :title-link-class="'text-light'">
         <b-card-text>
           <table class="w-100 mt-1">
             <tr>
+              <th>Type</th>
               <th>Price</th>
-              <th>Remaining Amount</th>
-              <th>Expiry</th>
-              <th>Created</th>
-<!--              <th>Action</th>-->
+              <th>Out</th>
+              <th>In</th>
+              <th>Time</th>
+              <th>Transaction</th>
             </tr>
-            <tr v-for="(data, i) in sellOffer" :key="i">
-              <td>{{ data.price }}</td>
-              <td>{{ removeDecimal(data.remainingAmount) }}</td>
-              <td>{{ convertExpiryToDate(data.expiry) }}</td>
-              <td>{{ data.createdAt }}</td>
-<!--              <td><b-button size="sm" variant="success" @click="fillOrder(data)">Fill</b-button></td>-->
+            <tr v-for="(data, i) in myTrades" :key="i">
+              <td>{{ data.orderType }}</td>
+              <td>{{ Math.abs(data.price).toFixed(2) }}</td>
+              <td>{{ calculateOutTrade(data.orderType, data.price, data.volume) }}</td>
+              <td>{{ calculateInTrade(data.orderType, data.price, data.volume) }}</td>
+              <td>{{ convertTimestampToDate(data.timestamp) }}</td>
+              <td><a style="color: rgb(35, 167, 118)" href="#">DETAIL</a></td>
             </tr>
           </table>
         </b-card-text>
@@ -51,11 +58,8 @@
 </template>
 
 <script>
-import { listOrder } from "@/plugins/backend";
-import { LimitOrder } from "@0x/protocol-utils";
+import {listMyTrades, listOrder} from "@/plugins/backend";
 import Web3 from "web3";
-import {exchangeABI} from "@/libs/abi/exchange.ts";
-import {erc20ABI} from "@/libs/abi/erc20.ts";
 import {socket} from "@/plugins/socket";
 const debounce = require('debounce');
 const BigNumber = require('bignumber.js');
@@ -72,6 +76,14 @@ export default {
       type: String,
       required: true
     },
+    baseTokenSymbol: {
+      type: String,
+      required: true
+    },
+    quoteTokenSymbol: {
+      type: String,
+      required: true
+    },
     pairId: {
       type: String,
       required: true
@@ -79,8 +91,8 @@ export default {
   },
   data() {
     return {
-      buyOffers: [],
-      sellOffer: [],
+      myOrders: [],
+      myTrades: [],
       historyTab: 0,
       currentAccountWallet: null,
     };
@@ -88,116 +100,93 @@ export default {
   watch: {
     pairId() {
       if (this.historyTab === 0) {
-        this.listBuyOffer();
+        this.listMyOrder();
       }
       if (this.historyTab === 1) {
-        this.listSellOffer();
+        this.listMyTrades();
       }
     },
     historyTab(newVal, oldVal) {
       if (newVal === 0) {
-        this.listBuyOffer();
+        this.listMyOrder();
       }
       if (newVal === 1) {
-        this.listSellOffer();
+        this.listMyTrades();
       }
     }
   },
   mounted() {
   },
   created: debounce(function () {
-    this.listBuyOffer();
-    this.listSellOffer();
     this.client = new Web3(window.ethereum);
     this.client.eth.getAccounts().then(res => { this.currentAccountWallet = res[0] });
+    this.listMyOrder();
     this.initSocketNewOrderCreated();
     this.initOrderMatched();
   }, 500),
   methods: {
-    updateOrderMatched(offers, order) {
-      const orderFound = offers.find(e => e._id === order._id);
-      const orderFoundIndex = offers.indexOf(orderFound);
-      if (new BigNumber(order.remainingAmount).gt(0)) {
-        // Replace new order if new order has remainingAmount > 0
-        offers.splice(orderFoundIndex, 1, order);
-      } else {
-        // Remove order because full match
-        offers = offers.slice(orderFoundIndex + 1);
-      }
-      return offers;
-    },
     initOrderMatched() {
-      socket.on("OrderMatched", (order) => {
-        if (order.type === 'buy') {
-          this.buyOffers = this.updateOrderMatched(this.buyOffers, order);
-        } else {
-          this.sellOffer = this.updateOrderMatched(this.sellOffer, order);
+      socket.on("NewTradeCreated", (trade) => {
+        if (
+          trade.maker.toLowerCase() === this.currentAccountWallet.toLowerCase() ||
+          trade.taker.toLowerCase() === this.currentAccountWallet.toLowerCase()
+        ) {
+          if (this.historyTab === 0) {
+            this.listMyOrder();
+          }
+          if (this.historyTab === 1) {
+            this.listMyTrades();
+          }
         }
       });
     },
     initSocketNewOrderCreated() {
       socket.on("NewOrderCreated", (data) => {
-        if (data.pairId === this.pairId) {
-          if (data.type === 'buy') this.buyOffers.unshift(data);
-          if (data.type === 'sell') this.sellOffer.unshift(data);
+        if (data.pairId === this.pairId && data.maker.toLowerCase() === this.currentAccountWallet.toLowerCase()) {
+          this.myOrders.unshift(data);
         }
       });
     },
     convertExpiryToDate(expiry) {
       const dateObject = new Date(expiry * 1000);
-      return moment(dateObject).format('YYYY-MM-DDTHH:mm:ss.Z');
+      return moment(dateObject).local().format('YYYY/MM/DD-HH:mm:ss');
+    },
+    convertTimestampToDate(timestamp) {
+      const dateObject = new Date(timestamp);
+      return moment(dateObject).local().format('YYYY/MM/DD-HH:mm:ss');
     },
     removeDecimal(value) {
-      return new BigNumber(value).div(new BigNumber(10).pow(18)).toString();
+      return new BigNumber(value).div(new BigNumber(10).pow(18)).toFixed(2);
     },
-    listBuyOffer() {
-      listOrder('desc', this.baseTokenAddress, this.quoteTokenAddress, 'buy', 1, 6)
+    calculateOutTrade(type, price, volume) {
+      if (type === 'buy') {
+        const amount = new BigNumber(price).times(volume).div(new BigNumber(10).pow(18));
+        return `${amount.toFixed(2)} ${this.quoteTokenSymbol}`
+      } else {
+        const amount = new BigNumber(volume).div(new BigNumber(10).pow(18));
+        return `${amount.toFixed(2)} ${this.baseTokenSymbol}`;
+      }
+    },
+    calculateInTrade(type, price, volume) {
+      if (type === 'buy') {
+        const amount = new BigNumber(volume).div(new BigNumber(10).pow(18));
+        return `${amount.toFixed(2)} ${this.baseTokenSymbol}`;
+      } else {
+        const amount = new BigNumber(price).times(volume).div(new BigNumber(10).pow(18));
+        return `${amount.toFixed(2)} ${this.quoteTokenSymbol}`
+      }
+    },
+    listMyOrder() {
+      listOrder(null, this.baseTokenAddress, this.quoteTokenAddress, null, 1, 6, this.currentAccountWallet, 'desc')
       .then(res => {
-        this.buyOffers = res.data.data;
+        this.myOrders = res.data.data;
       })
     },
-    listSellOffer() {
-      listOrder('asc', this.baseTokenAddress, this.quoteTokenAddress, 'sell', 1, 6)
+    listMyTrades() {
+      listMyTrades(1, 6, this.currentAccountWallet.toLowerCase(), this.pairId)
       .then(res => {
-        this.sellOffer = res.data.data;
+        this.myTrades = res.data.data;
       })
-    },
-    async fillOrder(order) {
-      const signature = JSON.parse(order.signature);
-      const limitOrder = new LimitOrder({
-        chainId: Number(order.chainId),
-        verifyingContract: order.verifyingContract,
-        maker: order.maker,
-        taker: order.taker,
-        makerToken: order.makerToken,
-        takerToken: order.takerToken,
-        makerAmount: order.makerAmount,
-        takerAmount: order.takerAmount,
-        takerTokenFeeAmount: order.takerTokenFeeAmount,
-        sender: order.sender,
-        feeRecipient: order.feeRecipient,
-        expiry: Number(order.expiry),
-        pool: order.pool,
-        salt: order.salt
-      });
-
-      const erc20TokenContract = new this.client.eth.Contract(erc20ABI, order.takerToken);
-      const orderContract = new this.client.eth.Contract(exchangeABI, process.env.VUE_APP_ORDER_ADDRESS);
-      await erc20TokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, order.takerAmount).send({
-        from: this.currentAccountWallet,
-        gas: 800000,
-        gasPrice: 20e9
-      });
-      await orderContract.methods.fillLimitOrder(
-        limitOrder,
-        signature,
-        order.takerAmount
-      ).send({
-        from: this.currentAccountWallet,
-        value: 0,
-        gas: 800000,
-        gasPrice: 20e9
-      });
     }
   }
 };

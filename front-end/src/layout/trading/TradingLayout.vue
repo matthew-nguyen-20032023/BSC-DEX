@@ -45,6 +45,8 @@
           <history
             :base-token-address="baseTokenAddress"
             :quote-token-address="quoteTokenAddress"
+            :quote-token-symbol="quoteTokenSymbol"
+            :base-token-symbol="baseTokenSymbol"
             :pair-id="pairId"
           />
         </b-col>
@@ -95,13 +97,26 @@ export default {
     OrderBook
   },
   created: debounce(function () {
-    this.onResize()
+    this.onResize();
+    this.initWalletIfHave();
   },500),
   mounted() {
     window.addEventListener('resize', this.onResize)
     this.onResize()
   },
   methods: {
+    initWalletIfHave() {
+      if (window.ethereum) {
+        ethereum
+          .request({ method: "eth_requestAccounts" })
+          .then(async (accounts) => {
+            this.walletAddress = accounts[0];
+            this.sortWalletAddress = this.walletAddress.substring(0, 5)
+              + '...'
+              + this.walletAddress.substring(this.walletAddress.length - 4)
+          })
+      }
+    },
     onResize() {
       const chartTrading = document.getElementById('trading-vue-js');
       const myTrade = document.getElementById('market-trade');

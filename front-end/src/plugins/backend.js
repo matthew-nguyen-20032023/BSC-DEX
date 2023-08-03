@@ -17,10 +17,14 @@ export const listOrder = async (
   type,
   page,
   limit,
-  maker = null
+  maker = null,
+  sortCreated = null
 ) => {
-  let url = `${process.env.VUE_APP_BACKEND_URL}/order?page=${page}&limit=${limit}&sortPrice=${sortPrice}&baseTokenAddress=${baseTokenAddress}&quoteTokenAddress=${quoteTokenAddress}&type=${type}`;
+  let url = `${process.env.VUE_APP_BACKEND_URL}/order?page=${page}&limit=${limit}&baseTokenAddress=${baseTokenAddress}&quoteTokenAddress=${quoteTokenAddress}`;
+  if (sortPrice !== null) url += `&sortPrice=${sortPrice}`;
+  if (type !== null) url += `&type=${type}`;
   if (maker !== null) url += `&maker=${maker}`;
+  if (sortCreated) url += `&sortCreated=${sortCreated}`;
   return axios.get(url);
 };
 
@@ -31,6 +35,11 @@ export const listTrades = async (
   ohlcvTypeInterval
 ) => {
   let url = `${process.env.VUE_APP_BACKEND_URL}/trade?pairId=${pairId}&fromTimestamp=${fromTimestamp}&toTimestamp=${toTimestamp}&ohlcvTypeInterval=${ohlcvTypeInterval}`;
+  return axios.get(url);
+};
+
+export const listMyTrades = async (page, limit, wallet, pairId) => {
+  let url = `${process.env.VUE_APP_BACKEND_URL}/trade/my-trades?page=${page}&limit=${limit}&wallet=${wallet}&pairId=${pairId}`;
   return axios.get(url);
 };
 

@@ -70,6 +70,9 @@ export class OrderConsole {
         : new BigNumber(event.takerTokenFilledAmount).div(order.price);
     newTrade.pairId = order.pairId;
     newTrade.timestamp = Date.now();
+    newTrade.transactionId = event.transactionHash;
+    newTrade.maker = event.maker.toLowerCase();
+    newTrade.taker = event.taker.toLowerCase();
     return newTrade;
   }
 
