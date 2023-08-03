@@ -88,7 +88,11 @@ export default {
             order.total = new BigNumber(order.total).minus(totalUpdate).toFixed();
             if (Number(order.amount) <= 0) {
               const indexOfOrder = orders.indexOf(order);
-              orders = orders.slice(indexOfOrder + 1);
+              if (trade.orderType === 'buy') {
+                this.buyOrders = this.buyOrders.slice(indexOfOrder + 1);
+              } else {
+                this.sellOrders = this.sellOrders.slice(indexOfOrder + 1);
+              }
             }
             break;
           }
@@ -135,7 +139,11 @@ export default {
             amount: new BigNumber(trade.remainingAmount).div(new BigNumber(10).pow(18)).toFixed(),
             total: new BigNumber(trade.remainingAmount).times(trade.price).div(new BigNumber(10).pow(18)).toFixed()
           }
-          orders.splice(insertFrom, 0, buildOrderBook);
+          if (trade.orderType === 'buy') {
+            this.buyOrders.splice(insertFrom, 0, buildOrderBook);
+          } else {
+            this.sellOrders.splice(insertFrom, 0, buildOrderBook);
+          }
         }
       });
     },
