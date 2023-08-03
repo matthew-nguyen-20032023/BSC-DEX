@@ -6,20 +6,20 @@
       small
     >
       <b-tab title="Spot" :title-link-class="'text-light'">
-        <b-card-text>
+        <b-card-text class="mt-2">
           <b-row>
             <b-col>
-              <i class="mt-1">{{quoteTokenSymbol}} balance: {{ quoteTokenBalance }}</i>
-              <b-input type="number" v-model="buyMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
-              <b-input type="number" v-model="buyMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
+              <i class="mt-1" style="color: white">{{quoteTokenSymbol}} balance: {{ quoteTokenBalance }}</i>
+              <b-input min="0" type="number" v-model="buyMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
+              <b-input min="0" type="number" v-model="buyMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
               <b-input :disabled="true" v-model="buyMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
               <i class="mt-1">Estimate fee: {{ buyMakerCost }}</i>
               <b-button class="w-100 mt-1" variant="success" @click="createOrder('buy')">Buy {{ baseTokenSymbol }}</b-button>
             </b-col>
             <b-col>
-              <i class="mt-1">{{baseTokenSymbol}} balance: {{ baseTokenBalance }}</i>
-              <b-input type="number" v-model="sellMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
-              <b-input type="number" v-model="sellMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
+              <i class="mt-1" style="color: white">{{baseTokenSymbol}} balance: {{ baseTokenBalance }}</i>
+              <b-input min="0" type="number" v-model="sellMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
+              <b-input min="0" type="number" v-model="sellMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
               <b-input  :disabled="true" v-model="sellMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
               <i class="mt-1">Estimate fee: {{ sellMakerCost }}</i>
               <b-button class="w-100 mt-1" variant="danger" @click="createOrder('sell')">Sell {{ baseTokenSymbol }}</b-button>
@@ -90,7 +90,7 @@ export default {
       await this.getBalances();
     }, 500),
     buyMakerPrice: debounce( function () {
-      if (this.buyMakerPrice && this.buyMakerAmount) {
+      if (this.buyMakerPrice > 0 && this.buyMakerAmount > 0) {
         this.buyMakerTotal = this.buyMakerPrice * this.buyMakerAmount
         this.estimateFee('buy');
       } else {
@@ -99,7 +99,7 @@ export default {
       }
     }, 1000),
     buyMakerAmount: debounce(function () {
-      if (this.buyMakerPrice && this.buyMakerAmount) {
+      if (this.buyMakerPrice > 0 && this.buyMakerAmount > 0) {
         this.buyMakerTotal = this.buyMakerPrice * this.buyMakerAmount
         this.estimateFee('buy');
       } else {
@@ -108,7 +108,7 @@ export default {
       }
     }, 1000),
     sellMakerPrice: debounce(function () {
-      if (this.sellMakerPrice && this.sellMakerAmount) {
+      if (this.sellMakerPrice > 0 && this.sellMakerAmount > 0) {
         this.sellMakerTotal = this.sellMakerPrice * this.sellMakerAmount
         this.estimateFee('sell');
       } else {
@@ -117,7 +117,7 @@ export default {
       }
     }, 1000),
     sellMakerAmount: debounce(function () {
-      if (this.sellMakerPrice && this.sellMakerAmount) {
+      if (this.sellMakerPrice > 0 && this.sellMakerAmount > 0) {
         this.sellMakerTotal = this.sellMakerPrice * this.sellMakerAmount
         this.estimateFee('sell');
       } else {

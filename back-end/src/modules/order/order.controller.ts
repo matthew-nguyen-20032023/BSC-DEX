@@ -93,11 +93,7 @@ export class OrderController {
   public async listOrderBook(
     @Query() listOrderBookDto: ListOrderBookDto
   ): Promise<IResponseToClient> {
-    const data = await this.orderService.getOrderBook(
-      listOrderBookDto.pairId,
-      listOrderBookDto.limit,
-      listOrderBookDto.type
-    );
+    const data = await this.orderService.getOrderBook(listOrderBookDto.pairId);
     return {
       message: OrderMessageSuccess.ListOrderBookSuccess,
       data,

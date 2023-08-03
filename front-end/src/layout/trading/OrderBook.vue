@@ -1,21 +1,34 @@
 <template>
-  <table :id="orderBookType" style="font-size: 12px">
-    <tr v-if="orderBookType === 'sell'" style="color: rgb(132, 142, 156)">
-      <th>Price</th>
-      <th>Amount</th>
-      <th>Total</th>
-    </tr>
-    <tr v-if="orderBookType === 'buy'" style="color: rgb(132, 142, 156)">
-      <th>Price</th>
-      <th>Amount</th>
-      <th>Total</th>
-    </tr>
-    <tr v-for="(order, index) in orderBook" :key="index">
-      <td>{{ order.price }}</td>
-      <td>{{ order.amount }}</td>
-      <td>{{ order.total }}</td>
-    </tr>
-  </table>
+  <b-row class="ml-1 mt-2">
+    <table style="font-size: 12px; color: #e54150">
+      <tr>
+        <th style="text-align: center; color: #525f7f" colspan="3"><strong>Order Book</strong></th>
+      </tr>
+      <tr style="color: rgb(132, 142, 156)">
+        <th>Price</th>
+        <th>Amount</th>
+        <th>Total</th>
+      </tr>
+      <tr v-for="(order, index) in sellOrders" :key="index">
+        <td>{{ order.price }}</td>
+        <td>{{ order.amount }}</td>
+        <td>{{ order.total }}</td>
+      </tr>
+    </table>
+    <hr>
+    <table style="font-size: 12px; color: #23a776">
+      <tr style="color: rgb(132, 142, 156)">
+        <th>Price</th>
+        <th>Amount</th>
+        <th>Total</th>
+      </tr>
+      <tr v-for="(order, index) in buyOrders" :key="index">
+        <td>{{ order.price }}</td>
+        <td>{{ order.amount }}</td>
+        <td>{{ order.total }}</td>
+      </tr>
+    </table>
+  </b-row>
 </template>
 
 <script>
@@ -27,10 +40,6 @@ const debounce = require('debounce');
 
 export default {
   props: {
-    orderBookType: {
-      type: String,
-      required: true
-    },
     pairId: {
       type: String,
       required: true
@@ -42,23 +51,26 @@ export default {
       this.initSocketForNewOrderBook();
       this.initSocketNewTrade()
     },
+    buyOrders() {
+      if (this.buyOrders.length > this.defaultLengthOrderBook) {
+        this.buyOrders = this.buyOrders.splice(0, this.defaultLengthOrderBook);
+      }
+    },
+    sellOrders() {
+      if (this.sellOrders.length > this.defaultLengthOrderBook) {
+        this.sellOrders = this.sellOrders.splice(0, this.defaultLengthOrderBook);
+      }
+    }
   },
   created: debounce(function () {
     this.getOrderBook();
   }, 500),
   data() {
     return {
-      orderBook: [],
+      buyOrders: [],
+      sellOrders: [],
+      defaultLengthOrderBook: 8,
     };
-  },
-  mounted() {
-    const table = document.getElementById(this.orderBookType);
-    if (this.orderBookType === 'sell') {
-      table.style.color = '#e54150';
-    }
-    if (this.orderBookType === 'buy') {
-      table.style.color = '#23a776';
-    }
   },
   methods: {
     initSocketNewTrade() {
@@ -108,19 +120,19 @@ export default {
             }
             index++;
 
-            if (this.orderBookType === 'buy') {
-              if (data.price > order.price && !stop) {
-                insertFrom = index;
-                stop = true;
-              }
-            }
+            // if (this.orderBookType === 'buy') {
+            //   if (data.price > order.price && !stop) {
+            //     insertFrom = index;
+            //     stop = true;
+            //   }
+            // }
 
-            if (this.orderBookType === 'sell') {
-              if (data.price > order.price && !stop) {
-                insertFrom = index;
-                stop = true;
-              }
-            }
+            // if (this.orderBookType === 'sell') {
+            //   if (data.price > order.price && !stop) {
+            //     insertFrom = index;
+            //     stop = true;
+            //   }
+            // }
           }
 
           if (!isAdded) {
@@ -135,13 +147,21 @@ export default {
       });
     },
     getOrderBook() {
-      this.orderBook = []
-      listOrderBook(this.pairId, this.orderBookType, 15).then(res => {
-        this.orderBook = res.data.data.map(e => {
+      this.sellOrders = []
+      this.buyOrders = []
+      listOrderBook(this.pairId).then(res => {
+        this.buyOrders = res.data.data.buyOrders.map(e => {
           return {
-            price: e.price,
-            amount: new BigNumber(e.amount).div(new BigNumber(10).pow(18)),
-            total: new BigNumber(e.amount).times(e.price).div(new BigNumber(10).pow(18))
+            price: new BigNumber(e.price).toFixed(2),
+            amount: new BigNumber(e.amount).div(new BigNumber(10).pow(18)).toFixed(2),
+            total: new BigNumber(e.amount).times(e.price).div(new BigNumber(10).pow(18)).toFixed(2)
+          }
+        });
+        this.sellOrders = res.data.data.sellOrders.map(e => {
+          return {
+            price: new BigNumber(e.price).toFixed(2),
+            amount: new BigNumber(e.amount).div(new BigNumber(10).pow(18)).toFixed(2),
+            total: new BigNumber(e.amount).times(e.price).div(new BigNumber(10).pow(18)).toFixed(2)
           }
         });
       }).catch(error => {

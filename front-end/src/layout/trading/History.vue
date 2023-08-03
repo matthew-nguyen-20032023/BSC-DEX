@@ -24,8 +24,9 @@
               <td>{{ removeDecimal(data.remainingAmount) }}</td>
               <td>{{ convertExpiryToDate(data.expiry) }}</td>
               <td>
-                <b-button v-if="data.status === 'fill-able'" size="sm" variant="warning">Cancel</b-button>
-                <p style="color: rgb(35, 167, 118)" v-if="data.status !== 'fill-able'">{{ data.status.charAt(0).toUpperCase() + data.status.slice(1) }}</p>
+                <b-button v-if="Number(data.expiry) * 1000 > Date.now() && data.status === 'fill-able'" size="sm" variant="warning">Cancel</b-button>
+                <p style="color: rgb(35, 167, 118)" v-if="data.status === 'completed'">{{ data.status.charAt(0).toUpperCase() + data.status.slice(1) }}</p>
+                <p style="color: rgb(35, 167, 118)" v-if="Number(data.expiry) * 1000 < Date.now() && data.status === 'fill-able'">Expiry</p>
               </td>
             </tr>
           </table>
