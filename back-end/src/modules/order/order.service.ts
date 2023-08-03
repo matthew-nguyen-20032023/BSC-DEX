@@ -17,6 +17,7 @@ import { Pair, PairDocument } from "src/models/schemas/pair.schema";
 import { PairMessageError } from "src/modules/pair/pair.const";
 import { ListOrderDto } from "src/modules/order/dto/list-order.dto";
 import { SocketEmitter } from "src/socket/socket-emitter";
+import { IOrderBook } from "src/modules/order/order.interface";
 
 @Injectable()
 export class OrderService {
@@ -56,22 +57,25 @@ export class OrderService {
     return existPair._id.toString();
   }
 
-  private static async buildOrderBook(
+  public static async buildOrderBook(
     groupOrders: {
       _id: { type: OrderType; price: string };
       totalRemainingAmount: string;
     }[]
-  ): Promise<{
-    buyOrders: { price: string; amount: string }[];
-    sellOrders: { price: string; amount: string }[];
-  }> {
+  ): Promise<IOrderBook> {
     const buyOrders = [];
     const sellOrders = [];
 
     for (const order of groupOrders) {
       const orderBook = {
-        price: new BigNumber(order._id.price).toFixed(),
-        amount: new BigNumber(order.totalRemainingAmount).toFixed(),
+        price: new BigNumber(order._id.price).toFixed(2),
+        amount: new BigNumber(order.totalRemainingAmount)
+          .div(new BigNumber(10).pow(18))
+          .toFixed(2),
+        total: new BigNumber(order._id.price)
+          .times(order.totalRemainingAmount)
+          .div(new BigNumber(10).pow(18))
+          .toFixed(2),
       };
 
       if (order._id.type === OrderType.BuyOrder) buyOrders.push(orderBook);

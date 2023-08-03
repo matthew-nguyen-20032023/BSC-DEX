@@ -1,3 +1,5 @@
+import { OrderService } from "./order.service";
+
 const { MongoClient } = require("mongodb");
 const BigNumber = require("bignumber.js");
 import { Command, Console } from "nestjs-console";
@@ -22,12 +24,15 @@ import {
 import { Trade, TradeDocument } from "src/models/schemas/trade.schema";
 import { TradeRepository } from "src/models/repositories/trade.repository";
 import { SocketEmitter } from "src/socket/socket-emitter";
+import { Pair, PairDocument } from "src/models/schemas/pair.schema";
+import { PairRepository } from "src/models/repositories/pair.repository";
 
 @Console()
 export class OrderConsole {
   private readonly eventRepository: EventRepository;
   private readonly orderRepository: OrderRepository;
   private readonly tradeRepository: TradeRepository;
+  private readonly pairRepository: PairRepository;
 
   constructor(
     @InjectModel(Event.name)
@@ -35,11 +40,14 @@ export class OrderConsole {
     @InjectModel(Order.name)
     private readonly orderModel: Model<OrderDocument>,
     @InjectModel(Trade.name)
-    private readonly tradeModel: Model<TradeDocument>
+    private readonly tradeModel: Model<TradeDocument>,
+    @InjectModel(Pair.name)
+    private readonly pairModel: Model<PairDocument>
   ) {
     this.eventRepository = new EventRepository(this.eventModel);
     this.orderRepository = new OrderRepository(this.orderModel);
     this.tradeRepository = new TradeRepository(this.tradeModel);
+    this.pairRepository = new PairRepository(this.pairModel);
   }
 
   /**
@@ -210,8 +218,26 @@ export class OrderConsole {
         await this.orderRepository.save(order);
         await this.tradeRepository.save(newTrade);
       }
+    }
+  }
 
-      SocketEmitter.getInstance().emitOrderMatched(order);
+  @Command({ command: "build-order-book <pairName>" })
+  public async buildOrderBook(pairName: string): Promise<void> {
+    const pair = await this.pairRepository.getActivePairByName(pairName);
+    if (!pair) {
+      throw Error("No active pair found");
+    }
+
+    while (1) {
+      const ordersGrouped = await this.orderRepository.groupOrdersForOrderBook(
+        pair._id.toString()
+      );
+      const orderBook = await OrderService.buildOrderBook(ordersGrouped);
+      SocketEmitter.getInstance().emitOrderBookByPairId(
+        orderBook,
+        pair._id.toString()
+      );
+      await sleep(1000);
     }
   }
 }

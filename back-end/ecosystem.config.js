@@ -28,6 +28,15 @@ module.exports = {
       cron_restart: "1 0 * * *",
     },
     /**
+     * @description Build order book and emit to client by pair name
+     */
+    {
+      name: "BSC_DEX_BACKEND:build-order-book",
+      script: 'node ./dist/console.js build-order-book "BTC / USD"',
+      autorestart: true,
+      cron_restart: "1 0 * * *",
+    },
+    /**
      * @description Auto bot trading to fake data
      */
     {

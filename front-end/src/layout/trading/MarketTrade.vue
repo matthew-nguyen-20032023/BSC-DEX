@@ -32,13 +32,14 @@ export default {
     },
   },
   watch: {
-    pairId() {
+    pairId(newVal, oldVal) {
+      if (oldVal) socket.off(`NewTradeCreated_${oldVal}`);
       this.listMarket();
+      if (newVal) this.initSocketTradeCreated();
     }
   },
   created: debounce(function () {
     this.listMarket();
-    this.initSocketTradeCreated()
   }, 200),
   data() {
     return {
@@ -49,7 +50,7 @@ export default {
   mounted() {},
   methods: {
     initSocketTradeCreated() {
-      socket.on("NewTradeCreated", (data) => {
+      socket.on(`NewTradeCreated_${this.pairId}`, (data) => {
         this.data.unshift(data);
         if (this.data.length > this.defaultLengthDisplay) {
           this.data.pop()

@@ -63,8 +63,10 @@ export default {
     this.onResize()
   },
   watch: {
-    pairId() {
+    pairId(newVal, oldVal) {
+      if (oldVal) socket.off(`NewTradeCreated_${oldVal}`);
       this.listTrades();
+      if (newVal) this.initSocketNewTradeCreated();
     },
     intervalType() {
       this.listTrades();
@@ -72,7 +74,6 @@ export default {
   },
   created: debounce(function () {
     this.listTrades();
-    this.initSocketNewTradeCreated();
   }, 600),
   methods: {
     onResize() {
@@ -80,7 +81,7 @@ export default {
       this.height = window.innerHeight / 2.8 - 50
     },
     initSocketNewTradeCreated() {
-      socket.on('NewTradeCreated', (trade) => {
+      socket.on(`NewTradeCreated_${this.pairId}`, (trade) => {
         if (this.candleLength < this.maxCandleLength) this.candleLength++;
 
         const tradeVolume = new BigNumber(trade.volume).div(new BigNumber(10).pow(18)).toFixed();

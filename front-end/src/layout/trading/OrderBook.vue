@@ -46,10 +46,12 @@ export default {
     }
   },
   watch: {
-    pairId() {
+    pairId(newVal, oldVal) {
+      if (oldVal) {
+        socket.off(`OrderBookByPair_${oldVal}`);
+      }
       this.getOrderBook();
-      this.initSocketForNewOrderBook();
-      this.initSocketNewTrade()
+      if (newVal) this.initSocketOrderBook()
     },
     buyOrders() {
       if (this.buyOrders.length > this.defaultLengthOrderBook) {
@@ -73,79 +75,11 @@ export default {
     };
   },
   methods: {
-    initSocketNewTrade() {
-      socket.on('NewTradeCreated', (trade) => {
-        if (trade.pairId !== this.pairId) return;
-        if (trade.orderType === 'buy' && this.buyOrders.length === 0) return;
-        if (trade.orderType === 'sell' && this.sellOrders.length === 0) return;
-        let orders = trade.orderType === 'buy' ? this.buyOrders : this.sellOrders;
-
-        for (const order of orders) {
-          if (order.price === trade.price) {
-            const volumeNoDecimal = new BigNumber(trade.volume).div(new BigNumber(10).pow(18));
-            const totalUpdate = new BigNumber(trade.volume).times(trade.price).div(new BigNumber(10).pow(18));
-            order.amount = new BigNumber(order.amount).minus(volumeNoDecimal).toFixed();
-            order.total = new BigNumber(order.total).minus(totalUpdate).toFixed();
-            if (Number(order.amount) <= 0) {
-              const indexOfOrder = orders.indexOf(order);
-              if (trade.orderType === 'buy') {
-                this.buyOrders = this.buyOrders.slice(indexOfOrder + 1);
-              } else {
-                this.sellOrders = this.sellOrders.slice(indexOfOrder + 1);
-              }
-            }
-            break;
-          }
-        }
+    initSocketOrderBook() {
+      socket.on(`OrderBookByPair_${this.pairId}`, (orderBook) => {
+        this.buyOrders = orderBook.buyOrders;
+        this.sellOrders = orderBook.sellOrders;
       })
-    },
-    initSocketForNewOrderBook() {
-      socket.on("NewOrderCreated", (trade) => {
-        let orders = trade.orderType === 'buy' ? this.buyOrders : this.sellOrders;
-        if (orders.length === 0) {
-          const buildOrderBook = {
-            price: trade.price,
-            amount: new BigNumber(trade.remainingAmount).div(new BigNumber(10).pow(18)).toFixed(),
-            total: new BigNumber(trade.remainingAmount).times(trade.price).div(new BigNumber(10).pow(18)).toFixed()
-          }
-          orders.push(buildOrderBook);
-          return;
-        }
-
-        let index = -1;
-        let isAdded = false;
-        let insertFrom = index;
-        let stop = false;
-        for (const order of orders) {
-          if (order.price === trade.price) {
-            const amountUpdate = new BigNumber(trade.remainingAmount).div(new BigNumber(10).pow(18));
-            const totalUpdate = new BigNumber(trade.remainingAmount).times(trade.price).div(new BigNumber(10).pow(18));
-            order.amount = amountUpdate.plus(order.amount).toFixed();
-            order.total = totalUpdate.plus(order.total).toFixed();
-            isAdded = true;
-            break;
-          }
-          index++;
-
-          if (trade.price > order.price && !stop) {
-            insertFrom = index;
-            stop = true;
-          }
-        }
-
-        if (!isAdded) {
-          const buildOrderBook = {
-            price: trade.price,
-            amount: new BigNumber(trade.remainingAmount).div(new BigNumber(10).pow(18)).toFixed(),
-            total: new BigNumber(trade.remainingAmount).times(trade.price).div(new BigNumber(10).pow(18)).toFixed()
-          }
-          if (trade.orderType === 'buy') {
-            this.buyOrders.splice(insertFrom, 0, buildOrderBook);
-          } else {
-            this.sellOrders.splice(insertFrom, 0, buildOrderBook);
-          }
-        }
-      });
     },
     getOrderBook() {
       this.sellOrders = []

@@ -36,7 +36,6 @@ export class TickerService {
         low: "0",
         high: "0",
         volume: "0",
-        pairId,
       };
     return JSON.parse(<string>ticker);
   }

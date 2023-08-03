@@ -26,7 +26,7 @@
               <td>
                 <b-button v-if="Number(data.expiry) * 1000 > Date.now() && data.status === 'fill-able'" size="sm" variant="warning">Cancel</b-button>
                 <p style="color: rgb(35, 167, 118)" v-if="data.status === 'completed'">{{ data.status.charAt(0).toUpperCase() + data.status.slice(1) }}</p>
-                <p style="color: rgb(35, 167, 118)" v-if="Number(data.expiry) * 1000 < Date.now() && data.status === 'fill-able'">Expiry</p>
+                <p style="color: orange" v-if="Number(data.expiry) * 1000 < Date.now() && data.status === 'fill-able'">Expiry</p>
               </td>
             </tr>
           </table>
@@ -99,12 +99,20 @@ export default {
     };
   },
   watch: {
-    pairId() {
+    pairId(newVal, oldVal) {
+      if (oldVal) {
+        socket.off(`NewTradeCreated_${oldVal}`);
+        socket.off(`NewOrderCreated_${oldVal}`);
+      }
       if (this.historyTab === 0) {
         this.listMyOrder();
       }
       if (this.historyTab === 1) {
         this.listMyTrades();
+      }
+      if (newVal) {
+        this.initSocketNewOrderCreated();
+        this.initOrderMatched();
       }
     },
     historyTab(newVal, oldVal) {
@@ -130,12 +138,10 @@ export default {
     this.client = new Web3(window.ethereum);
     this.client.eth.getAccounts().then(res => { this.currentAccountWallet = res[0] });
     this.listMyOrder();
-    this.initSocketNewOrderCreated();
-    this.initOrderMatched();
   }, 500),
   methods: {
     initOrderMatched() {
-      socket.on("NewTradeCreated", (trade) => {
+      socket.on(`NewTradeCreated_${this.pairId}`, (trade) => {
         if (
           trade.maker.toLowerCase() === this.currentAccountWallet.toLowerCase() ||
           trade.taker.toLowerCase() === this.currentAccountWallet.toLowerCase()
@@ -150,8 +156,8 @@ export default {
       });
     },
     initSocketNewOrderCreated() {
-      socket.on("NewOrderCreated", (data) => {
-        if (data.pairId === this.pairId && data.maker.toLowerCase() === this.currentAccountWallet.toLowerCase()) {
+      socket.on(`NewOrderCreated_${this.pairId}`, (data) => {
+        if (data.maker.toLowerCase() === this.currentAccountWallet.toLowerCase()) {
           this.myOrders.unshift(data);
         }
       });

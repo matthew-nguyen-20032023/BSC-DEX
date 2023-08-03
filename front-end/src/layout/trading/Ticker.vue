@@ -114,15 +114,17 @@ export default {
   },
   created() {
     this.listPair();
-    this.initTicker24h();
     this.initWalletIfHave();
   },
   watch: {
     pairSelected(newVal, oldVal) {
+      if (oldVal) socket.off(`TickerChange_${oldVal._id.toString()}`)
       if (newVal !== null) {
+        this.pairId = newVal._id.toString();
         this.$emit('pairChange', newVal);
+        this.getTicker();
+        this.initTicker24h()
       }
-      this.getTicker();
     },
     walletAddress(newWallet, oldWallet) {
       if (newWallet !== null) {
@@ -166,13 +168,11 @@ export default {
       }
     },
     initTicker24h() {
-      socket.on("TickerChange", (ticker) => {
-        if (ticker.pairId === this.pairId) {
-          this.change = ticker.change;
-          this.high = ticker.high;
-          this.low = ticker.low;
-          this.volume = ticker.volume;
-        } else {}
+      socket.on(`TickerChange_${this.pairId}`, (ticker) => {
+        this.change = ticker.change;
+        this.high = ticker.high;
+        this.low = ticker.low;
+        this.volume = ticker.volume;
       });
     },
     async getTicker() {
@@ -194,6 +194,7 @@ export default {
         this.optionsPair = res.data.data.map(e => {
           return { value: e, text: e.name }
         })
+        this.initTicker24h();
       })
     },
   }
