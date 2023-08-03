@@ -4,7 +4,7 @@
       <th style="text-align: center; font-size: 12px" colspan="3"><strong>Trade Matched</strong></th>
     </tr>
     <tr style="color: rgb(132, 142, 156);">
-      <th>Price</th>
+      <th>Price ({{quoteTokenSymbol}})</th>
       <th>Amount</th>
       <th>Time</th>
     </tr>
@@ -27,6 +27,10 @@ import {socket} from "@/plugins/socket";
 export default {
   props: {
     pairId: {
+      type: String,
+      required: true
+    },
+    quoteTokenSymbol: {
       type: String,
       required: true
     },
