@@ -1,11 +1,11 @@
 <template>
-  <b-row class="ml-1 mt-2">
+  <b-row class="mt-2">
     <table id="sellOrders" style="font-size: 12px; color: #e54150">
       <tr>
         <th style="text-align: center; color: #525f7f" colspan="3"><strong>Order Book</strong></th>
       </tr>
       <tr style="color: rgb(132, 142, 156)">
-        <th>Price ({{quoteTokenSymbol}})</th>
+        <th style="padding-left: 20px">Price ({{quoteTokenSymbol}})</th>
         <th>Amount</th>
         <th>Total</th>
       </tr>
@@ -15,7 +15,7 @@
     <hr>
     <table id="buyOrders" style="font-size: 12px; color: #23a776">
       <tr style="color: rgb(132, 142, 156)">
-        <th>Price ({{quoteTokenSymbol}})</th>
+        <th style="padding-left: 20px">Price ({{quoteTokenSymbol}})</th>
         <th>Amount</th>
         <th>Total</th>
       </tr>
@@ -114,7 +114,6 @@ export default {
       // Find the highest total
       const highestTotalBuy = Math.max(...this.buyOrders.map((order) => order.total));
       const highestTotalSell = Math.max(...this.sellOrders.map((order) => order.total));
-      const highestTotal = Math.max(highestTotalBuy, highestTotalSell);
 
       // Add buy orders dynamically
       this.buyOrders.forEach((order) => {
@@ -123,9 +122,10 @@ export default {
         const amountCell = row.insertCell(1);
         const totalCell = row.insertCell(2);
         priceCell.innerText = order.price;
+        priceCell.style.paddingLeft = "20px";
         amountCell.innerText = order.amount;
         totalCell.innerText = order.total;
-        const heightPercentage = (order.total / highestTotal) * 100;
+        const heightPercentage = (order.total / highestTotalBuy) * 100;
         row.style.backgroundImage = `linear-gradient(to right, rgba(35, 167, 118, 0.1) ${heightPercentage}%, transparent ${heightPercentage}%)`;
       });
 
@@ -136,9 +136,10 @@ export default {
         const amountCell = row.insertCell(1);
         const totalCell = row.insertCell(2);
         priceCell.innerText = order.price;
+        priceCell.style.paddingLeft = "20px";
         amountCell.innerText = order.amount;
         totalCell.innerText = order.total;
-        const heightPercentage = (order.total / highestTotal) * 100;
+        const heightPercentage = (order.total / highestTotalSell) * 100;
         row.style.backgroundImage = `linear-gradient(to right, rgba(229, 65, 80, 0.1) ${heightPercentage}%, transparent ${heightPercentage}%)`;
       });
     }
@@ -146,6 +147,6 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 /* Add your component styles here */
 </style>
