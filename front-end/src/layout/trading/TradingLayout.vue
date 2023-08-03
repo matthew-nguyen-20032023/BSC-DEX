@@ -4,7 +4,7 @@
       <b-button v-if="!walletAddress" @click="connectWallet()" variant="warning" class="h-100">
         <span><i class="tim-icons icon-wallet-43 mb-1"></i> Connect wallet</span>
       </b-button>
-      <b-dropdown v-if="walletAddress" id="dropdown-left" variant="primary" class="h-100">
+      <b-dropdown v-if="walletAddress" id="dropdown-left" variant="success" class="h-100">
         <template #button-content>
           <span><i class="tim-icons icon-wallet-43 mb-1"></i> {{ sortWalletAddress }}</span>
         </template>
