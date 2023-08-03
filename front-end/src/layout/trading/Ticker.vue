@@ -9,7 +9,7 @@
     </tr>
     <tr>
       <th>
-        <select style="color: rgb(132, 142, 156); border-radius: 5px" v-model="pairSelected">
+        <select style="color: white; background-image: linear-gradient(to bottom left, #00f2c3, #0098f0, #00f2c3); border-radius: 5px" v-model="pairSelected">
           <option v-for="(data, i) in optionsPair" :key="i" :value="data.value">{{ data.text }}</option>
         </select>
       </th>

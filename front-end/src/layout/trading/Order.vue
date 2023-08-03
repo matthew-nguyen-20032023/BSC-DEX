@@ -143,15 +143,15 @@ export default {
       setTimeout(async () => {
         const quoteTokenBalance = await this.quoteTokenContract.methods.balanceOf(this.currentAccountWallet).call();
         const baseTokenBalance = await this.baseTokenContract.methods.balanceOf(this.currentAccountWallet).call();
-        this.quoteTokenBalance = new BigNumber(quoteTokenBalance).div(new BigNumber(10).pow(18));
-        this.baseTokenBalance = new BigNumber(baseTokenBalance).div(new BigNumber(10).pow(18));
+        this.quoteTokenBalance = new BigNumber(quoteTokenBalance).div(new BigNumber(10).pow(18)).toFixed(2);
+        this.baseTokenBalance = new BigNumber(baseTokenBalance).div(new BigNumber(10).pow(18)).toFixed(2);
       }, 1000)
     },
     async estimateFee(type) {
       const tx = await this.approveToken(type, false);
       const gas = await tx.estimateGas({from: this.currentAccountWallet});
       const gasPrice = await this.client.eth.getGasPrice();
-      const gasCost = new BigNumber(gas).times(gasPrice).div(new BigNumber(10).pow(18));
+      const gasCost = new BigNumber(gas).times(gasPrice).div(new BigNumber(10).pow(18)).toFixed(10);
       if (type === 'buy') {
         this.buyMakerCost = gasCost;
       } else {
