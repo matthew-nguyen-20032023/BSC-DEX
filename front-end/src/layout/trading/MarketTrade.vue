@@ -44,7 +44,7 @@ export default {
   data() {
     return {
       data: [],
-      defaultLengthDisplay: 18,
+      defaultLengthDisplay: window.innerHeight < 1100 ? 13 : 18,
     };
   },
   mounted() {},

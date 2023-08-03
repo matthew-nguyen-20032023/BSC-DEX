@@ -5,7 +5,7 @@
         <th style="text-align: center; color: #525f7f" colspan="3"><strong>Order Book</strong></th>
       </tr>
       <tr style="color: rgb(132, 142, 156)">
-        <th>Price</th>
+        <th>Price ({{quoteTokenSymbol}})</th>
         <th>Amount</th>
         <th>Total</th>
       </tr>
@@ -18,7 +18,7 @@
     <hr>
     <table style="font-size: 12px; color: #23a776">
       <tr style="color: rgb(132, 142, 156)">
-        <th>Price</th>
+        <th>Price ({{quoteTokenSymbol}})</th>
         <th>Amount</th>
         <th>Total</th>
       </tr>
@@ -41,6 +41,10 @@ const debounce = require('debounce');
 export default {
   props: {
     pairId: {
+      type: String,
+      required: true
+    },
+    quoteTokenSymbol: {
       type: String,
       required: true
     }

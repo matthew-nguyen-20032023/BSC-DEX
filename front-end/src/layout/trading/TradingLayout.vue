@@ -9,7 +9,7 @@
 
       <b-row class="justify-content-center">
         <b-col class="custom-order-book-col" id="order-book" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
-          <order-book :pair-id="pairId"/>
+          <order-book :pair-id="pairId" :quote-token-symbol="quoteTokenSymbol"/>
         </b-col>
 
         <b-col class="custom-trading-col" id="chart-trading">
