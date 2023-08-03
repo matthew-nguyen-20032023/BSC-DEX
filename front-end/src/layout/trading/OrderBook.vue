@@ -11,11 +11,6 @@
       </tr>
       <tbody>
       </tbody>
-<!--      <tr v-for="(order, index) in sellOrders" :key="index">-->
-<!--        <td>{{ order.price }}</td>-->
-<!--        <td>{{ order.amount }}</td>-->
-<!--        <td>{{ order.total }}</td>-->
-<!--      </tr>-->
     </table>
     <hr>
     <table id="buyOrders" style="font-size: 12px; color: #23a776">
@@ -26,11 +21,6 @@
       </tr>
       <tbody>
       </tbody>
-<!--      <tr v-for="(order, index) in buyOrders" :key="index">-->
-<!--        <td>{{ order.price }}</td>-->
-<!--        <td>{{ order.amount }}</td>-->
-<!--        <td>{{ order.total }}</td>-->
-<!--      </tr>-->
     </table>
   </b-row>
 </template>
@@ -104,6 +94,7 @@ export default {
             total: new BigNumber(e.amount).times(e.price).div(new BigNumber(10).pow(18)).toFixed(2)
           }
         });
+        this.updateOrderBook();
       }).catch(error => {
         return notificationWithCustomMessage('warning', this, `${error.message}`);
       })
