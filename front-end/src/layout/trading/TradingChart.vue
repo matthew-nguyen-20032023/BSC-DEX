@@ -49,6 +49,7 @@ export default {
       intervalType: '1m',
       millisecondStep: 60000,
       candleLength: 50,
+      maxCandleLength: 100,
       width: (window.innerWidth / 3.2),
       height: (window.innerHeight / 2.8),
     }
@@ -80,6 +81,8 @@ export default {
     },
     initSocketNewTradeCreated() {
       socket.on('NewTradeCreated', (trade) => {
+        if (this.candleLength < this.maxCandleLength) this.candleLength++;
+
         const tradeVolume = new BigNumber(trade.volume).div(new BigNumber(10).pow(18)).toFixed();
         const roundDownTradeTimestamp = Math.floor(trade.timestamp / (60 * 1000)) * 60 * 1000;
         this.data.update({
