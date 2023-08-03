@@ -114,6 +114,14 @@ export default {
       if (newVal === 1) {
         this.listMyTrades();
       }
+    },
+    currentAccountWallet(newVal, oldVal) {
+      if (newVal != null) {
+        this.listMyOrder();
+      }
+      if (newVal === 1) {
+        this.listMyTrades();
+      }
     }
   },
   mounted() {
@@ -178,6 +186,7 @@ export default {
       }
     },
     listMyOrder() {
+      if (this.currentAccountWallet === null) return;
       listOrder(null, this.baseTokenAddress, this.quoteTokenAddress, null, 1, 6, this.currentAccountWallet, 'desc')
       .then(res => {
         this.myOrders = res.data.data;

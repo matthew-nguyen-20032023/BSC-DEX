@@ -129,8 +129,8 @@ export class OrderRepository {
     return this.model.aggregate([
       {
         $match: {
-          // status: OrderStatus.FillAble,
-          // expiry: { $gt: Date.now() / 1000 },
+          status: OrderStatus.FillAble,
+          expiry: { $gt: Date.now() / 1000 },
           pairId: pairId,
         },
       },
