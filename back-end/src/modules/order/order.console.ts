@@ -1,5 +1,3 @@
-import { OrderService } from "./order.service";
-
 const { MongoClient } = require("mongodb");
 const BigNumber = require("bignumber.js");
 import { Command, Console } from "nestjs-console";
@@ -26,6 +24,7 @@ import { TradeRepository } from "src/models/repositories/trade.repository";
 import { SocketEmitter } from "src/socket/socket-emitter";
 import { Pair, PairDocument } from "src/models/schemas/pair.schema";
 import { PairRepository } from "src/models/repositories/pair.repository";
+import { OrderService } from "src/modules/order/order.service";
 
 @Console()
 export class OrderConsole {
@@ -237,6 +236,7 @@ export class OrderConsole {
         orderBook,
         pair._id.toString()
       );
+      console.log(`Build order book done`);
       await sleep(1000);
     }
   }

@@ -26,64 +26,31 @@
           <option v-for="(data, i) in optionsPair" :key="i" :value="data.value">{{ data.text }}</option>
         </select>
       </th>
-      <th v-if="change >= 0" style="color: rgb(35, 167, 118); text-align: right">
-        {{ Math.abs(change).toFixed(2) }}%
+      <th v-if="price >= 0" style="color: rgb(35, 167, 118); text-align: right">
+        {{ Math.abs(price).toFixed(2) }} {{ change }}%
         <b-icon
           :icon="'arrow-up-circle'"
           :class="{'grow-up': true, 'growing': true}"
         />
       </th>
-      <th v-if="change < 0" style="color: rgb(229, 65, 80); text-align: right">
-        {{ Math.abs(change).toFixed(2) }}%
+      <th v-if="price < 0" style="color: rgb(229, 65, 80); text-align: right">
+        {{ Math.abs(price).toFixed(2) }} {{ change }}%
         <b-icon
           :icon="'arrow-down-circle'"
           :class="{'grow-up': true, 'growing': true}"
         />
       </th>
 
-      <th v-if="high >= 0" style="color: rgb(35, 167, 118); text-align: right">
+      <th style="text-align: right">
         {{ Math.abs(high).toFixed(2) }}
-        <b-icon
-          :icon="'arrow-up-circle'"
-          :class="{'grow-up': true, 'growing': true}"
-        />
-      </th>
-      <th v-if="high < 0" style="color: rgb(229, 65, 80); text-align: right">
-        {{ Math.abs(high).toFixed(2) }}
-        <b-icon
-          :icon="'arrow-down-circle'"
-          :class="{'grow-up': false, 'growing': false}"
-        />
       </th>
 
-      <th v-if="low >= 0" style="color: rgb(35, 167, 118); text-align: right">
+      <th style="text-align: right">
         {{ Math.abs(low).toFixed(2) }}
-        <b-icon
-          :icon="'arrow-up-circle'"
-          :class="{'grow-up': true, 'growing': true}"
-        />
-      </th>
-      <th v-if="low < 0" style="color: rgb(229, 65, 80); text-align: right">
-        {{ Math.abs(low).toFixed(2) }}
-        <b-icon
-          :icon="'arrow-down-circle'"
-          :class="{'grow-up': false, 'growing': false}"
-        />
       </th>
 
-      <th v-if="volume >= 0" style="color: rgb(35, 167, 118); text-align: right">
+      <th style="text-align: right">
         {{ removeDecimal(volume) }}
-        <b-icon
-          :icon="'arrow-up-circle'"
-          :class="{'grow-up': true, 'growing': true}"
-        />
-      </th>
-      <th v-if="volume < 0" style="color: rgb(229, 65, 80); text-align: right">
-        {{ removeDecimal(volume) }}
-        <b-icon
-          :icon="'arrow-down-circle'"
-          :class="{'grow-up': false, 'growing': false}"
-        />
       </th>
     </tr>
   </table>
@@ -104,6 +71,7 @@ export default {
       pairId: null,
       pairSelected: null,
       optionsPair: [],
+      price: "0",
       change: "0",
       low: "0",
       high: "0",
@@ -169,6 +137,7 @@ export default {
     },
     initTicker24h() {
       socket.on(`TickerChange_${this.pairId}`, (ticker) => {
+        this.price = ticker.price;
         this.change = ticker.change;
         this.high = ticker.high;
         this.low = ticker.low;
@@ -178,6 +147,7 @@ export default {
     async getTicker() {
       if (this.pairId === null) return;
       const ticker = await getTicker24H(this.pairId);
+      this.price = ticker.data.data.price;
       this.change = ticker.data.data.change;
       this.high = ticker.data.data.high;
       this.low = ticker.data.data.low;

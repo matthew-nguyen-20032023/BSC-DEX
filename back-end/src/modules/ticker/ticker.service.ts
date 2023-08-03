@@ -36,6 +36,7 @@ export class TickerService {
         low: "0",
         high: "0",
         volume: "0",
+        price: "0",
       };
     return JSON.parse(<string>ticker);
   }

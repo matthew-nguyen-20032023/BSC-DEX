@@ -52,6 +52,7 @@ export class TickerConsole {
       ? // @ts-ignore
         JSON.parse(oldTickerRedis)
       : {
+          price: "0",
           change: "0",
           low: "0",
           high: "0",
@@ -61,6 +62,7 @@ export class TickerConsole {
     while (1) {
       console.log(`${TickerConsole.name}: Calculate ticker at ${new Date()}`);
       const ticker24h: Ticker24H = {
+        price: "0",
         change: "0",
         low: "0",
         high: "0",
@@ -88,10 +90,12 @@ export class TickerConsole {
       const price24hAgo = trades24h[0].price;
       ticker24h.change = new BigNumber(currentPrice)
         .minus(price24hAgo)
+        .abs()
         .div(price24hAgo)
         .times(100)
-        .toFixed();
+        .toFixed(2);
       ticker24h.low = trades24h[0].price;
+      ticker24h.price = currentPrice;
 
       // calculate 24h low, high and volume
       for (const trade of trades24h) {
@@ -112,24 +116,17 @@ export class TickerConsole {
 
       const tickerAbsValue = JSON.stringify(ticker24h);
 
-      ticker24h.change = new BigNumber(ticker24h.change)
-        .minus(oldTicker.change)
+      ticker24h.price = new BigNumber(ticker24h.price)
+        .minus(oldTicker.price)
         .gt("0")
-        ? ticker24h.change
+        ? ticker24h.price
+        : `-${ticker24h.price}`;
+
+      ticker24h.change = new BigNumber(ticker24h.price)
+        .minus(oldTicker.price)
+        .gt("0")
+        ? `+${ticker24h.change}`
         : `-${ticker24h.change}`;
-      ticker24h.high = new BigNumber(ticker24h.high)
-        .minus(oldTicker.high)
-        .gt("0")
-        ? ticker24h.high
-        : `-${ticker24h.high}`;
-      ticker24h.low = new BigNumber(ticker24h.low).minus(oldTicker.low).gt("0")
-        ? ticker24h.low
-        : `-${ticker24h.low}`;
-      ticker24h.volume = new BigNumber(ticker24h.volume)
-        .minus(oldTicker.volume)
-        .gt("0")
-        ? ticker24h.volume
-        : `-${ticker24h.volume}`;
       oldTicker = JSON.parse(tickerAbsValue);
 
       await this.cacheManager.set(

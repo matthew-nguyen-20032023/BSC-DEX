@@ -84,11 +84,9 @@ export class OrderService {
 
     const funcSort = (a, b) => {
       {
-        const priceA = new Date(a.price);
-        const priceB = new Date(b.price);
         // Compare the 2 dates
-        if (priceA > priceB) return -1;
-        if (priceA < priceB) return 1;
+        if (new BigNumber(a.price).gt(b.price)) return -1;
+        if (new BigNumber(a.price).lt(b.price)) return 1;
       }
     };
 
