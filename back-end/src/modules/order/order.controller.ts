@@ -11,13 +11,12 @@ import { EstimateAllowanceDto } from "src/modules/order/dto/estimate-allowance.d
 import { GetMatchOrdersDto } from "src/modules/order/dto/get-match-orders.dto";
 
 @Controller("order")
-@ApiBearerAuth()
+@Public()
 @ApiTags("Order")
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
-  @Public()
   @ApiOperation({
     summary: "Api to create limit order (use to create off-chain order only)",
   })
@@ -33,7 +32,6 @@ export class OrderController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({
     summary: "Api to list best order offer by conditions",
   })
@@ -49,7 +47,6 @@ export class OrderController {
   }
 
   @Get("estimate-allowance")
-  @Public()
   @ApiOperation({
     summary:
       "Api to estimate maker amount to approve when you create multiple order",
@@ -69,7 +66,6 @@ export class OrderController {
   }
 
   @Get("match-orders")
-  @Public()
   @ApiOperation({
     summary: "Api to get match order",
   })
@@ -91,7 +87,6 @@ export class OrderController {
   }
 
   @Get("order-book")
-  @Public()
   @ApiOperation({
     summary: "Api to get order-book",
   })
