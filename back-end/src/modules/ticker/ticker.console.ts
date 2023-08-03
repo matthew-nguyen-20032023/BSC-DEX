@@ -127,19 +127,6 @@ export class TickerConsole {
         .gt("0")
         ? `+${ticker24h.change}`
         : `-${ticker24h.change}`;
-      ticker24h.high = new BigNumber(ticker24h.high)
-        .minus(oldTicker.high)
-        .gt("0")
-        ? ticker24h.high
-        : `-${ticker24h.high}`;
-      ticker24h.low = new BigNumber(ticker24h.low).minus(oldTicker.low).gt("0")
-        ? ticker24h.low
-        : `-${ticker24h.low}`;
-      ticker24h.volume = new BigNumber(ticker24h.volume)
-        .minus(oldTicker.volume)
-        .gt("0")
-        ? ticker24h.volume
-        : `-${ticker24h.volume}`;
       oldTicker = JSON.parse(tickerAbsValue);
 
       await this.cacheManager.set(

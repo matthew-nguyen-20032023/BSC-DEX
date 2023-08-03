@@ -41,49 +41,16 @@
         />
       </th>
 
-      <th v-if="high >= 0" style="color: rgb(35, 167, 118); text-align: right">
+      <th style="text-align: right">
         {{ Math.abs(high).toFixed(2) }}
-        <b-icon
-          :icon="'arrow-up-circle'"
-          :class="{'grow-up': true, 'growing': true}"
-        />
-      </th>
-      <th v-if="high < 0" style="color: rgb(229, 65, 80); text-align: right">
-        {{ Math.abs(high).toFixed(2) }}
-        <b-icon
-          :icon="'arrow-down-circle'"
-          :class="{'grow-up': false, 'growing': false}"
-        />
       </th>
 
-      <th v-if="low >= 0" style="color: rgb(35, 167, 118); text-align: right">
+      <th style="text-align: right">
         {{ Math.abs(low).toFixed(2) }}
-        <b-icon
-          :icon="'arrow-up-circle'"
-          :class="{'grow-up': true, 'growing': true}"
-        />
-      </th>
-      <th v-if="low < 0" style="color: rgb(229, 65, 80); text-align: right">
-        {{ Math.abs(low).toFixed(2) }}
-        <b-icon
-          :icon="'arrow-down-circle'"
-          :class="{'grow-up': false, 'growing': false}"
-        />
       </th>
 
-      <th v-if="volume >= 0" style="color: rgb(35, 167, 118); text-align: right">
+      <th style="text-align: right">
         {{ removeDecimal(volume) }}
-        <b-icon
-          :icon="'arrow-up-circle'"
-          :class="{'grow-up': true, 'growing': true}"
-        />
-      </th>
-      <th v-if="volume < 0" style="color: rgb(229, 65, 80); text-align: right">
-        {{ removeDecimal(volume) }}
-        <b-icon
-          :icon="'arrow-down-circle'"
-          :class="{'grow-up': false, 'growing': false}"
-        />
       </th>
     </tr>
   </table>
