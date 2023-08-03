@@ -19,11 +19,14 @@
             </tr>
             <tr v-for="(data, i) in myOrders" :key="i">
               <td>{{ data.type }}</td>
-              <td>{{ data.price }}</td>
+              <td>{{ Math.abs(data.price).toFixed(2) }}</td>
               <td>{{ removeDecimal(data.makerAmount) }}</td>
               <td>{{ removeDecimal(data.remainingAmount) }}</td>
               <td>{{ convertExpiryToDate(data.expiry) }}</td>
-              <td><b-button size="sm" variant="warning">Cancel</b-button></td>
+              <td>
+                <b-button v-if="data.status === 'fill-able'" size="sm" variant="warning">Cancel</b-button>
+                <p style="color: rgb(35, 167, 118)" v-if="data.status !== 'fill-able'">{{ data.status.charAt(0).toUpperCase() + data.status.slice(1) }}</p>
+              </td>
             </tr>
           </table>
         </b-card-text>
@@ -32,16 +35,20 @@
         <b-card-text>
           <table class="w-100 mt-1">
             <tr>
+              <th>Type</th>
               <th>Price</th>
-              <th>Remaining Amount</th>
-              <th>Expiry</th>
-              <th>Created</th>
+              <th>Out</th>
+              <th>In</th>
+              <th>Time</th>
+              <th>Transaction</th>
             </tr>
-            <tr v-for="(data, i) in sellOffer" :key="i">
-              <td>{{ data.price }}</td>
-              <td>{{ removeDecimal(data.remainingAmount) }}</td>
-              <td>{{ convertExpiryToDate(data.expiry) }}</td>
-              <td>{{ data.createdAt }}</td>
+            <tr v-for="(data, i) in myTrades" :key="i">
+              <td>{{ data.orderType }}</td>
+              <td>{{ Math.abs(data.price).toFixed(2) }}</td>
+              <td>{{ calculateOutTrade(data.orderType, data.price, data.volume) }}</td>
+              <td>{{ calculateInTrade(data.orderType, data.price, data.volume) }}</td>
+              <td>{{ convertTimestampToDate(data.timestamp) }}</td>
+              <td><a style="color: rgb(35, 167, 118)" href="#">DETAIL</a></td>
             </tr>
           </table>
         </b-card-text>
@@ -51,7 +58,7 @@
 </template>
 
 <script>
-import { listOrder } from "@/plugins/backend";
+import {listMyTrades, listOrder} from "@/plugins/backend";
 import Web3 from "web3";
 import {socket} from "@/plugins/socket";
 const debounce = require('debounce');
@@ -69,6 +76,14 @@ export default {
       type: String,
       required: true
     },
+    baseTokenSymbol: {
+      type: String,
+      required: true
+    },
+    quoteTokenSymbol: {
+      type: String,
+      required: true
+    },
     pairId: {
       type: String,
       required: true
@@ -77,7 +92,7 @@ export default {
   data() {
     return {
       myOrders: [],
-      sellOffer: [],
+      myTrades: [],
       historyTab: 0,
       currentAccountWallet: null,
     };
@@ -88,7 +103,7 @@ export default {
         this.listMyOrder();
       }
       if (this.historyTab === 1) {
-        // this.listSellOffer();
+        this.listMyTrades();
       }
     },
     historyTab(newVal, oldVal) {
@@ -96,7 +111,7 @@ export default {
         this.listMyOrder();
       }
       if (newVal === 1) {
-        // this.listSellOffer();
+        this.listMyTrades();
       }
     }
   },
@@ -111,9 +126,17 @@ export default {
   }, 500),
   methods: {
     initOrderMatched() {
-      socket.on("OrderMatched", (order) => {
-        if (order.maker.toLowerCase() === this.currentAccountWallet.toLowerCase()) {
-          this.listMyOrder();
+      socket.on("NewTradeCreated", (trade) => {
+        if (
+          trade.maker.toLowerCase() === this.currentAccountWallet.toLowerCase() ||
+          trade.taker.toLowerCase() === this.currentAccountWallet.toLowerCase()
+        ) {
+          if (this.historyTab === 0) {
+            this.listMyOrder();
+          }
+          if (this.historyTab === 1) {
+            this.listMyTrades();
+          }
         }
       });
     },
@@ -128,8 +151,30 @@ export default {
       const dateObject = new Date(expiry * 1000);
       return moment(dateObject).local().format('YYYY/MM/DD-HH:mm:ss');
     },
+    convertTimestampToDate(timestamp) {
+      const dateObject = new Date(timestamp);
+      return moment(dateObject).local().format('YYYY/MM/DD-HH:mm:ss');
+    },
     removeDecimal(value) {
-      return new BigNumber(value).div(new BigNumber(10).pow(18)).toString();
+      return new BigNumber(value).div(new BigNumber(10).pow(18)).toFixed(2);
+    },
+    calculateOutTrade(type, price, volume) {
+      if (type === 'buy') {
+        const amount = new BigNumber(price).times(volume).div(new BigNumber(10).pow(18));
+        return `${amount.toFixed(2)} ${this.quoteTokenSymbol}`
+      } else {
+        const amount = new BigNumber(volume).div(new BigNumber(10).pow(18));
+        return `${amount.toFixed(2)} ${this.baseTokenSymbol}`;
+      }
+    },
+    calculateInTrade(type, price, volume) {
+      if (type === 'buy') {
+        const amount = new BigNumber(volume).div(new BigNumber(10).pow(18));
+        return `${amount.toFixed(2)} ${this.baseTokenSymbol}`;
+      } else {
+        const amount = new BigNumber(price).times(volume).div(new BigNumber(10).pow(18));
+        return `${amount.toFixed(2)} ${this.quoteTokenSymbol}`
+      }
     },
     listMyOrder() {
       listOrder(null, this.baseTokenAddress, this.quoteTokenAddress, null, 1, 6, this.currentAccountWallet, 'desc')
@@ -137,6 +182,12 @@ export default {
         this.myOrders = res.data.data;
       })
     },
+    listMyTrades() {
+      listMyTrades(1, 6, this.currentAccountWallet.toLowerCase(), this.pairId)
+      .then(res => {
+        this.myTrades = res.data.data;
+      })
+    }
   }
 };
 </script>

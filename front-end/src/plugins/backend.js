@@ -38,6 +38,11 @@ export const listTrades = async (
   return axios.get(url);
 };
 
+export const listMyTrades = async (page, limit, wallet, pairId) => {
+  let url = `${process.env.VUE_APP_BACKEND_URL}/trade/my-trades?page=${page}&limit=${limit}&wallet=${wallet}&pairId=${pairId}`;
+  return axios.get(url);
+};
+
 export const listCurrentOriginTrades = async (pairId, limit) => {
   let url = `${process.env.VUE_APP_BACKEND_URL}/trade/origin?pairId=${pairId}&limit=${limit}`;
   return axios.get(url);

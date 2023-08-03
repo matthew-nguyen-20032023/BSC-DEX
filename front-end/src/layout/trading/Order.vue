@@ -10,17 +10,17 @@
           <b-row>
             <b-col>
               <i class="mt-1">{{quoteTokenSymbol}} balance: {{ quoteTokenBalance }}</i>
-              <b-input v-model="buyMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
-              <b-input v-model="buyMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
+              <b-input type="number" v-model="buyMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
+              <b-input type="number" v-model="buyMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
               <b-input :disabled="true" v-model="buyMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
               <i class="mt-1">Estimate fee: {{ buyMakerCost }}</i>
               <b-button class="w-100 mt-1" variant="success" @click="createOrder('buy')">Buy {{ baseTokenSymbol }}</b-button>
             </b-col>
             <b-col>
               <i class="mt-1">{{baseTokenSymbol}} balance: {{ baseTokenBalance }}</i>
-              <b-input v-model="sellMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
-              <b-input v-model="sellMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
-              <b-input :disabled="true" v-model="sellMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
+              <b-input type="number" v-model="sellMakerPrice" class="mt-1" :placeholder="'Price'"></b-input>
+              <b-input type="number" v-model="sellMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
+              <b-input  :disabled="true" v-model="sellMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
               <i class="mt-1">Estimate fee: {{ sellMakerCost }}</i>
               <b-button class="w-100 mt-1" variant="danger" @click="createOrder('sell')">Sell {{ baseTokenSymbol }}</b-button>
             </b-col>

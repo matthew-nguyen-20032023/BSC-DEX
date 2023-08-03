@@ -29,7 +29,6 @@ export class OrderRepository {
     if (conditions.type) condition["type"] = conditions.type;
     if (conditions.pairId) condition["pairId"] = conditions.pairId;
     condition["expiry"] = { $gt: Date.now() / 1000 };
-    condition["status"] = OrderStatus.FillAble;
 
     return this.model
       .find(condition)

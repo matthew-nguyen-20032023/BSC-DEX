@@ -45,6 +45,8 @@
           <history
             :base-token-address="baseTokenAddress"
             :quote-token-address="quoteTokenAddress"
+            :quote-token-symbol="quoteTokenSymbol"
+            :base-token-symbol="baseTokenSymbol"
             :pair-id="pairId"
           />
         </b-col>
