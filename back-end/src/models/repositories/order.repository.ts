@@ -15,24 +15,27 @@ export class OrderRepository {
     return this.model.create(newOrder);
   }
 
-  public async listOrder(listOrderDto: ListOrderDto): Promise<Order[]> {
+  public async listOrder(conditions: ListOrderDto): Promise<Order[]> {
     const sort = {};
     const condition = {};
 
-    if (listOrderDto.sortPrice) {
-      sort["price"] = listOrderDto.sortPrice;
+    if (conditions.sortPrice) {
+      sort["price"] = conditions.sortPrice;
+    }
+    if (conditions.sortCreated) {
+      sort["createdAt"] = conditions.sortCreated;
     }
 
-    if (listOrderDto.type) condition["type"] = listOrderDto.type;
-    if (listOrderDto.pairId) condition["pairId"] = listOrderDto.pairId;
+    if (conditions.type) condition["type"] = conditions.type;
+    if (conditions.pairId) condition["pairId"] = conditions.pairId;
     condition["expiry"] = { $gt: Date.now() / 1000 };
     condition["status"] = OrderStatus.FillAble;
 
     return this.model
       .find(condition)
       .sort(sort)
-      .skip((listOrderDto.page - 1) * listOrderDto.limit)
-      .limit(listOrderDto.limit);
+      .skip((conditions.page - 1) * conditions.limit)
+      .limit(conditions.limit);
   }
 
   public async getOrderByOrderHash(orderHash: string): Promise<Order> {

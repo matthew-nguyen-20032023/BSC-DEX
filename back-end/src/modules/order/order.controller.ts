@@ -35,7 +35,7 @@ export class OrderController {
   @Get()
   @Public()
   @ApiOperation({
-    summary: "Api to list order",
+    summary: "Api to list best order offer by conditions",
   })
   public async listOrder(
     @Query() listOrderDto: ListOrderDto

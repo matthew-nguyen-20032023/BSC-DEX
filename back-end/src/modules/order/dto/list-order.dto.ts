@@ -24,19 +24,28 @@ export class ListOrderDto {
   })
   limit: number;
 
-  @IsString()
+  @IsOptional()
   @IsNotEmpty()
   @ApiProperty({
     description: "Sort by price",
-    required: true,
+    required: false,
     example: "desc | asc",
   })
   sortPrice: string;
 
+  @IsOptional()
+  @IsNotEmpty()
+  @ApiProperty({
+    description: "Sort by created time",
+    required: false,
+    example: "desc | asc",
+  })
+  sortCreated: string;
+
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
-    description: "Verifying contract address (exchange contract)",
+    description: "Base token address",
     required: true,
     example: "0x78F4419Fe57aA16e8D6e8ceffF4061A2641eE421",
   })
@@ -45,17 +54,17 @@ export class ListOrderDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
-    description: "Verifying contract address (exchange contract)",
+    description: "Quote token address",
     required: true,
     example: "0x78F4419Fe57aA16e8D6e8ceffF4061A2641eE421",
   })
   quoteTokenAddress: string;
 
-  @IsString()
+  @IsOptional()
   @IsNotEmpty()
   @ApiProperty({
     description: "Order side type",
-    required: true,
+    required: false,
     example: `${OrderType.SellOrder} | ${OrderType.BuyOrder}`,
   })
   type: OrderType;
