@@ -405,7 +405,11 @@ export class SeedConsole {
       }
 
       await matchingOrderSmartContract.methods
-        .fillLimitOrder(limitOrder, signature, limitOrder.takerAmount)
+        .fillLimitOrder(
+          limitOrder,
+          signature,
+          new BigNumber(limitOrder.takerAmount).div(2).toFixed()
+        )
         .send({
           from: takerAddress,
           value: 0,

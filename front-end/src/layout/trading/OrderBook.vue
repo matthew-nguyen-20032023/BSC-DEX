@@ -71,7 +71,7 @@ export default {
     return {
       buyOrders: [],
       sellOrders: [],
-      defaultLengthOrderBook: 8,
+      defaultLengthOrderBook: window.innerHeight < 1100 ? 5 : 8,
     };
   },
   methods: {
