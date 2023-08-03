@@ -1,5 +1,8 @@
 <template>
-  <table style="font-size: 12px">
+  <table style="font-size: 12px;" class="mt-1">
+    <tr>
+      <th style="text-align: center; font-size: 12px" colspan="3"><strong>Trade Matched</strong></th>
+    </tr>
     <tr style="color: rgb(132, 142, 156);">
       <th>Price</th>
       <th>Amount</th>
@@ -29,32 +32,34 @@ export default {
     },
   },
   watch: {
-    pairId() {
+    pairId(newVal, oldVal) {
+      if (oldVal) socket.off(`NewTradeCreated_${oldVal}`);
       this.listMarket();
+      if (newVal) this.initSocketTradeCreated();
     }
   },
   created: debounce(function () {
     this.listMarket();
-    this.initSocketTradeCreated()
   }, 200),
   data() {
     return {
       data: [],
+      defaultLengthDisplay: 18,
     };
   },
   mounted() {},
   methods: {
     initSocketTradeCreated() {
-      socket.on("NewTradeCreated", (data) => {
+      socket.on(`NewTradeCreated_${this.pairId}`, (data) => {
         this.data.unshift(data);
-        if (this.data.length > 20) {
+        if (this.data.length > this.defaultLengthDisplay) {
           this.data.pop()
         }
       })
     },
     listMarket() {
       this.data = [];
-      listCurrentOriginTrades(this.pairId, 20).then(res => {
+      listCurrentOriginTrades(this.pairId, this.defaultLengthDisplay).then(res => {
         this.data = res.data.data
       }).catch(error => {
         return notificationWithCustomMessage('warning', this, error.message);

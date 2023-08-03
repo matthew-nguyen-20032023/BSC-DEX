@@ -17,6 +17,7 @@ import { Pair, PairDocument } from "src/models/schemas/pair.schema";
 import { PairMessageError } from "src/modules/pair/pair.const";
 import { ListOrderDto } from "src/modules/order/dto/list-order.dto";
 import { SocketEmitter } from "src/socket/socket-emitter";
+import { IOrderBook } from "src/modules/order/order.interface";
 
 @Injectable()
 export class OrderService {
@@ -56,31 +57,45 @@ export class OrderService {
     return existPair._id.toString();
   }
 
-  private static async buildOrderBook(
-    orders: Order[]
-  ): Promise<{ price: string; amount: string }[]> {
-    const orderBook = [];
-    for (const order of orders) {
-      if (!orderBook[order.price]) {
-        orderBook[order.price] = {
-          price: order.price,
-          amount: order.remainingAmount,
-        };
-        continue;
-      }
-      orderBook[order.price].amount = new BigNumber(
-        orderBook[order.price].amount
-      )
-        .plus(order.remainingAmount)
-        .toFixed();
+  public static async buildOrderBook(
+    groupOrders: {
+      _id: { type: OrderType; price: string };
+      totalRemainingAmount: string;
+    }[]
+  ): Promise<IOrderBook> {
+    const buyOrders = [];
+    const sellOrders = [];
+
+    for (const order of groupOrders) {
+      const orderBook = {
+        price: new BigNumber(order._id.price).toFixed(2),
+        amount: new BigNumber(order.totalRemainingAmount)
+          .div(new BigNumber(10).pow(18))
+          .toFixed(2),
+        total: new BigNumber(order._id.price)
+          .times(order.totalRemainingAmount)
+          .div(new BigNumber(10).pow(18))
+          .toFixed(2),
+      };
+
+      if (order._id.type === OrderType.BuyOrder) buyOrders.push(orderBook);
+      else sellOrders.push(orderBook);
     }
-    return Object.values(orderBook).sort((a, b) => {
-      const priceA = new Date(a.price);
-      const priceB = new Date(b.price);
-      // Compare the 2 dates
-      if (priceA > priceB) return -1;
-      if (priceA < priceB) return 1;
-    });
+
+    const funcSort = (a, b) => {
+      {
+        const priceA = new Date(a.price);
+        const priceB = new Date(b.price);
+        // Compare the 2 dates
+        if (priceA > priceB) return -1;
+        if (priceA < priceB) return 1;
+      }
+    };
+
+    return {
+      buyOrders: buyOrders.sort(funcSort),
+      sellOrders: sellOrders.sort(funcSort),
+    };
   }
 
   public async createOrder(createOrderDto: CreateOrderDto): Promise<Order> {
@@ -157,17 +172,14 @@ export class OrderService {
     return matchedOrders;
   }
 
-  public async getOrderBook(
-    pairId: string,
-    limit: number,
-    type: OrderType
-  ): Promise<{ price: string; amount: string }[]> {
-    const orders = await this.orderRepository.getBestFillAbleOrder(
-      pairId,
-      type,
-      limit
+  public async getOrderBook(pairId: string): Promise<{
+    buyOrders: { price: string; amount: string }[];
+    sellOrders: { price: string; amount: string }[];
+  }> {
+    const groupOrders = await this.orderRepository.groupOrdersForOrderBook(
+      pairId
     );
-    return await OrderService.buildOrderBook(orders);
+    return await OrderService.buildOrderBook(groupOrders);
   }
 
   public async estimateAllowances(

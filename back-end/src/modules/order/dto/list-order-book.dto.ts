@@ -1,7 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsNumber, IsString } from "class-validator";
-import { Type } from "class-transformer";
-import { OrderType } from "src/models/schemas/order.schema";
+import { IsNotEmpty, IsString } from "class-validator";
 
 export class ListOrderBookDto {
   @IsString()
@@ -12,22 +10,4 @@ export class ListOrderBookDto {
     example: "64b78387748b86d134d8ff50",
   })
   pairId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({
-    description: "Order type",
-    required: true,
-    example: OrderType.BuyOrder,
-  })
-  type: OrderType;
-
-  @IsNumber()
-  @Type(() => Number)
-  @ApiProperty({
-    description: "Limit",
-    required: true,
-    example: 15,
-  })
-  limit: number;
 }

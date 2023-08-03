@@ -56,7 +56,6 @@ export class TickerConsole {
           low: "0",
           high: "0",
           volume: "0",
-          pairId: pair._id.toString(),
         };
 
     while (1) {
@@ -66,7 +65,6 @@ export class TickerConsole {
         low: "0",
         high: "0",
         volume: "0",
-        pairId: pair._id.toString(),
       };
       const toTimestamp = Math.ceil(Date.now());
       const fromTimestamp = Math.ceil(Date.now() - 86400000);
@@ -77,7 +75,10 @@ export class TickerConsole {
       );
 
       if (trades24h.length === 0) {
-        SocketEmitter.getInstance().emitTicker24h(ticker24h);
+        SocketEmitter.getInstance().emitTicker24h(
+          ticker24h,
+          pair._id.toString()
+        );
         await sleep(60000);
         continue;
       }
@@ -136,7 +137,7 @@ export class TickerConsole {
         JSON.stringify(ticker24h)
       );
 
-      SocketEmitter.getInstance().emitTicker24h(ticker24h);
+      SocketEmitter.getInstance().emitTicker24h(ticker24h, pair._id.toString());
       await sleep(60000);
     }
   }

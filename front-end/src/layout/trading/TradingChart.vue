@@ -49,6 +49,7 @@ export default {
       intervalType: '1m',
       millisecondStep: 60000,
       candleLength: 50,
+      maxCandleLength: 100,
       width: (window.innerWidth / 3.2),
       height: (window.innerHeight / 2.8),
     }
@@ -62,8 +63,10 @@ export default {
     this.onResize()
   },
   watch: {
-    pairId() {
+    pairId(newVal, oldVal) {
+      if (oldVal) socket.off(`NewTradeCreated_${oldVal}`);
       this.listTrades();
+      if (newVal) this.initSocketNewTradeCreated();
     },
     intervalType() {
       this.listTrades();
@@ -71,7 +74,6 @@ export default {
   },
   created: debounce(function () {
     this.listTrades();
-    this.initSocketNewTradeCreated();
   }, 600),
   methods: {
     onResize() {
@@ -79,7 +81,9 @@ export default {
       this.height = window.innerHeight / 2.8 - 50
     },
     initSocketNewTradeCreated() {
-      socket.on('NewTradeCreated', (trade) => {
+      socket.on(`NewTradeCreated_${this.pairId}`, (trade) => {
+        if (this.candleLength < this.maxCandleLength) this.candleLength++;
+
         const tradeVolume = new BigNumber(trade.volume).div(new BigNumber(10).pow(18)).toFixed();
         const roundDownTradeTimestamp = Math.floor(trade.timestamp / (60 * 1000)) * 60 * 1000;
         this.data.update({

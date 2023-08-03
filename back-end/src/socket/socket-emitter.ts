@@ -4,6 +4,7 @@ import { Order } from "src/models/schemas/order.schema";
 import { EventEmit } from "src/socket/socket-server.const";
 import { Trade } from "src/models/schemas/trade.schema";
 import { Ticker24H } from "src/modules/ticker/ticker.interface";
+import { IOrderBook } from "src/modules/order/order.interface";
 
 export class SocketEmitter {
   private static instance: SocketEmitter;
@@ -31,7 +32,7 @@ export class SocketEmitter {
    * @param order: Order
    */
   public emitNewOrderCreated(order: Order): void {
-    this.emitter.emit(EventEmit.NewOrderCreated, order);
+    this.emitter.emit(`${EventEmit.NewOrderCreated}_${order.pairId}`, order);
   }
 
   /**
@@ -39,22 +40,24 @@ export class SocketEmitter {
    * @param trade: Trade
    */
   public emitNewTradeCreated(trade: Trade): void {
-    this.emitter.emit(EventEmit.NewTradeCreated, trade);
+    this.emitter.emit(`${EventEmit.NewTradeCreated}_${trade.pairId}`, trade);
   }
 
   /**
-   * @description use getInstance() above to call this function
-   * @param order: Order
-   */
-  public emitOrderMatched(order: Order): void {
-    this.emitter.emit(EventEmit.OrderMatched, order);
-  }
-
-  /**
-   * @description for emit ticker 24h change for UI
+   * @description for emit ticker 24h change for UI by pair
    * @param ticker
+   * @param pairId
    */
-  public emitTicker24h(ticker: Ticker24H): void {
-    this.emitter.emit(EventEmit.TickerChange, ticker);
+  public emitTicker24h(ticker: Ticker24H, pairId: string): void {
+    this.emitter.emit(`${EventEmit.TickerChange}_${pairId}`, ticker);
+  }
+
+  /**
+   * @description for emit order book by pair
+   * @param orderBook
+   * @param pairId
+   */
+  public emitOrderBookByPairId(orderBook: IOrderBook, pairId: string): void {
+    this.emitter.emit(`${EventEmit.OrderBookByPair}_${pairId}`, orderBook);
   }
 }

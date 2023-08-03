@@ -26,9 +26,10 @@ export class OrderRepository {
       sort["createdAt"] = conditions.sortCreated;
     }
 
+    if (conditions.maker) condition["maker"] = conditions.maker;
     if (conditions.type) condition["type"] = conditions.type;
     if (conditions.pairId) condition["pairId"] = conditions.pairId;
-    condition["expiry"] = { $gt: Date.now() / 1000 };
+    // condition["expiry"] = { $gt: Date.now() / 1000 };
 
     return this.model
       .find(condition)
@@ -113,5 +114,35 @@ export class OrderRepository {
       })
       .skip((page - 1) * limit)
       .limit(limit);
+  }
+
+  /**
+   * @description This function group data to build order book
+   * This will group orders by type and price and get sum of remaining amount
+   * Only fill-able order that not expiry is selected
+   */
+  public async groupOrdersForOrderBook(
+    pairId: string
+  ): Promise<
+    { _id: { type: OrderType; price: string }; totalRemainingAmount: string }[]
+  > {
+    return this.model.aggregate([
+      {
+        $match: {
+          status: OrderStatus.FillAble,
+          expiry: { $gt: Date.now() / 1000 },
+          pairId: pairId,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            type: "$type",
+            price: "$price",
+          },
+          totalRemainingAmount: { $sum: { $toDecimal: "$remainingAmount" } },
+        },
+      },
+    ]);
   }
 }
