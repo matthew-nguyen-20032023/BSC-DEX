@@ -158,7 +158,7 @@ export default {
     initSocketNewOrderCreated() {
       socket.on(`NewOrderCreated_${this.pairId}`, (data) => {
         if (data.maker.toLowerCase() === this.currentAccountWallet.toLowerCase()) {
-          this.myOrders.unshift(data);
+          this.listMyOrder();
         }
       });
     },
