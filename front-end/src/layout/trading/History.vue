@@ -11,8 +11,8 @@
           <table class="w-100 mt-1">
             <tr>
               <th>Type</th>
+              <th>Amount ({{baseTokenSymbol}})</th>
               <th>Price</th>
-              <th>Amount</th>
               <th>Remaining</th>
               <th>Expiry</th>
               <th>Action</th>
@@ -20,15 +20,36 @@
             </tr>
             <tr v-for="(data, i) in myOrders" :key="i">
               <td>{{ data.type }}</td>
+              <td>{{ data.type === 'buy' ? removeDecimal(data.takerAmount) : removeDecimal(data.makerAmount) }}</td>
               <td>{{ Math.abs(data.price).toFixed(2) }}</td>
-              <td>{{ removeDecimal(data.makerAmount) }}</td>
               <td>{{ removeDecimal(data.remainingAmount) }}</td>
               <td>{{ convertExpiryToDate(data.expiry) }}</td>
               <td>
-                <b-button v-if="Number(data.expiry) * 1000 > Date.now() && data.status === 'fill-able'" size="sm" variant="warning">Cancel</b-button>
+                <b-badge v-if="Number(data.expiry) * 1000 > Date.now() && data.status === 'fill-able'" variant="warning">Cancel</b-badge>
                 <p style="color: rgb(35, 167, 118)" v-if="data.status === 'completed'">{{ data.status.charAt(0).toUpperCase() + data.status.slice(1) }}</p>
                 <p style="color: orange" v-if="Number(data.expiry) * 1000 < Date.now() && data.status === 'fill-able'">Expiry</p>
               </td>
+            </tr>
+            <tr>
+              <th colspan="6">
+                <b-pagination
+                  class="mt-3"
+                  align="center"
+                  v-model="currentMyOrderPage"
+                  :total-rows="totalMyOrder"
+                  :per-page="limitMyOrder"
+                  aria-controls="my-table"
+                  first-text="First"
+                  prev-text="Prev"
+                  next-text="Next"
+                  last-text="Last"
+                >
+                  <template #first-text><span class="text-success">First</span></template>
+                  <template #prev-text><span class="text-success">Prev</span></template>
+                  <template #next-text><span class="text-danger">Next</span></template>
+                  <template #last-text><span class="text-danger">Last</span></template>
+                </b-pagination>
+              </th>
             </tr>
           </table>
         </b-card-text>
@@ -39,18 +60,18 @@
             <tr>
               <th>Type</th>
               <th>Price</th>
-              <th>Out</th>
-              <th>In</th>
+              <th>Amount In</th>
+              <th>Amount Out</th>
               <th>Time</th>
               <th>Transaction</th>
             </tr>
             <tr v-for="(data, i) in myTrades" :key="i">
               <td>{{ data.orderType }}</td>
               <td>{{ Math.abs(data.price).toFixed(2) }}</td>
-              <td>{{ calculateOutTrade(data.orderType, data.price, data.volume) }}</td>
-              <td>{{ calculateInTrade(data.orderType, data.price, data.volume) }}</td>
+              <td>{{ calculateAmountIn(data.orderType, data.price, data.volume, data.maker) }}</td>
+              <td>{{ calculateAmountOut(data.orderType, data.price, data.volume, data.maker) }}</td>
               <td>{{ convertTimestampToDate(data.timestamp) }}</td>
-              <td><a style="color: rgb(35, 167, 118)" href="#">DETAIL</a></td>
+              <td><b-badge style="color: rgb(35, 167, 118)" href="#">Detail</b-badge></td>
             </tr>
           </table>
         </b-card-text>
@@ -97,6 +118,9 @@ export default {
       myTrades: [],
       historyTab: 0,
       currentAccountWallet: null,
+      currentMyOrderPage: 1,
+      totalMyOrder: 1,
+      limitMyOrder: 7,
     };
   },
   watch: {
@@ -115,6 +139,9 @@ export default {
         this.initSocketNewOrderCreated();
         this.initOrderMatched();
       }
+    },
+    currentMyOrderPage() {
+      this.listMyOrder();
     },
     historyTab(newVal, oldVal) {
       if (newVal === 0) {
@@ -174,29 +201,32 @@ export default {
     removeDecimal(value) {
       return new BigNumber(value).div(new BigNumber(10).pow(18)).toFixed(2);
     },
-    calculateOutTrade(type, price, volume) {
-      if (type === 'buy') {
-        const amount = new BigNumber(price).times(volume).div(new BigNumber(10).pow(18));
-        return `${amount.toFixed(2)} ${this.quoteTokenSymbol}`
-      } else {
-        const amount = new BigNumber(volume).div(new BigNumber(10).pow(18));
-        return `${amount.toFixed(2)} ${this.baseTokenSymbol}`;
-      }
+    calculateAmountOut(type, price, volume, maker) {
+      const baseAmount = `${new BigNumber(volume).div(new BigNumber(10).pow(18)).toFixed(2)} ${this.baseTokenSymbol}`;
+      const quoteAmount = `${new BigNumber(volume).times(price).div(new BigNumber(10).pow(18)).toFixed(2)} ${this.quoteTokenSymbol}`;
+
+      if (maker.toLowerCase() === this.currentAccountWallet.toLowerCase() && type === 'buy') return quoteAmount;
+      if (maker.toLowerCase() === this.currentAccountWallet.toLowerCase() && type === 'sell') return baseAmount;
+
+      if (maker.toLowerCase() !== this.currentAccountWallet.toLowerCase() && type === 'buy') return baseAmount;
+      if (maker.toLowerCase() !== this.currentAccountWallet.toLowerCase() && type === 'sell') return quoteAmount;
     },
-    calculateInTrade(type, price, volume) {
-      if (type === 'buy') {
-        const amount = new BigNumber(volume).div(new BigNumber(10).pow(18));
-        return `${amount.toFixed(2)} ${this.baseTokenSymbol}`;
-      } else {
-        const amount = new BigNumber(price).times(volume).div(new BigNumber(10).pow(18));
-        return `${amount.toFixed(2)} ${this.quoteTokenSymbol}`
-      }
+    calculateAmountIn(type, price, volume, maker) {
+      const baseAmount = `${new BigNumber(volume).div(new BigNumber(10).pow(18)).toFixed(2)} ${this.baseTokenSymbol}`;
+      const quoteAmount = `${new BigNumber(volume).times(price).div(new BigNumber(10).pow(18)).toFixed(2)} ${this.quoteTokenSymbol}`;
+
+      if (maker.toLowerCase() === this.currentAccountWallet.toLowerCase() && type === 'buy') return baseAmount;
+      if (maker.toLowerCase() === this.currentAccountWallet.toLowerCase() && type === 'sell') return quoteAmount;
+
+      if (maker.toLowerCase() !== this.currentAccountWallet.toLowerCase() && type === 'buy') return quoteAmount;
+      if (maker.toLowerCase() !== this.currentAccountWallet.toLowerCase() && type === 'sell') return baseAmount;
     },
     listMyOrder() {
       if (this.currentAccountWallet === null) return;
-      listOrder(null, this.baseTokenAddress, this.quoteTokenAddress, null, 1, 6, this.currentAccountWallet, 'desc')
+      listOrder(null, this.baseTokenAddress, this.quoteTokenAddress, null, this.currentMyOrderPage, this.limitMyOrder, this.currentAccountWallet, 'desc')
       .then(res => {
         this.myOrders = res.data.data;
+        this.totalMyOrder = res.data.metadata.total;
       })
     },
     listMyTrades() {

@@ -15,7 +15,9 @@ export class OrderRepository {
     return this.model.create(newOrder);
   }
 
-  public async listOrder(conditions: ListOrderDto): Promise<Order[]> {
+  public async listOrder(
+    conditions: ListOrderDto
+  ): Promise<{ data: Order[]; total: number }> {
     const sort = {};
     const condition = {};
 
@@ -31,11 +33,16 @@ export class OrderRepository {
     if (conditions.pairId) condition["pairId"] = conditions.pairId;
     // condition["expiry"] = { $gt: Date.now() / 1000 };
 
-    return this.model
+    const data = await this.model
       .find(condition)
       .sort(sort)
       .skip((conditions.page - 1) * conditions.limit)
       .limit(conditions.limit);
+    const total = await this.model.count(condition);
+    return {
+      data,
+      total,
+    };
   }
 
   public async getOrderByOrderHash(orderHash: string): Promise<Order> {
