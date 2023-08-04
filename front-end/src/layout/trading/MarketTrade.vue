@@ -1,8 +1,5 @@
 <template>
   <table style="font-size: 12px;" class="mt-1">
-    <tr>
-      <th style="text-align: center; font-size: 12px" colspan="3"><strong>Trade Matched</strong></th>
-    </tr>
     <tr style="color: rgb(132, 142, 156);">
       <th>Price ({{quoteTokenSymbol}})</th>
       <th>Amount</th>
@@ -48,7 +45,7 @@ export default {
   data() {
     return {
       data: [],
-      defaultLengthDisplay: window.innerHeight < 1100 ? 13 : 18,
+      defaultLengthDisplay: window.innerHeight < 1100 ? 14 : 19,
     };
   },
   mounted() {},

@@ -1,9 +1,6 @@
 <template>
   <b-row class="mt-2">
     <table id="sellOrders" style="font-size: 12px; color: #e54150">
-      <tr>
-        <th style="text-align: center; color: #525f7f" colspan="3"><strong>Order Book</strong></th>
-      </tr>
       <tr style="color: rgb(132, 142, 156)">
         <th style="padding-left: 20px">Price ({{quoteTokenSymbol}})</th>
         <th>Amount</th>
@@ -12,13 +9,24 @@
       <tbody>
       </tbody>
     </table>
-    <hr>
+    <strong v-if="currentPrice === previousPrice" style="padding-left: 20px; color: white; font-size: 18px">
+      {{ currentPrice }}
+    </strong>
+    <strong v-if="currentPrice > previousPrice" style="padding-left: 20px; color: rgb(35, 167, 118); font-size: 18px">
+      {{ currentPrice }}
+      <b-icon
+        :icon="'arrow-up-circle'"
+        :class="{'grow-up': true, 'growing': true}"
+      />
+    </strong>
+    <strong v-if="previousPrice > currentPrice" style="padding-left: 20px; color: rgb(229, 65, 80); font-size: 18px">
+      {{ currentPrice }}
+      <b-icon
+        :icon="'arrow-down-circle'"
+        :class="{'grow-up': true, 'growing': true}"
+      />
+    </strong>
     <table id="buyOrders" style="font-size: 12px; color: #23a776">
-      <tr style="color: rgb(132, 142, 156)">
-        <th style="padding-left: 20px">Price ({{quoteTokenSymbol}})</th>
-        <th>Amount</th>
-        <th>Total</th>
-      </tr>
       <tbody>
       </tbody>
     </table>
@@ -47,9 +55,13 @@ export default {
     pairId(newVal, oldVal) {
       if (oldVal) {
         socket.off(`OrderBookByPair_${oldVal}`);
+        socket.off(`NewTradeCreated_${oldVal}`)
       }
       this.getOrderBook();
-      if (newVal) this.initSocketOrderBook()
+      if (newVal) {
+        this.initSocketOrderBook();
+        this.initTradeMatched();
+      }
     },
   },
   created: debounce(function () {
@@ -59,10 +71,18 @@ export default {
     return {
       buyOrders: [],
       sellOrders: [],
-      defaultLengthOrderBook: window.innerHeight < 1100 ? 5 : 8,
+      defaultLengthOrderBook: window.innerHeight < 1100 ? 6 : 9,
+      currentPrice: 0,
+      previousPrice: 0,
     };
   },
   methods: {
+    initTradeMatched() {
+      socket.on(`NewTradeCreated_${this.pairId}`, (trade) => {
+        this.previousPrice = this.currentPrice;
+        this.currentPrice = new BigNumber(trade.price).toFixed(4);
+      })
+    },
     initSocketOrderBook() {
       socket.on(`OrderBookByPair_${this.pairId}`, (orderBook) => {
         this.buyOrders = orderBook.buyOrders;
