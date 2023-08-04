@@ -15,6 +15,7 @@
               <th>Amount</th>
               <th>Remaining</th>
               <th>Expiry</th>
+              <th>Action</th>
               <th></th>
             </tr>
             <tr v-for="(data, i) in myOrders" :key="i">
