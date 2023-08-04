@@ -41,7 +41,7 @@ module.exports = {
      */
     {
       name: "BSC_DEX_BACKEND:auto-bot-trading 1",
-      script: "node ./dist/console.js auto-bot-trading 7 8 15 5000",
+      script: "node ./dist/console.js auto-bot-trading 7 8 15 3000",
       autorestart: true,
       cron_restart: "1 0 * * *",
     },

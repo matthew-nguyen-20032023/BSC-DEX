@@ -48,8 +48,8 @@ export default {
       a: 0,
       intervalType: '1m',
       millisecondStep: 60000,
-      candleLength: 50,
-      maxCandleLength: 100,
+      candleLength: 120,
+      maxCandleLength: 200,
       width: (window.innerWidth / 3.2),
       height: (window.innerHeight / 2.8),
     }

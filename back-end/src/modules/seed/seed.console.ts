@@ -22,7 +22,11 @@ import { EventRepository } from "src/models/repositories/event.repository";
 import { Binance } from "src/blockchains/binance";
 const BigNumber = require("bignumber.js");
 import { LimitOrder, SignatureType } from "@0x/protocol-utils";
-import { randomIntFromInterval, sleep } from "src/helper/common";
+import {
+  getRandomPriceByRule,
+  randomIntFromInterval,
+  sleep,
+} from "src/helper/common";
 import { SocketEmitter } from "src/socket/socket-emitter";
 const {
   RPCSubprovider,
@@ -196,16 +200,18 @@ export class SeedConsole {
 
   private static async createRandomOrder(
     makerAddress: string,
-    maxPrice: number
+    maxPrice: number,
+    previousPrice: number
   ): Promise<{
     limitOrder: LimitOrder;
     orderType: OrderType;
+    price: number;
   }> {
     // 1 for buying and 2 for selling
     const randomNumber = randomIntFromInterval(1, 2);
     // random quantity and price for order
-    const price = randomIntFromInterval(1, maxPrice);
-    const amount = randomIntFromInterval(1, 20);
+    const price = getRandomPriceByRule(previousPrice, 1);
+    const amount = randomIntFromInterval(1, 10);
     const total = price * amount;
 
     const limitOrder = new LimitOrder({
@@ -241,6 +247,7 @@ export class SeedConsole {
     return {
       limitOrder: limitOrder,
       orderType: randomNumber === 1 ? OrderType.BuyOrder : OrderType.SellOrder,
+      price: price,
     };
   }
 
@@ -325,11 +332,15 @@ export class SeedConsole {
     const matchingOrderSmartContract =
       await Binance.getInstance().getMatchingOrderContract();
 
+    let previousPrice = maxPrice;
     while (1) {
-      const { limitOrder, orderType } = await SeedConsole.createRandomOrder(
-        makerAddress,
-        maxPrice
-      );
+      const { limitOrder, orderType, price } =
+        await SeedConsole.createRandomOrder(
+          makerAddress,
+          maxPrice,
+          previousPrice
+        );
+      previousPrice = price;
       const signature = await limitOrder.getSignatureWithProviderAsync(
         web3Wrapper.getProvider(),
         SignatureType.EIP712,
