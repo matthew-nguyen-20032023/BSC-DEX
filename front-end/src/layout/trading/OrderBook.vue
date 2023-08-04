@@ -1,11 +1,13 @@
 <template>
   <b-row class="mt-2">
-    <table id="sellOrders" style="font-size: 12px; color: #e54150">
-      <tr style="color: rgb(132, 142, 156)">
-        <th style="padding-left: 20px">Price ({{quoteTokenSymbol}})</th>
+    <table style="font-size: 12px; color: #e54150">
+      <tr style="color: rgb(132, 142, 156); text-align: center">
+        <th>Price</th>
         <th>Amount</th>
-        <th>Total</th>
+        <th style="text-align: left">Total</th>
       </tr>
+    </table>
+    <table id="sellOrders" style="font-size: 12px; color: #e54150">
       <tbody>
       </tbody>
     </table>
@@ -26,7 +28,7 @@
         :class="{'grow-up': true, 'growing': true}"
       />
     </strong>
-    <table id="buyOrders" style="font-size: 12px; color: #23a776">
+    <table id="buyOrders" style="font-size: 12px; color: #23a776; padding-left: 20px">
       <tbody>
       </tbody>
     </table>
