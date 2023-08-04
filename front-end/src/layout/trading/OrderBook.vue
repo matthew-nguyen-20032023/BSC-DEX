@@ -36,8 +36,6 @@
 </template>
 
 <script>
-import {listOrderBook} from "@/plugins/backend";
-import {notificationWithCustomMessage} from "@/plugins/notification";
 import {socket} from "@/plugins/socket";
 const BigNumber = require('bignumber.js');
 const debounce = require('debounce');
@@ -59,7 +57,6 @@ export default {
         socket.off(`OrderBookByPair_${oldVal}`);
         socket.off(`NewTradeCreated_${oldVal}`)
       }
-      this.getOrderBook();
       if (newVal) {
         this.initSocketOrderBook();
         this.initTradeMatched();
@@ -67,7 +64,7 @@ export default {
     },
   },
   created: debounce(function () {
-    this.getOrderBook();
+    this.updateOrderBook();
   }, 500),
   data() {
     return {
@@ -96,29 +93,6 @@ export default {
           this.buyOrders = this.buyOrders.splice(0, this.defaultLengthOrderBook);
         }
         this.updateOrderBook();
-      })
-    },
-    getOrderBook() {
-      this.sellOrders = []
-      this.buyOrders = []
-      listOrderBook(this.pairId).then(res => {
-        this.buyOrders = res.data.data.buyOrders.map(e => {
-          return {
-            price: new BigNumber(e.price).toFixed(2),
-            amount: new BigNumber(e.amount).div(new BigNumber(10).pow(18)).toFixed(2),
-            total: new BigNumber(e.amount).times(e.price).div(new BigNumber(10).pow(18)).toFixed(2)
-          }
-        });
-        this.sellOrders = res.data.data.sellOrders.map(e => {
-          return {
-            price: new BigNumber(e.price).toFixed(2),
-            amount: new BigNumber(e.amount).div(new BigNumber(10).pow(18)).toFixed(2),
-            total: new BigNumber(e.amount).times(e.price).div(new BigNumber(10).pow(18)).toFixed(2)
-          }
-        });
-        this.updateOrderBook();
-      }).catch(error => {
-        return notificationWithCustomMessage('warning', this, `${error.message}`);
       })
     },
     calculateTotal(order) {
