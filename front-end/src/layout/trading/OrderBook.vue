@@ -115,6 +115,18 @@ export default {
       const highestTotalBuy = Math.max(...this.buyOrders.map((order) => order.total));
       const highestTotalSell = Math.max(...this.sellOrders.map((order) => order.total));
 
+      if (this.buyOrders.length < this.defaultLengthOrderBook) {
+        const defaultArray = new Array(this.defaultLengthOrderBook - this.buyOrders.length)
+          .fill({ price: '--', amount: '--', total: '--' });
+        this.buyOrders = this.buyOrders.concat(defaultArray);
+
+      }
+      if (this.sellOrders.length < this.defaultLengthOrderBook) {
+        const defaultArray = new Array(this.defaultLengthOrderBook - this.sellOrders.length)
+          .fill({ price: '--', amount: '--', total: '--' });
+        this.sellOrders = defaultArray.concat(this.sellOrders);
+      }
+
       // Add buy orders dynamically
       this.buyOrders.forEach((order) => {
         const row = buyOrdersTable.insertRow();
