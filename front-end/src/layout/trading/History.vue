@@ -33,6 +33,7 @@
             <tr>
               <th colspan="6">
                 <b-pagination
+                  v-if="totalMyOrder > limitMyOrder"
                   class="mt-3"
                   align="center"
                   v-model="currentMyOrderPage"
