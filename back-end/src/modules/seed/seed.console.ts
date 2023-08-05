@@ -200,7 +200,6 @@ export class SeedConsole {
 
   private static async createRandomOrder(
     makerAddress: string,
-    maxPrice: number,
     previousPrice: number
   ): Promise<{
     limitOrder: LimitOrder;
@@ -333,13 +332,35 @@ export class SeedConsole {
       await Binance.getInstance().getMatchingOrderContract();
 
     let previousPrice = maxPrice;
+    const testingAmountMint = new BigNumber(1000000)
+      .times(new BigNumber(10).pow(18))
+      .toFixed();
+
+    await quoteTokenSmartContract.methods
+      .approve(process.env.ORDER_SMART_CONTRACT_ADDRESS, testingAmountMint)
+      .send({
+        from: makerAddress,
+      });
+    await baseTokenSmartContract.methods
+      .approve(process.env.ORDER_SMART_CONTRACT_ADDRESS, testingAmountMint)
+      .send({
+        from: takerAddress,
+      });
+    await baseTokenSmartContract.methods
+      .approve(process.env.ORDER_SMART_CONTRACT_ADDRESS, testingAmountMint)
+      .send({
+        from: makerAddress,
+      });
+
+    await quoteTokenSmartContract.methods
+      .approve(process.env.ORDER_SMART_CONTRACT_ADDRESS, testingAmountMint)
+      .send({
+        from: takerAddress,
+      });
+
     while (1) {
       const { limitOrder, orderType, price } =
-        await SeedConsole.createRandomOrder(
-          makerAddress,
-          maxPrice,
-          previousPrice
-        );
+        await SeedConsole.createRandomOrder(makerAddress, previousPrice);
       previousPrice = price;
       const signature = await limitOrder.getSignatureWithProviderAsync(
         web3Wrapper.getProvider(),
@@ -376,44 +397,6 @@ export class SeedConsole {
 
       const orderCreated = await this.orderRepository.save(orderForBackend);
       SocketEmitter.getInstance().emitNewOrderCreated(orderCreated);
-
-      if (orderType === OrderType.BuyOrder) {
-        await quoteTokenSmartContract.methods
-          .approve(
-            process.env.ORDER_SMART_CONTRACT_ADDRESS,
-            limitOrder.makerAmount
-          )
-          .send({
-            from: makerAddress,
-          });
-
-        await baseTokenSmartContract.methods
-          .approve(
-            process.env.ORDER_SMART_CONTRACT_ADDRESS,
-            limitOrder.takerAmount
-          )
-          .send({
-            from: takerAddress,
-          });
-      } else {
-        await baseTokenSmartContract.methods
-          .approve(
-            process.env.ORDER_SMART_CONTRACT_ADDRESS,
-            limitOrder.makerAmount
-          )
-          .send({
-            from: makerAddress,
-          });
-
-        await quoteTokenSmartContract.methods
-          .approve(
-            process.env.ORDER_SMART_CONTRACT_ADDRESS,
-            limitOrder.takerAmount
-          )
-          .send({
-            from: takerAddress,
-          });
-      }
 
       await matchingOrderSmartContract.methods
         .fillLimitOrder(

@@ -109,18 +109,45 @@ export class OrderRepository {
   ): Promise<Order[]> {
     const priceCondition =
       orderType === OrderType.BuyOrder
-        ? { $lte: price } // find best for buyer will get order low or equal expect price
-        : { $gte: price }; // find best for seller will get order high or equal expect price
-    return this.model
-      .find({
-        makerToken: takerToken,
-        takerToken: makerToken,
-        status: OrderStatus.FillAble,
-        expiry: { $gt: Date.now() / 1000 },
-        price: priceCondition,
-      })
-      .skip((page - 1) * limit)
-      .limit(limit);
+        ? { $lte: Number(price) } // find best for buyer will get order low or equal expect price
+        : { $gte: Number(price) }; // find best for seller will get order high or equal expect price
+    return this.model.aggregate([
+      {
+        $addFields: {
+          numericPrice: {
+            $convert: {
+              input: "$price",
+              to: "decimal",
+              onError: 0,
+              onNull: 0,
+            },
+          },
+        },
+      },
+      {
+        $sort: {
+          numericPrice: orderType === OrderType.BuyOrder ? 1 : -1,
+        },
+      },
+      {
+        $limit: limit,
+      },
+      {
+        $match: {
+          makerToken: {
+            $regex: takerToken,
+            $options: "i",
+          },
+          takerToken: {
+            $regex: makerToken,
+            $options: "i",
+          },
+          status: OrderStatus.FillAble,
+          expiry: { $gt: Date.now() / 1000 },
+          numericPrice: priceCondition,
+        },
+      },
+    ]);
   }
 
   /**
@@ -129,17 +156,40 @@ export class OrderRepository {
    * Only fill-able order that not expiry is selected
    */
   public async groupOrdersForOrderBook(
-    pairId: string
+    pairId: string,
+    type: OrderType,
+    limit: number
   ): Promise<
     { _id: { type: OrderType; price: string }; totalRemainingAmount: string }[]
   > {
     return this.model.aggregate([
       {
+        $addFields: {
+          numericPrice: {
+            $convert: {
+              input: "$price",
+              to: "decimal",
+              onError: 0,
+              onNull: 0,
+            },
+          },
+        },
+      },
+      {
         $match: {
+          type: type,
           status: OrderStatus.FillAble,
           expiry: { $gt: Date.now() / 1000 },
           pairId: pairId,
         },
+      },
+      {
+        $sort: {
+          numericPrice: type === OrderType.BuyOrder ? -1 : 1,
+        },
+      },
+      {
+        $limit: limit,
       },
       {
         $group: {

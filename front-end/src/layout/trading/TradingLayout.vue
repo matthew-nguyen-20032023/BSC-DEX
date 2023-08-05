@@ -125,8 +125,8 @@ export default {
 }
 
 .custom-trading-col {
-  flex-basis: calc((100% / 12) * 4);
-  max-width: calc((100% / 12) * 4);
+  flex-basis: calc((100% / 12) * 6);
+  max-width: calc((100% / 12) * 6);
 }
 
 .custom-order-book-col {
@@ -140,19 +140,19 @@ export default {
 }
 
 .custom-ticker-col {
-  flex-basis: calc((100% / 12) * 6.65);
-  max-width: calc((100% / 12) * 6.65);
+  flex-basis: calc((100% / 12) * 8.65);
+  max-width: calc((100% / 12) * 8.65);
 }
 
 .custom-trade-history-col {
-  flex-basis: calc((100% / 12) * 4.05);
-  max-width: calc((100% / 12) * 4.05);
+  flex-basis: calc((100% / 12) * 5.05);
+  max-width: calc((100% / 12) * 5.05);
   max-height: 31vh;
 }
 
 .custom-order-col {
-  flex-basis: calc((100% / 12) * 2.6);
-  max-width: calc((100% / 12) * 2.6);
+  flex-basis: calc((100% / 12) * 3.6);
+  max-width: calc((100% / 12) * 3.6);
   max-height: 31vh;
 }
 </style>

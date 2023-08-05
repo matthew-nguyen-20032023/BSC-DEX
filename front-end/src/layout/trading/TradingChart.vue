@@ -10,6 +10,9 @@
       :chart-config="{ DEFAULT_LEN: candleLength }"
       :indexBased="true"
       :drawingMode="true"
+      :timezone="currentTimezone"
+      :extensions="extensions"
+      skin="Alps"
       ref="tradingVue"
     />
     <TFSelector @tfSelected="changeIntervalType" />
@@ -17,6 +20,7 @@
 </template>
 
 <script>
+import Alps from "@/layout/trading/extension/Alps";
 import { TradingVue, DataCube } from 'trading-vue-js'
 import {listTrades} from "@/plugins/backend";
 import {notificationWithCustomMessage} from "@/plugins/notification";
@@ -39,19 +43,22 @@ export default {
   },
   data() {
     return {
+      extensions: [Alps],
       data: new DataCube({
         chart: {
           tf: '1m',
           data: []
         },
       }, { aggregation: 100, auto_scroll: false }),
-      a: 0,
       intervalType: '1m',
       millisecondStep: 60000,
       candleLength: 50,
       maxCandleLength: 100,
-      width: (window.innerWidth / 3.2),
+      width: (window.innerWidth / 2.05),
       height: (window.innerHeight / 2.8),
+      currentCandleLength: 0,
+      currentTimezone: new Date().getTimezoneOffset() / (-60),
+      isProcessing: false,
     }
   },
   mounted() {
@@ -72,12 +79,9 @@ export default {
       this.listTrades();
     }
   },
-  created: debounce(function () {
-    this.listTrades();
-  }, 600),
   methods: {
     onResize() {
-      this.width = window.innerWidth / 3.2
+      this.width = window.innerWidth / 2.05
       this.height = window.innerHeight / 2.8 - 50
     },
     initSocketNewTradeCreated() {
@@ -91,7 +95,10 @@ export default {
           price: parseFloat(trade.price),
           volume: parseFloat(tradeVolume),
         })
-        this.$refs.tradingVue.resetChart()
+        if (this.data.data.chart.data.length > this.currentCandleLength && !this.isProcessing) {
+          this.$refs.tradingVue.resetChart();
+          this.currentCandleLength = this.data.data.chart.data.length;
+        }
       })
     },
     changeIntervalType(tf) {
@@ -112,16 +119,35 @@ export default {
           return Object.values(e)
         });
         this.$refs.tradingVue.resetChart()
+        this.currentCandleLength = this.data.data.chart.data.length;
         // this.data.onrange(this.load_chunk)
       }).catch(error => {
         return notificationWithCustomMessage('warning', this, error.message);
       })
     },
-    rangeChange(data) {
-      console.log(data[0] - this.a);
-      console.log(new Date(data[0]))
-      this.a = data[0];
-    },
+    rangeChange: debounce(function (data) {
+      const fromTimestamp = Math.floor(data[0] / (60 * 1000)) * 60 * 1000 + 60 * 1000;
+      const toTimestamp = this.data.data.chart.data[0][0];
+      this.isProcessing = true;
+      const lastOHLCV = JSON.parse(JSON.stringify(this.data.data.chart.data[0]));
+      listTrades(this.pairId, fromTimestamp, toTimestamp, this.intervalType).then(res => {
+        let isSame = false;
+        for (const candle of res.data.data.reverse()) {
+          candle.close = parseFloat(candle.close);
+          candle.high = parseFloat(candle.high);
+          candle.low = parseFloat(candle.low);
+          candle.open = parseFloat(candle.open);
+          candle.volume = parseFloat(candle.volume);
+          if (candle.timestamp + 60 * 1000 === lastOHLCV[0] && !isSame) {
+            candle.close = lastOHLCV[1];
+            this.data.data.chart.data.unshift(Object.values(candle))
+            isSame = true;
+          } else this.data.data.chart.data.unshift(Object.values(candle))
+        }
+      }).catch(error => {
+        return notificationWithCustomMessage('warning', this, error.message);
+      })
+    }, 1000),
   }
 }
 
