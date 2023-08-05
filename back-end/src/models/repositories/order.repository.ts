@@ -31,7 +31,10 @@ export class OrderRepository {
     if (conditions.maker) condition["maker"] = conditions.maker;
     if (conditions.type) condition["type"] = conditions.type;
     if (conditions.pairId) condition["pairId"] = conditions.pairId;
-    // condition["expiry"] = { $gt: Date.now() / 1000 };
+    if (conditions.orderStatus === OrderStatus.FillAble) {
+      condition["status"] = conditions.orderStatus;
+      condition["expiry"] = { $gt: Date.now() / 1000 };
+    }
 
     const data = await this.model
       .find(condition)
