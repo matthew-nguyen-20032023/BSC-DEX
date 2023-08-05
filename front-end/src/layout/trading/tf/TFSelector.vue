@@ -48,6 +48,7 @@ export default {
 
 <style>
 .tf-selector {
+    opacity: 0.8;
     position: absolute;
     top: 0px;
     right: 93px;
