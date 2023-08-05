@@ -83,14 +83,15 @@ export class TickerConsole {
       let endSliceTrade = 0;
       let currentIndex = -1;
       let isUpdated = false;
+      let fromTimestamp24h = toTimestamp - 86400000;
       for (const trade of trades24h) {
         currentIndex++;
-        if (trade.timestamp < fromTimestamp && !isUpdated) {
+        if (trade.timestamp < fromTimestamp24h && !isUpdated) {
           startSliceTrade = currentIndex;
           isUpdated = true;
           continue;
         }
-        if (trade.timestamp < fromTimestamp) {
+        if (trade.timestamp < fromTimestamp24h) {
           endSliceTrade = currentIndex;
         } else {
           break;
