@@ -74,6 +74,26 @@
               <td>{{ convertTimestampToDate(data.timestamp) }}</td>
               <td><b-badge style="color: rgb(35, 167, 118)" href="#">Detail</b-badge></td>
             </tr>
+            <th colspan="6">
+              <b-pagination
+                v-if="totalMyTrade > limitMyTrade"
+                class="mt-3"
+                align="center"
+                v-model="currentMyTradePage"
+                :total-rows="totalMyTrade"
+                :per-page="limitMyTrade"
+                aria-controls="my-table"
+                first-text="First"
+                prev-text="Prev"
+                next-text="Next"
+                last-text="Last"
+              >
+                <template #first-text><span class="text-success">First</span></template>
+                <template #prev-text><span class="text-success">Prev</span></template>
+                <template #next-text><span class="text-danger">Next</span></template>
+                <template #last-text><span class="text-danger">Last</span></template>
+              </b-pagination>
+            </th>
           </table>
         </b-card-text>
       </b-tab>
@@ -122,6 +142,9 @@ export default {
       currentMyOrderPage: 1,
       totalMyOrder: 1,
       limitMyOrder: 7,
+      currentMyTradePage: 1,
+      totalMyTrade: 1,
+      limitMyTrade: 7,
     };
   },
   watch: {
@@ -143,6 +166,9 @@ export default {
     },
     currentMyOrderPage() {
       this.listMyOrder();
+    },
+    currentMyTradePage() {
+      this.listMyTrades();
     },
     historyTab(newVal, oldVal) {
       if (newVal === 0) {
@@ -231,9 +257,10 @@ export default {
       })
     },
     listMyTrades() {
-      listMyTrades(1, 6, this.currentAccountWallet.toLowerCase(), this.pairId)
+      listMyTrades(this.currentMyTradePage, this.limitMyTrade, this.currentAccountWallet.toLowerCase(), this.pairId)
       .then(res => {
         this.myTrades = res.data.data;
+        this.totalMyTrade = res.data.metadata.total;
       })
     }
   }
