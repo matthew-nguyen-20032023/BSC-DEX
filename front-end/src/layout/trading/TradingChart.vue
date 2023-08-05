@@ -52,6 +52,7 @@ export default {
       maxCandleLength: 100,
       width: (window.innerWidth / 3.2),
       height: (window.innerHeight / 2.8),
+      currentCandleLength: 0,
     }
   },
   mounted() {
@@ -91,7 +92,10 @@ export default {
           price: parseFloat(trade.price),
           volume: parseFloat(tradeVolume),
         })
-        this.$refs.tradingVue.resetChart()
+        if (this.data.data.chart.data.length > this.currentCandleLength) {
+          this.$refs.tradingVue.resetChart();
+          this.currentCandleLength = this.data.data.chart.data.length;
+        }
       })
     },
     changeIntervalType(tf) {
@@ -112,6 +116,7 @@ export default {
           return Object.values(e)
         });
         this.$refs.tradingVue.resetChart()
+        this.currentCandleLength = this.data.data.chart.data.length;
         // this.data.onrange(this.load_chunk)
       }).catch(error => {
         return notificationWithCustomMessage('warning', this, error.message);
