@@ -6,7 +6,56 @@
       small
       v-model="historyTab"
     >
-      <b-tab title="My Orders" :title-link-class="'text-light'">
+      <b-tab title="Open Orders" :title-link-class="'text-light'">
+        <b-card-text>
+          <table class="w-100 mt-1">
+            <tr>
+              <th>Type</th>
+              <th>Amount ({{baseTokenSymbol}})</th>
+              <th>Price</th>
+              <th>Remaining</th>
+              <th>Expiry</th>
+              <th>Action</th>
+              <th></th>
+            </tr>
+            <tr v-for="(data, i) in myOpenOrders" :key="i">
+              <td>{{ data.type }}</td>
+              <td>{{ data.type === 'buy' ? removeDecimal(data.takerAmount) : removeDecimal(data.makerAmount) }}</td>
+              <td>{{ Math.abs(data.price).toFixed(2) }}</td>
+              <td>{{ removeDecimal(data.remainingAmount) }}</td>
+              <td>{{ convertExpiryToDate(data.expiry) }}</td>
+              <td>
+                <b-badge v-if="Number(data.expiry) * 1000 > Date.now() && data.status === 'fill-able'" variant="warning">Cancel</b-badge>
+                <p style="color: rgb(35, 167, 118)" v-if="data.status === 'completed'">{{ data.status.charAt(0).toUpperCase() + data.status.slice(1) }}</p>
+                <p style="color: orange" v-if="Number(data.expiry) * 1000 < Date.now() && data.status === 'fill-able'">Expiry</p>
+              </td>
+            </tr>
+            <tr>
+              <th colspan="6">
+                <b-pagination
+                  v-if="totalMyOpenOrder > limitMyOpenOrder"
+                  class="mt-3"
+                  align="center"
+                  v-model="currentMyOpenOrderPage"
+                  :total-rows="totalMyOpenOrder"
+                  :per-page="limitMyOpenOrder"
+                  aria-controls="my-table"
+                  first-text="First"
+                  prev-text="Prev"
+                  next-text="Next"
+                  last-text="Last"
+                >
+                  <template #first-text><span class="text-success">First</span></template>
+                  <template #prev-text><span class="text-success">Prev</span></template>
+                  <template #next-text><span class="text-danger">Next</span></template>
+                  <template #last-text><span class="text-danger">Last</span></template>
+                </b-pagination>
+              </th>
+            </tr>
+          </table>
+        </b-card-text>
+      </b-tab>
+      <b-tab title="Order History" :title-link-class="'text-light'">
         <b-card-text>
           <table class="w-100 mt-1">
             <tr>
@@ -55,7 +104,7 @@
           </table>
         </b-card-text>
       </b-tab>
-      <b-tab title="My Trades" :title-link-class="'text-light'">
+      <b-tab title="Trade History" :title-link-class="'text-light'">
         <b-card-text>
           <table class="w-100 mt-1">
             <tr>
@@ -135,13 +184,20 @@ export default {
   },
   data() {
     return {
-      myOrders: [],
-      myTrades: [],
       historyTab: 0,
       currentAccountWallet: null,
+
+      myOpenOrders: [],
+      currentMyOpenOrderPage: 1,
+      totalMyOpenOrder: 1,
+      limitMyOpenOrder: 7,
+
+      myOrders: [],
       currentMyOrderPage: 1,
       totalMyOrder: 1,
       limitMyOrder: 7,
+
+      myTrades: [],
       currentMyTradePage: 1,
       totalMyTrade: 1,
       limitMyTrade: 7,
@@ -154,9 +210,12 @@ export default {
         socket.off(`NewOrderCreated_${oldVal}`);
       }
       if (this.historyTab === 0) {
-        this.listMyOrder();
+        this.listMyOpenOrder();
       }
       if (this.historyTab === 1) {
+        this.listMyOrder();
+      }
+      if (this.historyTab === 2) {
         this.listMyTrades();
       }
       if (newVal) {
@@ -167,14 +226,20 @@ export default {
     currentMyOrderPage() {
       this.listMyOrder();
     },
+    currentMyOpenOrderPage() {
+      this.listMyOpenOrder();
+    },
     currentMyTradePage() {
       this.listMyTrades();
     },
     historyTab(newVal, oldVal) {
       if (newVal === 0) {
-        this.listMyOrder();
+        this.listMyOpenOrder();
       }
       if (newVal === 1) {
+        this.listMyOrder();
+      }
+      if (newVal === 2) {
         this.listMyTrades();
       }
     },
@@ -189,11 +254,10 @@ export default {
   },
   mounted() {
   },
-  created: debounce(function () {
+  created() {
     this.client = new Web3(window.ethereum);
     this.client.eth.getAccounts().then(res => { this.currentAccountWallet = res[0] });
-    this.listMyOrder();
-  }, 500),
+  },
   methods: {
     initOrderMatched() {
       socket.on(`NewTradeCreated_${this.pairId}`, (trade) => {
@@ -201,10 +265,10 @@ export default {
           trade.maker.toLowerCase() === this.currentAccountWallet.toLowerCase() ||
           trade.taker.toLowerCase() === this.currentAccountWallet.toLowerCase()
         ) {
-          if (this.historyTab === 0) {
+          if (this.historyTab === 1) {
             this.listMyOrder();
           }
-          if (this.historyTab === 1) {
+          if (this.historyTab === 2) {
             this.listMyTrades();
           }
         }
@@ -213,7 +277,12 @@ export default {
     initSocketNewOrderCreated() {
       socket.on(`NewOrderCreated_${this.pairId}`, (data) => {
         if (data.maker.toLowerCase() === this.currentAccountWallet.toLowerCase()) {
-          this.listMyOrder();
+          if (this.historyTab === 0) {
+            this.listMyOpenOrder();
+          }
+          if (this.historyTab === 1) {
+            this.listMyOrder();
+          }
         }
       });
     },
@@ -247,6 +316,17 @@ export default {
 
       if (maker.toLowerCase() !== this.currentAccountWallet.toLowerCase() && type === 'buy') return quoteAmount;
       if (maker.toLowerCase() !== this.currentAccountWallet.toLowerCase() && type === 'sell') return baseAmount;
+    },
+    listMyOpenOrder() {
+      if (this.currentAccountWallet === null) return;
+      listOrder(
+        null, this.baseTokenAddress, this.quoteTokenAddress, null, this.currentMyOpenOrderPage,
+        this.limitMyOrder, this.currentAccountWallet, 'desc', 'fill-able'
+      )
+        .then(res => {
+          this.myOpenOrders = res.data.data;
+          this.totalMyOpenOrder = res.data.metadata.total;
+        })
     },
     listMyOrder() {
       if (this.currentAccountWallet === null) return;

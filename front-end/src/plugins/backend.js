@@ -18,13 +18,15 @@ export const listOrder = async (
   page,
   limit,
   maker = null,
-  sortCreated = null
+  sortCreated = null,
+  status = null
 ) => {
   let url = `${process.env.VUE_APP_BACKEND_URL}/order?page=${page}&limit=${limit}&baseTokenAddress=${baseTokenAddress}&quoteTokenAddress=${quoteTokenAddress}`;
   if (sortPrice !== null) url += `&sortPrice=${sortPrice}`;
   if (type !== null) url += `&type=${type}`;
   if (maker !== null) url += `&maker=${maker}`;
   if (sortCreated) url += `&sortCreated=${sortCreated}`;
+  if (status) url += `&orderStatus=${status}`;
   return axios.get(url);
 };
 

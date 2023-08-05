@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
-import { OrderType } from "src/models/schemas/order.schema";
+import { OrderStatus, OrderType } from "src/models/schemas/order.schema";
 import { Type } from "class-transformer";
 
 export class ListOrderDto {
@@ -77,6 +77,15 @@ export class ListOrderDto {
     example: "0x2b98a2c5A0155d9D6aAa0747E6bbE3D285EA7bb7",
   })
   maker: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    description: "Address of maker wallet",
+    required: false,
+    example: OrderStatus.FillAble,
+  })
+  orderStatus: OrderStatus;
 
   pairId: string;
 }
