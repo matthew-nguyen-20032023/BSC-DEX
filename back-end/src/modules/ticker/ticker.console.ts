@@ -45,89 +45,93 @@ export class TickerConsole {
       throw Error(`No pair name found for: ${pairName}`);
     }
 
-    const oldTickerRedis = await this.cacheManager.get(
-      `${TickerRedisKey.Ticker24h}_${pair._id.toString()}`
-    );
-    let oldTicker: Ticker24H = oldTickerRedis
-      ? // @ts-ignore
-        JSON.parse(oldTickerRedis)
-      : {
-          price: "0",
-          change: "0",
-          low: "0",
-          high: "0",
-          volume: "0",
-        };
+    let toTimestamp = Date.now();
+    let fromTimestamp = Date.now() - 86400000;
+    let trades24h: Trade[] = [];
+    let ticker24h: Ticker24H = {
+      price: "0",
+      change: "0",
+      low: "0",
+      high: "0",
+      volume: "0",
+    };
 
     while (1) {
-      console.log(`${TickerConsole.name}: Calculate ticker at ${new Date()}`);
-      const ticker24h: Ticker24H = {
-        price: "0",
-        change: "0",
-        low: "0",
-        high: "0",
-        volume: "0",
-      };
-      const toTimestamp = Math.ceil(Date.now());
-      const fromTimestamp = Math.ceil(Date.now() - 86400000);
-      const trades24h = await this.tradeRepository.getTradesFromToByPair(
+      console.log(
+        `${TickerConsole.name}: calculate ticker from ${fromTimestamp}-${toTimestamp}`
+      );
+      const currentTrades = await this.tradeRepository.getTradesFromToByPair(
         pair._id.toString(),
         fromTimestamp,
         toTimestamp
       );
 
-      if (trades24h.length === 0) {
+      // If not find any trade within 24h, return default ticker and set range time to next
+      if (currentTrades.length === 0) {
         SocketEmitter.getInstance().emitTicker24h(
           ticker24h,
           pair._id.toString()
         );
-        await sleep(60000);
+        await sleep(1000);
+        fromTimestamp = toTimestamp;
+        toTimestamp = Date.now();
         continue;
       }
 
-      // calculate 24h change
-      const currentPrice = trades24h[trades24h.length - 1].price;
+      // Remove old trades that have the timestamp < fromTimestamp
+      let startSliceTrade = 0;
+      let endSliceTrade = 0;
+      let currentIndex = -1;
+      let isUpdated = false;
+      for (const trade of trades24h) {
+        currentIndex++;
+        if (trade.timestamp < fromTimestamp && !isUpdated) {
+          startSliceTrade = currentIndex;
+          isUpdated = true;
+          continue;
+        }
+        if (trade.timestamp < fromTimestamp) {
+          endSliceTrade = currentIndex;
+        } else {
+          break;
+        }
+      }
+      trades24h.splice(startSliceTrade, endSliceTrade);
+      for (const trade of currentTrades) {
+        trades24h.push(trade);
+      }
+
+      // Data now is up-to-date and ready to calculate ticker 24h
+      const currentPrice = currentTrades[currentTrades.length - 1].price;
       const price24hAgo = trades24h[0].price;
       ticker24h.change = new BigNumber(currentPrice)
         .minus(price24hAgo)
-        .abs()
         .div(price24hAgo)
         .times(100)
         .toFixed(2);
       ticker24h.low = trades24h[0].price;
+      ticker24h.high = trades24h[0].price;
       ticker24h.price = currentPrice;
+      ticker24h.volume = "0";
 
       // calculate 24h low, high and volume
       for (const trade of trades24h) {
-        // high
-        if (new BigNumber(trade.price).gt(ticker24h.high)) {
+        if (new BigNumber(trade.price).gt(ticker24h.high))
           ticker24h.high = new BigNumber(trade.price).toFixed();
-        }
-
-        // low
-        if (new BigNumber(trade.price).lt(ticker24h.low)) {
+        if (new BigNumber(trade.price).lt(ticker24h.low))
           ticker24h.low = new BigNumber(trade.price).toFixed();
-        }
-
         ticker24h.volume = new BigNumber(ticker24h.volume)
           .plus(trade.volume)
           .toFixed();
       }
 
-      const tickerAbsValue = JSON.stringify(ticker24h);
-
-      ticker24h.price = new BigNumber(ticker24h.price)
-        .minus(oldTicker.price)
-        .gt("0")
+      ticker24h.price = new BigNumber(ticker24h.change).gt("0")
         ? ticker24h.price
         : `-${ticker24h.price}`;
 
-      ticker24h.change = new BigNumber(ticker24h.price)
-        .minus(oldTicker.price)
-        .gt("0")
+      ticker24h.change = new BigNumber(ticker24h.change).gt("0")
         ? `+${ticker24h.change}`
-        : `-${ticker24h.change}`;
-      oldTicker = JSON.parse(tickerAbsValue);
+        : `${ticker24h.change}`;
 
       await this.cacheManager.set(
         `${TickerRedisKey.Ticker24h}_${pair._id.toString()}`,
@@ -135,7 +139,9 @@ export class TickerConsole {
       );
 
       SocketEmitter.getInstance().emitTicker24h(ticker24h, pair._id.toString());
-      await sleep(60000);
+      await sleep(1000);
+      fromTimestamp = toTimestamp;
+      toTimestamp = Date.now();
     }
   }
 }
