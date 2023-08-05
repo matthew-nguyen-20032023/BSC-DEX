@@ -104,6 +104,7 @@ export default {
     changeIntervalType(tf) {
       this.intervalType = tf.intervalType;
       this.millisecondStep = tf.millisecondStep;
+      this.data.data.chart.tf = tf.tf;
       this.data.set('data.chart.tf', tf.tf)
     },
     listTrades() {
