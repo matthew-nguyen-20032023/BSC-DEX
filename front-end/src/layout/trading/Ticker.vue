@@ -2,10 +2,10 @@
   <table style="font-size: 12px; width: 100%;">
     <tr style="color: rgb(132, 142, 156)">
       <th>Trading Pair</th>
-      <th style="text-align: right">24h Change ({{pairSelected.name.split('/')[1]}})</th>
+      <th v-if="pairSelected !== null" style="text-align: right">24h Change ({{pairSelected.name.split('/')[1]}})</th>
       <th style="text-align: right">24h High</th>
       <th style="text-align: right">24h Low</th>
-      <th style="text-align: right">24h Volume ({{pairSelected.name.split('/')[0]}})</th>
+      <th v-if="pairSelected !== null" style="text-align: right">24h Volume ({{pairSelected.name.split('/')[0]}})</th>
       <th rowspan="2">
         <b-nav align="right" pills>
           <b-button v-if="!walletAddress" @click="connectWallet()" variant="warning">
