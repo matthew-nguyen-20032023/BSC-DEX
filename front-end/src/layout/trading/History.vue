@@ -25,7 +25,13 @@
               <td>{{ removeDecimal(data.remainingAmount) }}</td>
               <td>{{ convertExpiryToDate(data.expiry) }}</td>
               <td>
-                <b-badge v-if="Number(data.expiry) * 1000 > Date.now() && data.status === 'fill-able'" variant="warning">Cancel</b-badge>
+                <b-badge
+                  v-if="Number(data.expiry) * 1000 > Date.now() && data.status === 'fill-able'"
+                  variant="warning" @click="cancelOrder(data)"
+                  :style="{ cursor: 'pointer' }"
+                >
+                  Cancel
+                </b-badge>
                 <p style="color: rgb(35, 167, 118)" v-if="data.status === 'completed'">{{ data.status.charAt(0).toUpperCase() + data.status.slice(1) }}</p>
                 <p style="color: orange" v-if="Number(data.expiry) * 1000 < Date.now() && data.status === 'fill-able'">Expiry</p>
               </td>
@@ -154,6 +160,8 @@
 import {listMyTrades, listOrder} from "@/plugins/backend";
 import Web3 from "web3";
 import {socket} from "@/plugins/socket";
+import {LimitOrder} from "@0x/protocol-utils";
+import {exchangeABI} from "@/libs/abi/exchange.ts";
 const debounce = require('debounce');
 const BigNumber = require('bignumber.js');
 const moment = require('moment');
@@ -257,6 +265,7 @@ export default {
   created() {
     this.client = new Web3(window.ethereum);
     this.client.eth.getAccounts().then(res => { this.currentAccountWallet = res[0] });
+    this.zeroExContract = new this.client.eth.Contract(exchangeABI, process.env.VUE_APP_ZERO_CONTRACT_ADDRESS);
   },
   methods: {
     initOrderMatched() {
@@ -342,7 +351,33 @@ export default {
         this.myTrades = res.data.data;
         this.totalMyTrade = res.data.metadata.total;
       })
-    }
+    },
+    async cancelOrder(order) {
+      const limitOrder = new LimitOrder({
+        chainId: Number(order.chainId),
+        verifyingContract: order.verifyingContract,
+        maker: order.maker,
+        taker: order.taker,
+        makerToken: order.makerToken,
+        takerToken: order.takerToken,
+        makerAmount: order.makerAmount,
+        takerAmount: order.takerAmount,
+        takerTokenFeeAmount: order.takerTokenFeeAmount,
+        sender: order.sender,
+        feeRecipient: order.feeRecipient,
+        expiry: Number(order.expiry),
+        pool: order.pool,
+        salt: order.salt
+      });
+      await this.zeroExContract.methods.batchCancelLimitOrders(
+        [limitOrder]
+      ).send({
+        from: this.currentAccountWallet,
+        value: 0,
+        gas: 800000,
+        gasPrice: 20e9
+      });
+    },
   }
 };
 </script>
