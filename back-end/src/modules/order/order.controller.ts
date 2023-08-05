@@ -41,8 +41,11 @@ export class OrderController {
     const data = await this.orderService.listOrder(listOrderDto);
     return {
       message: OrderMessageSuccess.ListOrderSuccess,
-      data,
+      data: data.data,
       statusCode: HttpStatus.OK,
+      metadata: {
+        total: data.total,
+      },
     };
   }
 

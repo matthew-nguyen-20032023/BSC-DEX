@@ -50,8 +50,8 @@
   &.active .page-link {
     z-index: 1;
     color: $pagination-active-color;
-    background-color: $pagination-active-bg;
-    border-color: $pagination-active-border-color;
+    background-color: rgb(35, 167, 118);
+    border-color: white;
   }
 
   &.disabled .page-link {

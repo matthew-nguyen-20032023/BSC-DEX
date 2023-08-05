@@ -114,7 +114,9 @@ export class OrderService {
     return order;
   }
 
-  public async listOrder(listOrderDto: ListOrderDto): Promise<Order[]> {
+  public async listOrder(
+    listOrderDto: ListOrderDto
+  ): Promise<{ data: Order[]; total: number }> {
     const pair = await this.pairRepository.getPairByBaseQuoteToken(
       listOrderDto.baseTokenAddress.toLowerCase(),
       listOrderDto.quoteTokenAddress.toLowerCase()

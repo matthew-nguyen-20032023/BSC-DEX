@@ -1,24 +1,34 @@
 <template>
   <b-row class="mt-2">
-    <table id="sellOrders" style="font-size: 12px; color: #e54150">
-      <tr>
-        <th style="text-align: center; color: #525f7f" colspan="3"><strong>Order Book</strong></th>
-      </tr>
-      <tr style="color: rgb(132, 142, 156)">
-        <th style="padding-left: 20px">Price ({{quoteTokenSymbol}})</th>
+    <table style="font-size: 12px; color: #e54150">
+      <tr style="color: rgb(132, 142, 156); text-align: center">
+        <th>Price</th>
         <th>Amount</th>
-        <th>Total</th>
+        <th style="text-align: left">Total</th>
       </tr>
+    </table>
+    <table id="sellOrders" style="font-size: 12px; color: #e54150">
       <tbody>
       </tbody>
     </table>
-    <hr>
-    <table id="buyOrders" style="font-size: 12px; color: #23a776">
-      <tr style="color: rgb(132, 142, 156)">
-        <th style="padding-left: 20px">Price ({{quoteTokenSymbol}})</th>
-        <th>Amount</th>
-        <th>Total</th>
-      </tr>
+    <strong v-if="currentPrice === previousPrice" style="padding-left: 20px; color: white; font-size: 18px">
+      {{ currentPrice }}
+    </strong>
+    <strong v-if="currentPrice > previousPrice" style="padding-left: 20px; color: rgb(35, 167, 118); font-size: 18px">
+      {{ currentPrice }}
+      <b-icon
+        :icon="'arrow-up-circle'"
+        :class="{'grow-up': true, 'growing': true}"
+      />
+    </strong>
+    <strong v-if="previousPrice > currentPrice" style="padding-left: 20px; color: rgb(229, 65, 80); font-size: 18px">
+      {{ currentPrice }}
+      <b-icon
+        :icon="'arrow-down-circle'"
+        :class="{'grow-up': true, 'growing': true}"
+      />
+    </strong>
+    <table id="buyOrders" style="font-size: 12px; color: #23a776; padding-left: 20px">
       <tbody>
       </tbody>
     </table>
@@ -26,8 +36,6 @@
 </template>
 
 <script>
-import {listOrderBook} from "@/plugins/backend";
-import {notificationWithCustomMessage} from "@/plugins/notification";
 import {socket} from "@/plugins/socket";
 const BigNumber = require('bignumber.js');
 const debounce = require('debounce');
@@ -47,22 +55,33 @@ export default {
     pairId(newVal, oldVal) {
       if (oldVal) {
         socket.off(`OrderBookByPair_${oldVal}`);
+        socket.off(`NewTradeCreated_${oldVal}`)
       }
-      this.getOrderBook();
-      if (newVal) this.initSocketOrderBook()
+      if (newVal) {
+        this.initSocketOrderBook();
+        this.initTradeMatched();
+      }
     },
   },
   created: debounce(function () {
-    this.getOrderBook();
+    this.updateOrderBook();
   }, 500),
   data() {
     return {
       buyOrders: [],
       sellOrders: [],
-      defaultLengthOrderBook: window.innerHeight < 1100 ? 5 : 8,
+      defaultLengthOrderBook: window.innerHeight < 1100 ? 6 : 9,
+      currentPrice: 0,
+      previousPrice: 0,
     };
   },
   methods: {
+    initTradeMatched() {
+      socket.on(`NewTradeCreated_${this.pairId}`, (trade) => {
+        this.previousPrice = this.currentPrice;
+        this.currentPrice = new BigNumber(trade.price).toFixed(4);
+      })
+    },
     initSocketOrderBook() {
       socket.on(`OrderBookByPair_${this.pairId}`, (orderBook) => {
         this.buyOrders = orderBook.buyOrders;
@@ -74,29 +93,6 @@ export default {
           this.buyOrders = this.buyOrders.splice(0, this.defaultLengthOrderBook);
         }
         this.updateOrderBook();
-      })
-    },
-    getOrderBook() {
-      this.sellOrders = []
-      this.buyOrders = []
-      listOrderBook(this.pairId).then(res => {
-        this.buyOrders = res.data.data.buyOrders.map(e => {
-          return {
-            price: new BigNumber(e.price).toFixed(2),
-            amount: new BigNumber(e.amount).div(new BigNumber(10).pow(18)).toFixed(2),
-            total: new BigNumber(e.amount).times(e.price).div(new BigNumber(10).pow(18)).toFixed(2)
-          }
-        });
-        this.sellOrders = res.data.data.sellOrders.map(e => {
-          return {
-            price: new BigNumber(e.price).toFixed(2),
-            amount: new BigNumber(e.amount).div(new BigNumber(10).pow(18)).toFixed(2),
-            total: new BigNumber(e.amount).times(e.price).div(new BigNumber(10).pow(18)).toFixed(2)
-          }
-        });
-        this.updateOrderBook();
-      }).catch(error => {
-        return notificationWithCustomMessage('warning', this, `${error.message}`);
       })
     },
     calculateTotal(order) {
