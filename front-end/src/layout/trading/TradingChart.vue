@@ -128,6 +128,7 @@ export default {
     rangeChange: debounce(function (data) {
       const fromTimestamp = Math.floor(data[0] / (60 * 1000)) * 60 * 1000 + 60 * 1000;
       const toTimestamp = this.data.data.chart.data[0][0];
+      if (fromTimestamp >= toTimestamp) return;
       this.isProcessing = true;
       const lastOHLCV = JSON.parse(JSON.stringify(this.data.data.chart.data[0]));
       listTrades(this.pairId, fromTimestamp, toTimestamp, this.intervalType).then(res => {
@@ -147,7 +148,7 @@ export default {
       }).catch(error => {
         return notificationWithCustomMessage('warning', this, error.message);
       })
-    }, 1000),
+    }, 500),
   }
 }
 
