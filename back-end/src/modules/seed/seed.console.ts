@@ -200,7 +200,6 @@ export class SeedConsole {
 
   private static async createRandomOrder(
     makerAddress: string,
-    maxPrice: number,
     previousPrice: number
   ): Promise<{
     limitOrder: LimitOrder;
@@ -335,11 +334,7 @@ export class SeedConsole {
     let previousPrice = maxPrice;
     while (1) {
       const { limitOrder, orderType, price } =
-        await SeedConsole.createRandomOrder(
-          makerAddress,
-          maxPrice,
-          previousPrice
-        );
+        await SeedConsole.createRandomOrder(makerAddress, previousPrice);
       previousPrice = price;
       const signature = await limitOrder.getSignatureWithProviderAsync(
         web3Wrapper.getProvider(),

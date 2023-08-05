@@ -25,6 +25,7 @@ import { SocketEmitter } from "src/socket/socket-emitter";
 import { Pair, PairDocument } from "src/models/schemas/pair.schema";
 import { PairRepository } from "src/models/repositories/pair.repository";
 import { OrderService } from "src/modules/order/order.service";
+import { IOrderBook } from "src/modules/order/order.interface";
 
 @Console()
 export class OrderConsole {
@@ -228,10 +229,29 @@ export class OrderConsole {
     }
 
     while (1) {
-      const ordersGrouped = await this.orderRepository.groupOrdersForOrderBook(
-        pair._id.toString()
+      let orderBook: IOrderBook = {
+        buyOrders: [],
+        sellOrders: [],
+      };
+      const buyOrdersGrouped =
+        await this.orderRepository.groupOrdersForOrderBook(
+          pair._id.toString(),
+          OrderType.BuyOrder,
+          10
+        );
+      const sellOrdersGrouped =
+        await this.orderRepository.groupOrdersForOrderBook(
+          pair._id.toString(),
+          OrderType.SellOrder,
+          10
+        );
+
+      const buyOrderBook = await OrderService.buildOrderBook(buyOrdersGrouped);
+      const sellOrderBook = await OrderService.buildOrderBook(
+        sellOrdersGrouped
       );
-      const orderBook = await OrderService.buildOrderBook(ordersGrouped);
+      orderBook.buyOrders = buyOrderBook.buyOrders;
+      orderBook.sellOrders = sellOrderBook.sellOrders;
       SocketEmitter.getInstance().emitOrderBookByPairId(
         orderBook,
         pair._id.toString()

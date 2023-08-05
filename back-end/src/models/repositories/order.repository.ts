@@ -129,17 +129,40 @@ export class OrderRepository {
    * Only fill-able order that not expiry is selected
    */
   public async groupOrdersForOrderBook(
-    pairId: string
+    pairId: string,
+    type: OrderType,
+    limit: number
   ): Promise<
     { _id: { type: OrderType; price: string }; totalRemainingAmount: string }[]
   > {
     return this.model.aggregate([
       {
+        $addFields: {
+          numericPrice: {
+            $convert: {
+              input: "$price",
+              to: "decimal",
+              onError: 0,
+              onNull: 0,
+            },
+          },
+        },
+      },
+      {
         $match: {
+          type: type,
           status: OrderStatus.FillAble,
           expiry: { $gt: Date.now() / 1000 },
           pairId: pairId,
         },
+      },
+      {
+        $sort: {
+          numericPrice: type === OrderType.BuyOrder ? -1 : 1,
+        },
+      },
+      {
+        $limit: limit,
       },
       {
         $group: {

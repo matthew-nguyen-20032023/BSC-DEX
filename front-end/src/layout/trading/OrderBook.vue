@@ -87,7 +87,7 @@ export default {
         this.buyOrders = orderBook.buyOrders;
         this.sellOrders = orderBook.sellOrders;
         if (this.sellOrders.length > this.defaultLengthOrderBook) {
-          this.sellOrders = this.sellOrders.splice(0, this.defaultLengthOrderBook);
+          this.sellOrders = this.sellOrders.splice(this.sellOrders.length - this.defaultLengthOrderBook, this.defaultLengthOrderBook);
         }
         if (this.buyOrders.length > this.defaultLengthOrderBook) {
           this.buyOrders = this.buyOrders.splice(0, this.defaultLengthOrderBook);

@@ -172,14 +172,29 @@ export class OrderService {
     return matchedOrders;
   }
 
-  public async getOrderBook(pairId: string): Promise<{
+  public async getOrderBook(
+    pairId: string,
+    limit = 10
+  ): Promise<{
     buyOrders: { price: string; amount: string }[];
     sellOrders: { price: string; amount: string }[];
   }> {
-    const groupOrders = await this.orderRepository.groupOrdersForOrderBook(
-      pairId
+    const buyGroupOrders = await this.orderRepository.groupOrdersForOrderBook(
+      pairId,
+      OrderType.BuyOrder,
+      limit
     );
-    return await OrderService.buildOrderBook(groupOrders);
+    const sellGroupOrders = await this.orderRepository.groupOrdersForOrderBook(
+      pairId,
+      OrderType.SellOrder,
+      limit
+    );
+    const buyOrder = await OrderService.buildOrderBook(buyGroupOrders);
+    const sellOrder = await OrderService.buildOrderBook(sellGroupOrders);
+    return {
+      buyOrders: buyOrder.buyOrders,
+      sellOrders: sellOrder.sellOrders,
+    };
   }
 
   public async estimateAllowances(

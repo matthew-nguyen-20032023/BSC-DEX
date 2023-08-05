@@ -19,5 +19,6 @@ export const getRandomPriceByRule = (
   const deviation = (previousPrice * maxDeviationPercentage) / 100;
   const minPrice = previousPrice - deviation;
   const maxPrice = previousPrice + deviation;
-  return Math.random() * (maxPrice - minPrice) + minPrice;
+  const result = Math.random() * (maxPrice - minPrice) + minPrice;
+  return Number(result.toFixed(2));
 };
