@@ -49,18 +49,24 @@ export default {
     quoteTokenSymbol: {
       type: String,
       required: true
-    }
+    },
+    newTradeCreated: {
+      required: true
+    },
   },
   watch: {
     pairId(newVal, oldVal) {
       if (oldVal) {
         socket.off(`OrderBookByPair_${oldVal}`);
-        socket.off(`NewTradeCreated_${oldVal}`)
       }
       if (newVal) {
         this.initSocketOrderBook();
-        this.initTradeMatched();
       }
+    },
+    newTradeCreated(newVal, oldVal) {
+      if (!newVal) return;
+      this.previousPrice = this.currentPrice;
+      this.currentPrice = new BigNumber(newVal.price).toFixed(4);
     },
   },
   created: debounce(function () {
@@ -76,12 +82,6 @@ export default {
     };
   },
   methods: {
-    initTradeMatched() {
-      socket.on(`NewTradeCreated_${this.pairId}`, (trade) => {
-        this.previousPrice = this.currentPrice;
-        this.currentPrice = new BigNumber(trade.price).toFixed(4);
-      })
-    },
     initSocketOrderBook() {
       socket.on(`OrderBookByPair_${this.pairId}`, (orderBook) => {
         this.buyOrders = orderBook.buyOrders;

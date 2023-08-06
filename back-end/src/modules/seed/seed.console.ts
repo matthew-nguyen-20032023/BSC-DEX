@@ -254,7 +254,8 @@ export class SeedConsole {
     limitOrder: LimitOrder,
     orderType: OrderType,
     signature: string,
-    pairId: string
+    pairId: string,
+    price: number
   ): Promise<Order> {
     const newOrder = new Order();
     newOrder.orderHash = limitOrder.getHash();
@@ -262,14 +263,7 @@ export class SeedConsole {
     newOrder.chainId = Number(process.env.BSC_CHAIN_ID);
     newOrder.verifyingContract =
       process.env.VERIFY_SMART_CONTRACT_ADDRESS.toLowerCase();
-    newOrder.price =
-      orderType === OrderType.BuyOrder
-        ? new BigNumber(limitOrder.makerAmount)
-            .div(limitOrder.takerAmount)
-            .toString()
-        : new BigNumber(limitOrder.takerAmount)
-            .div(limitOrder.makerAmount)
-            .toString();
+    newOrder.price = price.toString();
     newOrder.maker = limitOrder.maker.toLowerCase();
     newOrder.taker = limitOrder.taker.toLowerCase();
     newOrder.makerToken = limitOrder.makerToken.toLowerCase();
@@ -393,7 +387,8 @@ export class SeedConsole {
         limitOrder,
         orderType,
         JSON.stringify(signature),
-        pair._id.toString()
+        pair._id.toString(),
+        price
       );
 
       const orderCreated = await this.orderRepository.save(orderForBackend);

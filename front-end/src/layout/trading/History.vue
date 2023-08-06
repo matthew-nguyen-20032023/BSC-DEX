@@ -160,7 +160,6 @@
 <script>
 import {listMyTrades, listOrder} from "@/plugins/backend";
 import Web3 from "web3";
-import {socket} from "@/plugins/socket";
 import {LimitOrder} from "@0x/protocol-utils";
 import {exchangeABI} from "@/libs/abi/exchange.ts";
 const debounce = require('debounce');
@@ -194,6 +193,15 @@ export default {
       type: String,
       required: true
     },
+    orderCancelled: {
+      required: true
+    },
+    newTradeCreated: {
+      required: true
+    },
+    newOrderCreated: {
+      required: true
+    },
   },
   data() {
     return {
@@ -217,32 +225,26 @@ export default {
     };
   },
   watch: {
-    walletProp(newVal, oldVal) {
-      if (newVal !== '') {
-        this.currentAccountWallet = newVal;
+    orderCancelled(newVal, oldVal) {
+      if (!newVal) return;
+      this.changeTab();
+    },
+    newTradeCreated(newVal, oldVal) {
+      if (!newVal) return;
+      this.changeTab();
+    },
+    newOrderCreated(newVal, oldVal) {
+      if (!newVal) return;
+      this.changeTab();
+    },
+    walletProp(newWallet, oldWallet) {
+      if (newWallet) {
+        this.currentAccountWallet = newWallet;
         this.changeTab();
-        if (this.pairId) {
-          socket.off(`NewTradeCreated_${this.pairId}`);
-          socket.off(`NewOrderCreated_${this.pairId}`);
-          socket.off(`OrderCancelled_${this.pairId}`);
-          this.initSocketNewOrderCreated();
-          this.initOrderMatched();
-          this.initOrderCancelled();
-        }
       }
     },
-    pairId(newVal, oldVal) {
-      if (oldVal) {
-        socket.off(`NewTradeCreated_${oldVal}`);
-        socket.off(`NewOrderCreated_${oldVal}`);
-        socket.off(`OrderCancelled_${oldVal}`);
-      }
+    pairId() {
       this.changeTab();
-      if (newVal && this.currentAccountWallet) {
-        this.initSocketNewOrderCreated();
-        this.initOrderMatched();
-        this.initOrderCancelled();
-      }
     },
     currentMyOrderPage() {
       this.listMyOrder();
@@ -253,16 +255,8 @@ export default {
     currentMyTradePage() {
       this.listMyTrades();
     },
-    historyTab(newVal, oldVal) {
-      if (newVal === 0) {
-        this.listMyOpenOrder();
-      }
-      if (newVal === 1) {
-        this.listMyOrder();
-      }
-      if (newVal === 2) {
-        this.listMyTrades();
-      }
+    historyTab() {
+      this.changeTab();
     },
   },
   mounted() {
@@ -282,47 +276,6 @@ export default {
       if (this.historyTab === 2) {
         this.listMyTrades();
       }
-    },
-    initOrderCancelled() {
-      socket.on(`OrderCancelled_${this.pairId}`, (order) => {
-        if (
-          order.maker.toLowerCase() === this.currentAccountWallet.toLowerCase()
-        ) {
-          if (this.historyTab === 0) {
-            this.listMyOpenOrder();
-          }
-          if (this.historyTab === 1) {
-            this.listMyOrder();
-          }
-        }
-      });
-    },
-    initOrderMatched() {
-      socket.on(`NewTradeCreated_${this.pairId}`, (trade) => {
-        if (
-          trade.maker.toLowerCase() === this.currentAccountWallet.toLowerCase() ||
-          trade.taker.toLowerCase() === this.currentAccountWallet.toLowerCase()
-        ) {
-          if (this.historyTab === 1) {
-            this.listMyOrder();
-          }
-          if (this.historyTab === 2) {
-            this.listMyTrades();
-          }
-        }
-      });
-    },
-    initSocketNewOrderCreated() {
-      socket.on(`NewOrderCreated_${this.pairId}`, (data) => {
-        if (data.maker.toLowerCase() === this.currentAccountWallet.toLowerCase()) {
-          if (this.historyTab === 0) {
-            this.listMyOpenOrder();
-          }
-          if (this.historyTab === 1) {
-            this.listMyOrder();
-          }
-        }
-      });
     },
     convertExpiryToDate(expiry) {
       const dateObject = new Date(expiry * 1000);
