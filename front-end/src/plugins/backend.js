@@ -21,10 +21,12 @@ export const listOrder = async (
   sortCreated = null,
   status = null
 ) => {
-  let url = `${process.env.VUE_APP_BACKEND_URL}/order?page=${page}&limit=${limit}&baseTokenAddress=${baseTokenAddress}&quoteTokenAddress=${quoteTokenAddress}`;
+  let url = `${
+    process.env.VUE_APP_BACKEND_URL
+  }/order?page=${page}&limit=${limit}&baseTokenAddress=${baseTokenAddress.toLowerCase()}&quoteTokenAddress=${quoteTokenAddress.toLowerCase()}`;
   if (sortPrice !== null) url += `&sortPrice=${sortPrice}`;
   if (type !== null) url += `&type=${type}`;
-  if (maker !== null) url += `&maker=${maker}`;
+  if (maker !== null) url += `&maker=${maker.toLowerCase()}`;
   if (sortCreated) url += `&sortCreated=${sortCreated}`;
   if (status) url += `&orderStatus=${status}`;
   return axios.get(url);
@@ -41,7 +43,9 @@ export const listTrades = async (
 };
 
 export const listMyTrades = async (page, limit, wallet, pairId) => {
-  let url = `${process.env.VUE_APP_BACKEND_URL}/trade/my-trades?page=${page}&limit=${limit}&wallet=${wallet}&pairId=${pairId}`;
+  let url = `${
+    process.env.VUE_APP_BACKEND_URL
+  }/trade/my-trades?page=${page}&limit=${limit}&wallet=${wallet.toLowerCase()}&pairId=${pairId}`;
   return axios.get(url);
 };
 
@@ -67,7 +71,9 @@ export const getMatchOffers = async (
   amount,
   orderType
 ) => {
-  let url = `${process.env.VUE_APP_BACKEND_URL}/order/match-orders?makerToken=${makerToken}&takerToken=${takerToken}&price=${price}&amount=${amount}&orderType=${orderType}`;
+  let url = `${
+    process.env.VUE_APP_BACKEND_URL
+  }/order/match-orders?makerToken=${makerToken.toLowerCase()}&takerToken=${takerToken.toLowerCase()}&price=${price}&amount=${amount}&orderType=${orderType}`;
   return axios.get(url);
 };
 
