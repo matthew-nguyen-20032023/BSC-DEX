@@ -1,6 +1,6 @@
 #<mark>This Project Still In Development Process. I'm trying to develop it as soon as possible, It will be done at the end of this month</mark>
 # BSC-DEX
-![alt text](https://github.com/matthew-nguyen-20032023/BSC-DEX/blob/develop/docs/images/UI_demo.png?raw=true)
+![alt text](https://github.com/matthew-nguyen-20032023/BSC-DEX/blob/develop/docs/images/UI_demo_lastest.jpg?raw=true)
 ## Description
 This project is fully build a decentralized exchange (DEX) for trading ERC20 token on binance smart chain (BSC)
 that base on 0x Protocol and OpenZeppelin. You can find more information in
