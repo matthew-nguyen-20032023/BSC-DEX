@@ -36,6 +36,7 @@
         </b-col>
         <b-col cols="1" class="custom-order-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
           <order
+            :wallet-prop="walletAddress"
             :pair-id="pairId"
             :base-token-symbol="baseTokenSymbol"
             :quote-token-symbol="quoteTokenSymbol"
