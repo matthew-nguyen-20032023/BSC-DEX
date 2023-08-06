@@ -9,17 +9,17 @@
 
       <b-row class="justify-content-center">
         <b-col class="custom-order-book-col" id="order-book" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
-          <order-book :pair-id="pairId" :quote-token-symbol="quoteTokenSymbol"/>
+          <order-book :pair-id="pairId" :quote-token-symbol="quoteTokenSymbol" :new-trade-created="newTradeCreated"/>
         </b-col>
 
         <b-col class="custom-trading-col" id="chart-trading">
           <div style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
-            <TradingChart :pair-id="pairId" :trading-pair="`${baseTokenSymbol} / ${quoteTokenSymbol}`"/>
+            <TradingChart :new-trade-created="newTradeCreated" :pair-id="pairId" :trading-pair="`${baseTokenSymbol} / ${quoteTokenSymbol}`"/>
           </div>
         </b-col>
         <b-col class="custom-market-trade-col" id="market-trade" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
           <b-row class="mt-1  ml-1 mr-1 mb-1">
-            <market-trade :pair-id="pairId" :quote-token-symbol="quoteTokenSymbol" />
+            <market-trade :pair-id="pairId" :quote-token-symbol="quoteTokenSymbol" :new-trade-created="newTradeCreated" />
           </b-row>
         </b-col>
       </b-row>
@@ -33,6 +33,9 @@
             :quote-token-symbol="quoteTokenSymbol"
             :base-token-symbol="baseTokenSymbol"
             :pair-id="pairId"
+            :new-order-created="newOrderCreated"
+            :new-trade-created="newTradeCreated"
+            :order-cancelled = "orderCancelled"
           />
         </b-col>
         <b-col cols="1" class="custom-order-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
@@ -51,6 +54,7 @@
 </template>
 
 <script>
+import {socket} from "@/plugins/socket";
 import TradingChart from "@/layout/trading/TradingChart";
 import OrderBook from "@/layout/trading/OrderBook";
 import MarketTrade from "@/layout/trading/MarketTrade";
@@ -69,6 +73,10 @@ export default {
       baseTokenAddress: '',
       quoteTokenAddress: '',
       pairId: '',
+
+      orderCancelled: null,
+      newTradeCreated: null,
+      newOrderCreated: null,
     }
   },
   components: {
@@ -86,7 +94,30 @@ export default {
     window.addEventListener('resize', this.onResize)
     this.onResize()
   },
+  watch: {
+    pairId(newVal, oldVal) {
+      if (!newVal) return;
+      if (oldVal) {
+        socket.off(`NewOrderCreated_${oldVal}`)
+        socket.off(`OrderCancelled_${oldVal}`)
+        socket.off(`NewTradeCreated_${oldVal}`)
+      }
+      this.initSocket();
+    }
+  },
   methods: {
+    initSocket() {
+      if (!this.pairId) return;
+      socket.on(`NewOrderCreated_${this.pairId}`, (order) => {
+        this.newOrderCreated = order;
+      })
+      socket.on(`OrderCancelled_${this.pairId}`, (order) => {
+        this.orderCancelled = order;
+      })
+      socket.on(`NewTradeCreated_${this.pairId}`, (trade) => {
+        this.newTradeCreated = trade;
+      })
+    },
     onResize() {
       const chartTrading = document.getElementById('trading-vue-js');
       const myTrade = document.getElementById('market-trade');

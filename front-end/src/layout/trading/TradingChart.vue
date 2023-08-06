@@ -40,6 +40,9 @@ export default {
       type: String,
       required: true
     },
+    newTradeCreated: {
+      required: true
+    },
   },
   data() {
     return {
@@ -62,44 +65,40 @@ export default {
     }
   },
   mounted() {
-    // todo: set rage get trades for first initialize trading view
-    // this.$nextTick(() =>
-    //   this.$refs.tradingVue.setRange(t1, t2)
-    // )
     window.addEventListener('resize', this.onResize)
     this.onResize()
   },
   watch: {
-    pairId(newVal, oldVal) {
-      if (oldVal) socket.off(`NewTradeCreated_${oldVal}`);
+    pairId() {
       this.listTrades();
-      if (newVal) this.initSocketNewTradeCreated();
     },
     intervalType() {
       this.listTrades();
-    }
+    },
+    newTradeCreated(trade, oldVal) {
+      if (!trade) return;
+      if (this.candleLength < this.maxCandleLength) this.candleLength++;
+
+      const tradeVolume = new BigNumber(trade.volume).div(new BigNumber(10).pow(18)).toFixed();
+      const roundDownTradeTimestamp = Math.floor(trade.timestamp / (60 * 1000)) * 60 * 1000;
+      this.data.update({
+        t: roundDownTradeTimestamp,
+        price: parseFloat(trade.price),
+        volume: parseFloat(tradeVolume),
+      })
+      if (this.data.data.chart.data.length > this.currentCandleLength && !this.isProcessing) {
+        this.$refs.tradingVue.resetChart();
+        this.currentCandleLength = this.data.data.chart.data.length;
+      } else if (this.data.data.chart.data.length < 50) {
+        this.$refs.tradingVue.resetChart();
+        this.isProcessing = false;
+      }
+    },
   },
   methods: {
     onResize() {
       this.width = window.innerWidth / 2.05
       this.height = window.innerHeight / 2.8 - 50
-    },
-    initSocketNewTradeCreated() {
-      socket.on(`NewTradeCreated_${this.pairId}`, (trade) => {
-        if (this.candleLength < this.maxCandleLength) this.candleLength++;
-
-        const tradeVolume = new BigNumber(trade.volume).div(new BigNumber(10).pow(18)).toFixed();
-        const roundDownTradeTimestamp = Math.floor(trade.timestamp / (60 * 1000)) * 60 * 1000;
-        this.data.update({
-          t: roundDownTradeTimestamp,
-          price: parseFloat(trade.price),
-          volume: parseFloat(tradeVolume),
-        })
-        if (this.data.data.chart.data.length > this.currentCandleLength && !this.isProcessing) {
-          this.$refs.tradingVue.resetChart();
-          this.currentCandleLength = this.data.data.chart.data.length;
-        }
-      })
     },
     changeIntervalType(tf) {
       this.intervalType = tf.intervalType;

@@ -19,7 +19,6 @@ import {notificationWithCustomMessage} from "@/plugins/notification";
 const BigNumber = require("bignumber.js");
 const moment = require('moment');
 const debounce = require('debounce');
-import {socket} from "@/plugins/socket";
 
 export default {
   props: {
@@ -31,13 +30,21 @@ export default {
       type: String,
       required: true
     },
+    newTradeCreated: {
+      required: true
+    },
   },
   watch: {
-    pairId(newVal, oldVal) {
-      if (oldVal) socket.off(`NewTradeCreated_${oldVal}`);
+    pairId() {
       this.listMarket();
-      if (newVal) this.initSocketTradeCreated();
-    }
+    },
+    newTradeCreated(newVal, oldVal) {
+      if (!newVal) return;
+      this.data.unshift(newVal);
+      if (this.data.length > this.defaultLengthDisplay) {
+        this.data.pop()
+      }
+    },
   },
   created: debounce(function () {
     this.listMarket();
@@ -50,14 +57,6 @@ export default {
   },
   mounted() {},
   methods: {
-    initSocketTradeCreated() {
-      socket.on(`NewTradeCreated_${this.pairId}`, (data) => {
-        this.data.unshift(data);
-        if (this.data.length > this.defaultLengthDisplay) {
-          this.data.pop()
-        }
-      })
-    },
     listMarket() {
       this.data = [];
       listCurrentOriginTrades(this.pairId, this.defaultLengthDisplay).then(res => {

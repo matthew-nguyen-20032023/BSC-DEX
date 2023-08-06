@@ -19,6 +19,24 @@ module.exports = {
       cron_restart: "1 0 * * *",
     },
     /**
+     * @description Crawl event order cancelled
+     */
+    {
+      name: "BSC_DEX_JOB:crawl-order-cancelled",
+      script: "node ./dist/console.js crawl-order-cancelled",
+      autorestart: true,
+      cron_restart: "1 0 * * *",
+    },
+    /**
+     * @description Handle event cancelled crawled above
+     */
+    {
+      name: "BSC_DEX_JOB:handle-order-cancelled-crawled",
+      script: "node ./dist/console.js handle-order-cancelled-crawled",
+      autorestart: true,
+      cron_restart: "1 0 * * *",
+    },
+    /**
      * @description Calculate ticker by pair name
      */
     {
