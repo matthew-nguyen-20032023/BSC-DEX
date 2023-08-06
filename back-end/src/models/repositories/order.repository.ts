@@ -133,9 +133,6 @@ export class OrderRepository {
         },
       },
       {
-        $limit: limit,
-      },
-      {
         $match: {
           makerToken: takerToken,
           takerToken: makerToken,
@@ -143,6 +140,9 @@ export class OrderRepository {
           expiry: { $gt: Date.now() / 1000 },
           numericPrice: priceCondition,
         },
+      },
+      {
+        $limit: limit,
       },
     ]);
   }
