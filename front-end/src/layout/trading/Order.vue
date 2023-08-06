@@ -43,6 +43,10 @@ const debounce = require('debounce');
 
 export default {
   props: {
+    walletProp: {
+      type: String,
+      required: true
+    },
     pairId: {
       type: String,
       required: true
@@ -85,6 +89,12 @@ export default {
     };
   },
   watch: {
+    walletProp(newVal, oldVal) {
+      if (newVal !== '') {
+        this.currentAccountWallet = newVal;
+        this.getBalances();
+      }
+    },
     pairId: debounce(async function () {
       await this.setBaseQuoteContract();
       await this.getBalances();
@@ -131,7 +141,7 @@ export default {
     this.setBaseQuoteContract();
     this.zeroExContract = new this.client.eth.Contract(exchangeABI, process.env.VUE_APP_ZERO_CONTRACT_ADDRESS);
     this.orderContract = new this.client.eth.Contract(exchangeABI, process.env.VUE_APP_ORDER_ADDRESS);
-    this.client.eth.getAccounts().then(res => { this.currentAccountWallet = res[0] });
+    this.client.eth.getAccounts().then(res => { if (res[0]) this.currentAccountWallet = res[0] });
   }, 500),
   mounted() {},
   methods: {

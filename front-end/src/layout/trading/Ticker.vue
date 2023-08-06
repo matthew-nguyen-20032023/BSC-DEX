@@ -63,6 +63,7 @@ import BigNumber from "bignumber.js";
 import {notificationApp} from "@/plugins/notification";
 import SomethingWrong from "@/layout/trading/notifications/SomethingWrong";
 import NoMetamask from "@/layout/trading/notifications/NoMetamask";
+const Web3 = require('web3');
 
 export default {
   props: {},
@@ -104,14 +105,15 @@ export default {
   methods: {
     initWalletIfHave() {
       if (window.ethereum) {
-        ethereum
-          .request({ method: "eth_requestAccounts" })
-          .then(async (accounts) => {
-            this.walletAddress = accounts[0];
+        const client = new Web3(window.ethereum);
+        client.eth.getAccounts().then(res => {
+          if (res[0]) {
+            this.walletAddress = res[0]
             this.sortWalletAddress = this.walletAddress.substring(0, 5)
               + '...'
               + this.walletAddress.substring(this.walletAddress.length - 4)
-          })
+          }
+        });
       }
     },
     disconnectWallet() {

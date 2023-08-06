@@ -11,6 +11,7 @@ export enum OrderStatus {
   FillAble = "fill-able",
   PartialFill = "partial-fill",
   Completed = "completed",
+  Cancelled = "cancelled",
   Failed = "failed",
 }
 @Schema({ collection: "orders" })

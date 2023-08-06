@@ -54,7 +54,7 @@ export class OrderConsole {
    * @description: Determine start block for listen, I don't want to listen old event crawled and handled
    * @eventName: event name from blockchain
    */
-  private async getStartBlockForEvent(eventName: string): Promise<number> {
+  private async getStartBlockForEvent(eventName: OrderEvent): Promise<number> {
     let startBlockCrawl;
     const latestEventCrawled = await this.eventRepository.getLatestEventCrawled(
       eventName
@@ -82,6 +82,103 @@ export class OrderConsole {
     newTrade.maker = event.maker.toLowerCase();
     newTrade.taker = event.taker.toLowerCase();
     return newTrade;
+  }
+
+  /**
+   * @description Crawl OrderCancelled event on smart contract
+   */
+  @Command({ command: "crawl-order-cancelled" })
+  public async crawlOrderCancelled(): Promise<void> {
+    const orderSmartContract =
+      await Binance.getInstance().getOrderSmartContractWs();
+    const startBlockCrawl = await this.getStartBlockForEvent(
+      OrderEvent.OrderCancelled
+    );
+
+    console.log(
+      `Starting crawl order event ${
+        OrderEvent.OrderCancelled
+      } at block ${startBlockCrawl} (${new Date()})`
+    );
+
+    await orderSmartContract.events[OrderEvent.OrderCancelled](
+      { fromBlock: startBlockCrawl },
+      async (error, event) => {
+        if (!error) {
+          console.log(
+            `Event order cancelled crawled at block ${event.blockNumber}`
+          );
+          const URI = `mongodb://${process.env.DATABASE_USER}:${process.env.DATABASE_PASS}@${process.env.DATABASE_HOST}:${process.env.DATABASE_PORT}/${process.env.DATABASE_NAME}`;
+          const client = await MongoClient.connect(URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+          });
+          const db = client.db(process.env.DATABASE_NAME);
+          const eventCollection = db.collection("events");
+
+          const newEvent = new Event();
+          newEvent.blockNumber = event.blockNumber;
+          newEvent.transactionHash = event.transactionHash;
+          newEvent.name = OrderEvent.OrderCancelled;
+          newEvent.orderHash = event.returnValues.orderHash;
+          newEvent.maker = event.returnValues.maker;
+          newEvent.status = EventStatus.Crawled;
+          await eventCollection.insertOne(newEvent);
+          await client.close();
+        } else {
+          throw Error(
+            `Error processing event with error: ${JSON.stringify(error)}`
+          );
+        }
+      }
+    );
+  }
+
+  /**
+   * @description Handle order Crawled from Cancelled event on smart contract
+   */
+  @Command({ command: "handle-order-cancelled-crawled" })
+  public async handleOrderCancelledCrawled(): Promise<void> {
+    while (1) {
+      const oldestEventCrawled =
+        await this.eventRepository.getOldestEventCrawled(
+          OrderEvent.OrderCancelled
+        );
+
+      if (!oldestEventCrawled) {
+        console.log(
+          "No new OrderCancelled event crawled found, waiting to get again!"
+        );
+        await sleep(3000);
+        continue;
+      }
+      console.log(
+        `Handle event cancelled crawled with id ${
+          oldestEventCrawled._id
+        } at ${new Date()}`
+      );
+
+      const activeOrder = await this.orderRepository.getOrderByOrderHash(
+        oldestEventCrawled.orderHash
+      );
+
+      if (!activeOrder) {
+        oldestEventCrawled.status = EventStatus.Failed;
+        oldestEventCrawled.updatedAt = new Date();
+        oldestEventCrawled.note = "No match order found in orders";
+        await this.eventRepository.save(oldestEventCrawled);
+        continue;
+      }
+
+      activeOrder.status = OrderStatus.Cancelled;
+      activeOrder.updatedAt = new Date();
+      oldestEventCrawled.status = EventStatus.Complete;
+      oldestEventCrawled.updatedAt = new Date();
+
+      SocketEmitter.getInstance().emitOrderCancelled(activeOrder);
+      await this.orderRepository.save(activeOrder);
+      await this.eventRepository.save(oldestEventCrawled);
+    }
   }
 
   /**
