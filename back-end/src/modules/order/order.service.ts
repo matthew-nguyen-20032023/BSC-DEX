@@ -104,6 +104,11 @@ export class OrderService {
       newOrder.makerToken,
       newOrder.takerToken
     );
+    newOrder.verifyingContract = newOrder.verifyingContract.toLowerCase();
+    newOrder.maker = newOrder.maker.toLowerCase();
+    newOrder.taker = newOrder.taker.toLowerCase();
+    newOrder.makerToken = newOrder.makerToken.toLowerCase();
+    newOrder.takerToken = newOrder.takerToken.toLowerCase();
     newOrder.remainingAmount =
       createOrderDto.type === OrderType.BuyOrder
         ? createOrderDto.takerAmount

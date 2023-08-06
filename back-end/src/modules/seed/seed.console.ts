@@ -260,7 +260,8 @@ export class SeedConsole {
     newOrder.orderHash = limitOrder.getHash();
     newOrder.type = orderType;
     newOrder.chainId = Number(process.env.BSC_CHAIN_ID);
-    newOrder.verifyingContract = process.env.VERIFY_SMART_CONTRACT_ADDRESS;
+    newOrder.verifyingContract =
+      process.env.VERIFY_SMART_CONTRACT_ADDRESS.toLowerCase();
     newOrder.price =
       orderType === OrderType.BuyOrder
         ? new BigNumber(limitOrder.makerAmount)
@@ -269,10 +270,10 @@ export class SeedConsole {
         : new BigNumber(limitOrder.takerAmount)
             .div(limitOrder.makerAmount)
             .toString();
-    newOrder.maker = limitOrder.maker;
-    newOrder.taker = limitOrder.taker;
-    newOrder.makerToken = limitOrder.makerToken;
-    newOrder.takerToken = limitOrder.takerToken;
+    newOrder.maker = limitOrder.maker.toLowerCase();
+    newOrder.taker = limitOrder.taker.toLowerCase();
+    newOrder.makerToken = limitOrder.makerToken.toLowerCase();
+    newOrder.takerToken = limitOrder.takerToken.toLowerCase();
     newOrder.makerAmount = limitOrder.makerAmount.toString();
     newOrder.takerAmount = limitOrder.takerAmount.toString();
     newOrder.takerTokenFeeAmount = limitOrder.takerTokenFeeAmount.toString();

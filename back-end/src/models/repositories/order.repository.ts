@@ -28,11 +28,7 @@ export class OrderRepository {
       sort["createdAt"] = conditions.sortCreated;
     }
 
-    if (conditions.maker)
-      condition["maker"] = {
-        $regex: conditions.maker,
-        $options: "i",
-      };
+    if (conditions.maker) condition["maker"] = conditions.maker;
     if (conditions.type) condition["type"] = conditions.type;
     if (conditions.pairId) condition["pairId"] = conditions.pairId;
     if (conditions.orderStatus === OrderStatus.FillAble) {
@@ -90,10 +86,7 @@ export class OrderRepository {
     makerToken: string
   ): Promise<Order[]> {
     return this.model.find({
-      maker: {
-        $regex: maker,
-        $options: "i",
-      },
+      maker: maker,
       makerToken,
       status: OrderStatus.FillAble,
       expiry: { $gt: Date.now() / 1000 },
@@ -144,14 +137,8 @@ export class OrderRepository {
       },
       {
         $match: {
-          makerToken: {
-            $regex: takerToken,
-            $options: "i",
-          },
-          takerToken: {
-            $regex: makerToken,
-            $options: "i",
-          },
+          makerToken: takerToken,
+          takerToken: makerToken,
           status: OrderStatus.FillAble,
           expiry: { $gt: Date.now() / 1000 },
           numericPrice: priceCondition,
