@@ -4,4 +4,5 @@ export enum EventEmit {
   OrderMatched = "OrderMatched",
   TickerChange = "TickerChange",
   OrderBookByPair = "OrderBookByPair",
+  OrderCancelled = "OrderCancelled",
 }

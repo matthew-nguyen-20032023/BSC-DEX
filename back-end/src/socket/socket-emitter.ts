@@ -37,6 +37,14 @@ export class SocketEmitter {
 
   /**
    * @description use getInstance() above to call this function
+   * @param order: Order
+   */
+  public emitOrderCancelled(order: Order): void {
+    this.emitter.emit(`${EventEmit.OrderCancelled}_${order.pairId}`, order);
+  }
+
+  /**
+   * @description use getInstance() above to call this function
    * @param trade: Trade
    */
   public emitNewTradeCreated(trade: Trade): void {

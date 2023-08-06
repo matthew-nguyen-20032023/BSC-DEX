@@ -80,9 +80,10 @@
               <td>{{ removeDecimal(data.remainingAmount) }}</td>
               <td>{{ convertExpiryToDate(data.expiry) }}</td>
               <td>
-                <b-badge v-if="Number(data.expiry) * 1000 > Date.now() && data.status === 'fill-able'" variant="warning">Cancel</b-badge>
+                <p style="color: #5be8be" v-if="Number(data.expiry) * 1000 > Date.now() && data.status === 'fill-able'">Filling</p>
+                <p style="color: orange" v-if="data.status === 'cancelled'">Cancelled</p>
                 <p style="color: rgb(35, 167, 118)" v-if="data.status === 'completed'">{{ data.status.charAt(0).toUpperCase() + data.status.slice(1) }}</p>
-                <p style="color: orange" v-if="Number(data.expiry) * 1000 < Date.now() && data.status === 'fill-able'">Expiry</p>
+                <p style="color: #fd5d93" v-if="Number(data.expiry) * 1000 < Date.now() && data.status === 'fill-able'">Expiry</p>
               </td>
             </tr>
             <tr>
@@ -169,6 +170,10 @@ const moment = require('moment');
 
 export default {
   props: {
+    walletProp: {
+      type: String,
+      required: true
+    },
     baseTokenAddress: {
       type: String,
       required: true
@@ -212,23 +217,31 @@ export default {
     };
   },
   watch: {
+    walletProp(newVal, oldVal) {
+      if (newVal !== '') {
+        this.currentAccountWallet = newVal;
+        this.changeTab();
+        if (this.pairId) {
+          socket.off(`NewTradeCreated_${this.pairId}`);
+          socket.off(`NewOrderCreated_${this.pairId}`);
+          socket.off(`OrderCancelled_${this.pairId}`);
+          this.initSocketNewOrderCreated();
+          this.initOrderMatched();
+          this.initOrderCancelled();
+        }
+      }
+    },
     pairId(newVal, oldVal) {
       if (oldVal) {
         socket.off(`NewTradeCreated_${oldVal}`);
         socket.off(`NewOrderCreated_${oldVal}`);
+        socket.off(`OrderCancelled_${oldVal}`);
       }
-      if (this.historyTab === 0) {
-        this.listMyOpenOrder();
-      }
-      if (this.historyTab === 1) {
-        this.listMyOrder();
-      }
-      if (this.historyTab === 2) {
-        this.listMyTrades();
-      }
-      if (newVal) {
+      this.changeTab();
+      if (newVal && this.currentAccountWallet) {
         this.initSocketNewOrderCreated();
         this.initOrderMatched();
+        this.initOrderCancelled();
       }
     },
     currentMyOrderPage() {
@@ -251,23 +264,39 @@ export default {
         this.listMyTrades();
       }
     },
-    currentAccountWallet(newVal, oldVal) {
-      if (newVal != null) {
-        this.listMyOrder();
-      }
-      if (newVal === 1) {
-        this.listMyTrades();
-      }
-    }
   },
   mounted() {
   },
   created() {
     this.client = new Web3(window.ethereum);
-    this.client.eth.getAccounts().then(res => { this.currentAccountWallet = res[0] });
     this.zeroExContract = new this.client.eth.Contract(exchangeABI, process.env.VUE_APP_ZERO_CONTRACT_ADDRESS);
   },
   methods: {
+    changeTab() {
+      if (this.historyTab === 0) {
+        this.listMyOpenOrder();
+      }
+      if (this.historyTab === 1) {
+        this.listMyOrder();
+      }
+      if (this.historyTab === 2) {
+        this.listMyTrades();
+      }
+    },
+    initOrderCancelled() {
+      socket.on(`OrderCancelled_${this.pairId}`, (order) => {
+        if (
+          order.maker.toLowerCase() === this.currentAccountWallet.toLowerCase()
+        ) {
+          if (this.historyTab === 0) {
+            this.listMyOpenOrder();
+          }
+          if (this.historyTab === 1) {
+            this.listMyOrder();
+          }
+        }
+      });
+    },
     initOrderMatched() {
       socket.on(`NewTradeCreated_${this.pairId}`, (trade) => {
         if (
@@ -327,7 +356,7 @@ export default {
       if (maker.toLowerCase() !== this.currentAccountWallet.toLowerCase() && type === 'sell') return baseAmount;
     },
     listMyOpenOrder() {
-      if (this.currentAccountWallet === null) return;
+      if (!this.currentAccountWallet) return;
       listOrder(
         null, this.baseTokenAddress, this.quoteTokenAddress, null, this.currentMyOpenOrderPage,
         this.limitMyOrder, this.currentAccountWallet, 'desc', 'fill-able'
@@ -338,7 +367,7 @@ export default {
         })
     },
     listMyOrder() {
-      if (this.currentAccountWallet === null) return;
+      if (!this.currentAccountWallet) return;
       listOrder(null, this.baseTokenAddress, this.quoteTokenAddress, null, this.currentMyOrderPage, this.limitMyOrder, this.currentAccountWallet, 'desc')
       .then(res => {
         this.myOrders = res.data.data;
@@ -346,6 +375,7 @@ export default {
       })
     },
     listMyTrades() {
+      if (!this.currentAccountWallet) return;
       listMyTrades(this.currentMyTradePage, this.limitMyTrade, this.currentAccountWallet.toLowerCase(), this.pairId)
       .then(res => {
         this.myTrades = res.data.data;

@@ -9,4 +9,5 @@ export enum OrderMessageSuccess {
 
 export enum OrderEvent {
   LimitOrderFilled = "LimitOrderFilled",
+  OrderCancelled = "OrderCancelled",
 }

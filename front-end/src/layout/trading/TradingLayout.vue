@@ -27,6 +27,7 @@
       <b-row class="justify-content-center mt-3">
         <b-col cols="1" class="custom-trade-history-col" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
           <history
+            :wallet-prop="walletAddress"
             :base-token-address="baseTokenAddress"
             :quote-token-address="quoteTokenAddress"
             :quote-token-symbol="quoteTokenSymbol"

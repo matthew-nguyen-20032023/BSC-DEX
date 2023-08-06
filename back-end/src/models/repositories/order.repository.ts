@@ -28,7 +28,11 @@ export class OrderRepository {
       sort["createdAt"] = conditions.sortCreated;
     }
 
-    if (conditions.maker) condition["maker"] = conditions.maker;
+    if (conditions.maker)
+      condition["maker"] = {
+        $regex: conditions.maker,
+        $options: "i",
+      };
     if (conditions.type) condition["type"] = conditions.type;
     if (conditions.pairId) condition["pairId"] = conditions.pairId;
     if (conditions.orderStatus === OrderStatus.FillAble) {
@@ -86,7 +90,10 @@ export class OrderRepository {
     makerToken: string
   ): Promise<Order[]> {
     return this.model.find({
-      maker,
+      maker: {
+        $regex: maker,
+        $options: "i",
+      },
       makerToken,
       status: OrderStatus.FillAble,
       expiry: { $gt: Date.now() / 1000 },
