@@ -31,6 +31,6 @@ I use GitHub Issues as the official bug tracker for the project. Here are some a
 2. Providing me reproducible steps for the issue will shorten the time it takes for it to be fixed.
 3. Some issues may be browser specific, so specifying in what browser you encountered the issue might help.
 
-## Technical Support or Questions
+## Technical Support, Questions or Other
 
-If you have questions or need help integrating the product please me at <mark>matthew.nguyen.20.03.2023@gmail.com</mark> instead of opening an issue.
+If you have questions or need help integrating the product please contact me at <mark>https://www.linkedin.com/in/matthew-nguyen-0a608226b/</mark>.
