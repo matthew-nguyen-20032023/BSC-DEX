@@ -1,21 +1,28 @@
-#<mark>This Project Still In Development Process. I'm trying to develop it as soon as possible, It will be done at the end of this month</mark>
 # BSC-DEX
 ![alt text](https://github.com/matthew-nguyen-20032023/BSC-DEX/blob/develop/docs/images/UI_demo_lastest.jpg?raw=true)
 ## Description
 This project is fully build a decentralized exchange (DEX) for trading ERC20 token on binance smart chain (BSC)
 that base on 0x Protocol and OpenZeppelin. You can find more information in
-https://0x.org/ and https://www.openzeppelin.com/
-## Tech-stack Using
-Back-end: NestJs, TypeScript, Nodejs, MongoDB, Docker </br>
-Front-end: VueJs, Vue-Bootstrap, Html, Css, Javascript, Web3Js, Metamask </br>
-Smart-contract: Solidity, Hardhat, Ganache </br>
+https://0x.org/ and https://www.openzeppelin.com/. This project can be used for studying and developing DeFi application
+## Highlight Tech-stack Using
+* Back-end:
+  - Framework: Nestjs
+  - Programming Language: Typescript, Javascript
+  - Library: web3, bignumber.js, socket.io(With Redis), cache-manager(With Redis), mongoose,...
+  - Database: MongoDB, Redis
+  - Tools: Docker, Pm2, Webstorm 
+* Front-end:
+  - Framework: Vue 2, Vue Bootstrap
+  - Programming Language: Html, Css, Javascript
+  - Library: web3, trading-vue-js, socket.io-client,...
+  - Tools: Webstorm
+* Blockchain: 
+  - Framework: Hardhat
+  - Programming Language: Solidity
+  - Library: web3, ethers, 0x-protocol, open-zeppelin, mocha,...
+  - Tools: Webstorm, Ganache
 ## Quick Start Local
 Read and run ./setup_from_zero.sh script
-## Overview Installation
-First install and run smart-contract, README at smart-contract folder </br>
-Second install and run back-end, README at back-end folder </br>
-Third install and run front-end, README at front-end folder </br>
-
 ## Reporting Issues
 
 I use GitHub Issues as the official bug tracker for the project. Here are some advices for our users that want to report an issue:
