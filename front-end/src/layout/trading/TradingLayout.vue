@@ -14,7 +14,7 @@
 
         <b-col class="custom-trading-col" id="chart-trading">
           <div style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);">
-            <TradingChart :pair-id="pairId" :trading-pair="`${baseTokenSymbol} / ${quoteTokenSymbol}`"/>
+            <TradingChart :new-trade-created="newTradeCreated" :pair-id="pairId" :trading-pair="`${baseTokenSymbol} / ${quoteTokenSymbol}`"/>
           </div>
         </b-col>
         <b-col class="custom-market-trade-col" id="market-trade" style="border-style: solid; border-width: 1px; border-color: rgb(160,160,255, 0.25);" cols="1">
