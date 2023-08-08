@@ -99,6 +99,7 @@ export class OrderRepository {
    * @param takerToken token user want to receive
    * @param price
    * @param orderType // if user is buyer, so find the sell offers for, and opposite
+   * @param isMarketOrder // if market order, so the price  will not use in condition
    * @param page
    * @param limit
    */
@@ -107,13 +108,17 @@ export class OrderRepository {
     takerToken: string,
     price: string,
     orderType: OrderType,
+    isMarketOrder: boolean,
     page = 1,
     limit = 20
   ): Promise<Order[]> {
-    const priceCondition =
-      orderType === OrderType.BuyOrder
-        ? { $lte: Number(price) } // find best for buyer will get order low or equal expect price
-        : { $gte: Number(price) }; // find best for seller will get order high or equal expect price
+    let priceCondition;
+    if (!isMarketOrder) {
+      priceCondition =
+        orderType === OrderType.BuyOrder
+          ? { $lte: Number(price) } // find best for buyer will get order low or equal expect price
+          : { $gte: Number(price) }; // find best for seller will get order high or equal expect price
+    }
     return this.model.aggregate([
       {
         $addFields: {

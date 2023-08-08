@@ -33,6 +33,28 @@
           </b-row>
         </b-card-text>
       </b-tab>
+      <b-tab title="Market" :title-link-class="'text-light'">
+        <b-card-text class="mt-2">
+          <b-row>
+            <b-col>
+              <i class="mt-1" style="color: white">{{quoteTokenSymbol}} balance: {{ quoteTokenBalance }}</i>
+              <b-input min="0" type="number" v-model="marketBuyAmount" class="mt-1" :placeholder="'Amount'"></b-input>
+              <b-button :disabled="isCreatingOrder" class="w-100 mt-1" variant="success" @click="createMarketOrder('buy')">
+                Buy {{ baseTokenSymbol }}
+                <b-spinner v-if="isCreatingOrder" style="position: absolute; right: 30%; top: 28%" small type="border"></b-spinner>
+              </b-button>
+            </b-col>
+            <b-col>
+              <i class="mt-1" style="color: white">{{baseTokenSymbol}} balance: {{ baseTokenBalance }}</i>
+              <b-input min="0" type="number" v-model="marketSellAmount" class="mt-1" :placeholder="'Amount'"></b-input>
+              <b-button :disabled="isCreatingOrder" class="w-100 mt-1" variant="danger" @click="createMarketOrder('sell')">
+                Sell {{ baseTokenSymbol }}
+                <b-spinner v-if="isCreatingOrder" style="position: absolute; right: 30%; top: 28%" small type="border"></b-spinner>
+              </b-button>
+            </b-col>
+          </b-row>
+        </b-card-text>
+      </b-tab>
     </b-tabs>
   </b-card>
 </template>
@@ -94,6 +116,8 @@ export default {
       quoteTokenBalance: 0,
       isCreatingOrder: false,
       autoUpdateBalance: null,
+      marketBuyAmount: null,
+      marketSellAmount: null,
     };
   },
   watch: {
@@ -229,6 +253,130 @@ export default {
         pool: process.env.VUE_APP_DEFAULT_POOL,
         salt: Date.now().toString()
       });
+    },
+    async approveTokenForMarket(type, amount) {
+      let estimateAmountApprove;
+      let tx;
+      if (type === 'buy') {
+        estimateAmountApprove = (await estimateAllowance(this.currentAccountWallet, this.quoteTokenAddress)).data.data;
+        estimateAmountApprove = new BigNumber(estimateAmountApprove).plus(amount);
+        if (estimateAmountApprove.gt(new BigNumber(this.quoteTokenBalance).times(new BigNumber(10).pow(18)))) {
+          notificationWithCustomMessage('warning', this, `Not enough balances`);
+          throw Error('');
+        }
+        tx = this.quoteTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, estimateAmountApprove)
+      } else {
+        estimateAmountApprove = (await estimateAllowance(this.currentAccountWallet, this.baseTokenAddress)).data.data;
+        estimateAmountApprove = new BigNumber(estimateAmountApprove).plus(amount);
+        if (estimateAmountApprove.gt(new BigNumber(this.baseTokenBalance).times(new BigNumber(10).pow(18)))) {
+          notificationWithCustomMessage('warning', this, `Not enough balances`);
+          throw Error('');
+        }
+        tx = this.baseTokenContract.methods.approve(process.env.VUE_APP_ORDER_ADDRESS, estimateAmountApprove)
+      }
+      await tx.send({
+        from: this.currentAccountWallet,
+        gas: 800000,
+        gasPrice: 20e9
+      });
+    },
+    async createMarketOrder(type) {
+      if (this.isCreatingOrder) return;
+      this.isCreatingOrder = true;
+      if (type === 'buy') {
+        if (!this.marketBuyAmount) {
+          this.isCreatingOrder = false;
+          return notificationWithCustomMessage('warning', this, `Please input full fill`);
+        }
+      }
+      if (type === 'sell') {
+        if (!this.marketSellAmount) {
+          this.isCreatingOrder = false;
+          return notificationWithCustomMessage('warning', this, `Please input full fill`);
+        }
+      }
+
+      let remainingAmount = type === 'buy' ?
+        new BigNumber(this.marketBuyAmount).times(new BigNumber(10).pow(18)) :
+        new BigNumber(this.marketSellAmount).times(new BigNumber(10).pow(18));
+
+      let approveAmount = type === 'sell' ? remainingAmount.toFixed() : new BigNumber("0");
+
+      const matchOrders = await getMatchOffers(
+        type === 'buy' ? this.quoteTokenAddress : this.baseTokenAddress,
+        type === 'buy' ? this.baseTokenAddress : this.quoteTokenAddress,
+        "1",
+        remainingAmount.toFixed(),
+        true,
+      );
+      if (matchOrders.data.data.length === 0) {
+        this.isCreatingOrder = false;
+        return notificationWithCustomMessage('warning', this, `There no open order on market`);
+      }
+
+      const signatures = [];
+      const limitOrders = [];
+      const takerTokenFillAmounts = [];
+      const revertIfNotFullFill = false;
+
+      for (const order of matchOrders.data.data) {
+        let takerTokenFillAmount;
+        if (remainingAmount.minus(order.remainingAmount).gte(0)) {
+          takerTokenFillAmount = type === 'buy' ?
+            new BigNumber(order.remainingAmount).times(order.price).toFixed() :
+            new BigNumber(order.remainingAmount).toFixed();
+          remainingAmount = remainingAmount.minus(order.remainingAmount);
+        } else {
+          takerTokenFillAmount = type === 'buy' ?
+            remainingAmount.times(order.price).toFixed() :
+            remainingAmount.toFixed();
+          remainingAmount = new BigNumber('0');
+        }
+        if (type === 'buy') {
+          approveAmount = approveAmount.plus(takerTokenFillAmount);
+        }
+        takerTokenFillAmounts.push(takerTokenFillAmount);
+
+        signatures.push(JSON.parse(order.signature));
+        limitOrders.push(new LimitOrder({
+          chainId: Number(order.chainId),
+          verifyingContract: order.verifyingContract,
+          maker: order.maker,
+          taker: order.taker,
+          makerToken: order.makerToken,
+          takerToken: order.takerToken,
+          makerAmount: order.makerAmount,
+          takerAmount: order.takerAmount,
+          takerTokenFeeAmount: order.takerTokenFeeAmount,
+          sender: order.sender,
+          feeRecipient: order.feeRecipient,
+          expiry: Number(order.expiry),
+          pool: order.pool,
+          salt: order.salt
+        }));
+      }
+
+      if (remainingAmount.gt('0')) {
+        this.isCreatingOrder = false;
+        return notificationWithCustomMessage('warning', this, `Market not have enough balances`);
+      }
+
+      try {
+        await this.approveTokenForMarket(type, approveAmount);
+        await this.zeroExContract.methods.batchFillLimitOrders(
+          limitOrders,
+          signatures,
+          takerTokenFillAmounts,
+          revertIfNotFullFill
+        ).send({
+          from: this.currentAccountWallet,
+          value: 0,
+          gasPrice: 20e10,
+        });
+      } catch {
+        this.isCreatingOrder = false;
+      }
+      this.isCreatingOrder = false;
     },
     async createOrder(type) {
       if (this.isCreatingOrder) return;
