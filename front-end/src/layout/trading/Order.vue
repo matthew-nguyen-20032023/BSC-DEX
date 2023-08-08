@@ -14,7 +14,10 @@
               <b-input min="0" type="number" v-model="buyMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
               <b-input :disabled="true" v-model="buyMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
               <i class="mt-1">Estimate fee: {{ buyMakerCost }}</i>
-              <b-button class="w-100 mt-1" variant="success" @click="createOrder('buy')">Buy {{ baseTokenSymbol }}</b-button>
+              <b-button :disabled="isCreatingOrder" class="w-100 mt-1" variant="success" @click="createOrder('buy')">
+                Buy {{ baseTokenSymbol }}
+                <b-spinner v-if="isCreatingOrder" style="position: absolute; right: 30%; top: 28%" small type="border"></b-spinner>
+              </b-button>
             </b-col>
             <b-col>
               <i class="mt-1" style="color: white">{{baseTokenSymbol}} balance: {{ baseTokenBalance }}</i>
@@ -22,7 +25,10 @@
               <b-input min="0" type="number" v-model="sellMakerAmount" class="mt-1" :placeholder="'Amount'"></b-input>
               <b-input  :disabled="true" v-model="sellMakerTotal" class="mt-1" :placeholder="'Total'"></b-input>
               <i class="mt-1">Estimate fee: {{ sellMakerCost }}</i>
-              <b-button class="w-100 mt-1" variant="danger" @click="createOrder('sell')">Sell {{ baseTokenSymbol }}</b-button>
+              <b-button :disabled="isCreatingOrder" class="w-100 mt-1" variant="danger" @click="createOrder('sell')">
+                Sell {{ baseTokenSymbol }}
+                <b-spinner v-if="isCreatingOrder" style="position: absolute; right: 30%; top: 28%" small type="border"></b-spinner>
+              </b-button>
             </b-col>
           </b-row>
         </b-card-text>
@@ -85,7 +91,9 @@ export default {
       sellMakerTotal: null,
       sellMakerCost: 0,
       baseTokenBalance: 0,
-      quoteTokenBalance: 0
+      quoteTokenBalance: 0,
+      isCreatingOrder: false,
+      autoUpdateBalance: null,
     };
   },
   watch: {
@@ -149,13 +157,22 @@ export default {
       this.baseTokenContract = new this.client.eth.Contract(erc20ABI, this.baseTokenAddress);
       this.quoteTokenContract = new this.client.eth.Contract(erc20ABI, this.quoteTokenAddress);
     },
-    async getBalances() {
+    async getTokenBalance() {
       setTimeout(async () => {
         const quoteTokenBalance = await this.quoteTokenContract.methods.balanceOf(this.currentAccountWallet).call();
         const baseTokenBalance = await this.baseTokenContract.methods.balanceOf(this.currentAccountWallet).call();
         this.quoteTokenBalance = new BigNumber(quoteTokenBalance).div(new BigNumber(10).pow(18)).toFixed(2);
         this.baseTokenBalance = new BigNumber(baseTokenBalance).div(new BigNumber(10).pow(18)).toFixed(2);
-      }, 1000)
+      }, 1000);
+    },
+    async getBalances() {
+      await this.getTokenBalance();
+      if (this.autoUpdateBalance) {
+        clearInterval(this.autoUpdateBalance);
+      }
+      this.autoUpdateBalance = setInterval(() => {
+        this.getTokenBalance()
+      }, 4000)
     },
     async estimateFee(type) {
       const tx = await this.approveToken(type, false);
@@ -214,6 +231,7 @@ export default {
       });
     },
     async createOrder(type) {
+      if (this.isCreatingOrder) return;
       if (type === 'buy') {
         if (!this.buyMakerTotal) {
           return notificationWithCustomMessage('warning', this, `Please input full fill`);
@@ -230,8 +248,15 @@ export default {
           return notificationWithCustomMessage('warning', this, `Not enough balance of ${this.baseTokenSymbol}`);
         }
       }
+      this.isCreatingOrder = true;
       const limitOrder = await this.createLimitOrder(type);
-      await this.approveToken(type);
+
+      try {
+        await this.approveToken(type);
+      } catch {
+        this.isCreatingOrder = false;
+        return;
+      }
 
       const matchOrders = await getMatchOffers(
         limitOrder.makerToken,
@@ -282,19 +307,27 @@ export default {
             salt: order.salt
           }));
         }
-        await this.zeroExContract.methods.batchFillLimitOrders(
-          limitOrders,
-          signatures,
-          takerTokenFillAmounts,
-          revertIfNotFullFill
-        ).send({
-          from: this.currentAccountWallet,
-          value: 0,
-          gas: 800000,
-          gasPrice: 20e9
-        });
 
-        if (remainingBaseAmount.eq('0')) return;
+        try {
+          await this.zeroExContract.methods.batchFillLimitOrders(
+            limitOrders,
+            signatures,
+            takerTokenFillAmounts,
+            revertIfNotFullFill
+          ).send({
+            from: this.currentAccountWallet,
+            value: 0,
+            gasPrice: 20e10,
+          });
+        } catch {
+          this.isCreatingOrder = false;
+        }
+
+
+        if (remainingBaseAmount.eq('0')) {
+          this.isCreatingOrder = false;
+          return;
+        }
         else {
           limitOrder.makerAmount = type === 'buy' ?
             remainingBaseAmount.times(this.buyMakerPrice).toFixed() :
@@ -314,6 +347,8 @@ export default {
         notificationWithCustomMessage('success', this, res.data.message);
       }).catch(error => {
         notificationWithCustomMessage('warning', this, error.response.data.message);
+      }).finally(() => {
+        this.isCreatingOrder = false;
       })
     }
   }

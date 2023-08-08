@@ -72,10 +72,8 @@ docker-compose up -d
 yarn console:dev seed-data-for-test
 # Start backend service
 pm2 start "yarn start:dev" --name="BSC_DEX_BACKEND"
-pm2 start "yarn console:dev crawl-order-matched" --name="BSC_DEX_JOB:craw-order-matched"
-pm2 start "yarn console:dev handle-limit-order-filled-crawled" --name="BSC_DEX_JOB:handle-limit-order-filled-crawled"
 pm2 start "yarn console:dev migrate-batch-order" --name="BSC_DEX_BACKEND:migrate-batch-match-order-feature"
-pm2 start 'yarn console:dev calculate-ticker24h "BTC / USD"' --name="BSC_DEX_BACKEND:calculate-ticker24h"
+pm2 restart ecosystem.config.js
 #=================================================FRONTEND=============================================================#
 
 # Start front end
@@ -92,8 +90,6 @@ sed -i "s/^VUE_APP_ZERO_CONTRACT_ADDRESS=.*/VUE_APP_ZERO_CONTRACT_ADDRESS=$ZeroE
 sed -i "s/^VUE_APP_ORDER_ADDRESS=.*/VUE_APP_ORDER_ADDRESS=$ZeroExAddress/" "$env_file_frontend"
 
 pm2 start "npm run serve" --name="BSC_DEX_FRONTEND"
-
-#===========================================IMPORTANT INFORMATION======================================================#
 
 # Those important information gonna print to screen
 echo "============================================IMPORTANT INFORMATION================================================"
