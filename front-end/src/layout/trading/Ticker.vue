@@ -103,17 +103,22 @@ export default {
   },
   mounted() {},
   methods: {
+    getCurrentWallet(client) {
+      client.eth.getAccounts().then(res => {
+        if (res[0] && this.walletAddress === res[0]) return;
+        this.walletAddress = res[0]
+        this.sortWalletAddress = this.walletAddress.substring(0, 5)
+          + '...'
+          + this.walletAddress.substring(this.walletAddress.length - 4)
+      });
+    },
     initWalletIfHave() {
       if (window.ethereum) {
         const client = new Web3(window.ethereum);
-        client.eth.getAccounts().then(res => {
-          if (res[0]) {
-            this.walletAddress = res[0]
-            this.sortWalletAddress = this.walletAddress.substring(0, 5)
-              + '...'
-              + this.walletAddress.substring(this.walletAddress.length - 4)
-          }
-        });
+        this.getCurrentWallet(client);
+        setInterval(() => {
+          this.getCurrentWallet(client);
+        }, 2000);
       }
     },
     disconnectWallet() {
