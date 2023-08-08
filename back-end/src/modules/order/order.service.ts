@@ -208,8 +208,8 @@ export class OrderService {
   ): Promise<string> {
     const fillAbleOrders =
       await this.orderRepository.getFillAbleOrdersToEstimateAllowance(
-        maker,
-        makerToken
+        maker.toLowerCase(),
+        makerToken.toLowerCase()
       );
 
     let amount = new BigNumber(0);
