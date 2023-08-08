@@ -143,7 +143,8 @@ export class OrderService {
     takerToken: string,
     price: string,
     expectAmount: string,
-    orderType: OrderType
+    orderType: OrderType,
+    isMarketOrder: boolean
   ): Promise<Order[]> {
     const matchedOrders = [];
     let totalRemainingAmount = new BigNumber(0);
@@ -156,6 +157,7 @@ export class OrderService {
         takerToken,
         price,
         orderType,
+        isMarketOrder,
         page
       );
 

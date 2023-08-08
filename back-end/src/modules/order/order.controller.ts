@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpStatus, Post, Query } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Public } from "src/modules/authentication/auth.const";
 import { IResponseToClient } from "src/configs/response-to-client.config";
 import { OrderService } from "src/modules/order/order.service";
@@ -80,7 +80,8 @@ export class OrderController {
       getMatchOrdersDto.takerToken,
       getMatchOrdersDto.price,
       getMatchOrdersDto.amount,
-      getMatchOrdersDto.orderType
+      getMatchOrdersDto.orderType,
+      getMatchOrdersDto.isMarketOrder
     );
     return {
       message: OrderMessageSuccess.GetMatchOrderSuccess,

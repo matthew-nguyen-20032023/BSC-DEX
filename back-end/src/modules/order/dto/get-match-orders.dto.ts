@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { OrderType } from "src/models/schemas/order.schema";
 
 export class GetMatchOrdersDto {
@@ -47,4 +47,12 @@ export class GetMatchOrdersDto {
     example: OrderType.BuyOrder,
   })
   orderType: OrderType;
+
+  @IsOptional()
+  @ApiProperty({
+    description: "Is market order",
+    required: false,
+    example: true,
+  })
+  isMarketOrder: boolean;
 }

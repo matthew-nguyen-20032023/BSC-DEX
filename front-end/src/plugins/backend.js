@@ -69,11 +69,13 @@ export const getMatchOffers = async (
   takerToken,
   price,
   amount,
-  orderType
+  orderType,
+  isMarket = false
 ) => {
   let url = `${
     process.env.VUE_APP_BACKEND_URL
   }/order/match-orders?makerToken=${makerToken.toLowerCase()}&takerToken=${takerToken.toLowerCase()}&price=${price}&amount=${amount}&orderType=${orderType}`;
+  if (isMarket) url += `&isMarketOrder=${isMarket}`;
   return axios.get(url);
 };
 
