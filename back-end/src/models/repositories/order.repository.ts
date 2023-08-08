@@ -144,6 +144,9 @@ export class OrderRepository {
       {
         $limit: limit,
       },
+      {
+        $skip: (page - 1) * limit,
+      },
     ]);
   }
 

@@ -262,7 +262,7 @@ export default {
         limitOrder.makerToken,
         limitOrder.takerToken,
         type === 'buy' ? this.buyMakerPrice : this.sellMakerPrice,
-        limitOrder.takerAmount,
+        type === 'buy' ? limitOrder.takerAmount : limitOrder.makerAmount,
         type
       );
 
