@@ -411,6 +411,55 @@ export class SeedConsole {
     }
   }
 
+  @Command({
+    command: "seed-trades",
+  })
+  async seedTrades(): Promise<void> {
+    let timestamp = new Date(Date.now() - 86400000 * 30).getTime();
+    let previousPrice = 15;
+    let count = 0;
+    let saveTrades = [];
+    while (true) {
+      if (timestamp > Date.now()) {
+        if (saveTrades.length > 0)
+          await this.tradeRepository.saveTrades(saveTrades);
+        break;
+      }
+      const newTrade = new Trade();
+      newTrade.orderType =
+        randomIntFromInterval(1, 2) === 1
+          ? OrderType.BuyOrder
+          : OrderType.SellOrder;
+      newTrade.pairId = "64ca637a5dc04241fff1d209";
+      const price = getRandomPriceByRule(previousPrice, 1);
+      newTrade.price = `${price}`;
+      newTrade.volume = new BigNumber(randomIntFromInterval(1, 10))
+        .times(new BigNumber(10).pow(18))
+        .toFixed();
+      newTrade.transactionId =
+        "0xb225d54d8354b8d13399155bedfe6c29131a10a1d917aaea4c1ec9149c13118b";
+      newTrade.maker = "0x19ef6ab7a5e9753c214462df01f77ad324da645d";
+      newTrade.taker = "0x0056ea9a9c2a68d1679787a10b36acc71750093e";
+      newTrade.timestamp = timestamp;
+      saveTrades.push(newTrade);
+      count++;
+
+      if (count > 1000) {
+        await this.tradeRepository.saveTrades(saveTrades);
+        console.log(new Date(newTrade.timestamp));
+        count = 0;
+        saveTrades = [];
+      }
+
+      timestamp += 3000;
+      if (price < 1) {
+        previousPrice = 15;
+      } else {
+        previousPrice = price;
+      }
+    }
+  }
+
   /**
    * @description This migrate batch match order feature to ZeroEx contract, so that we can call batchFillLimitOrders
    */

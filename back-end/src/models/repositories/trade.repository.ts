@@ -9,6 +9,13 @@ export class TradeRepository {
     return this.model.create(newTrade);
   }
 
+  public async saveTrades(trades: Trade[]): Promise<Trade[]> {
+    const saves = trades.map((trade) => {
+      return new this.model(trade);
+    });
+    return this.model.create(saves);
+  }
+
   public async getTradesFromToByPair(
     pairId: string,
     fromTimestamp: number,

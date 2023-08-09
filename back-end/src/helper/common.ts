@@ -20,6 +20,5 @@ export const getRandomPriceByRule = (
   const minPrice = previousPrice - deviation;
   const maxPrice = previousPrice + deviation;
   const result = Math.random() * (maxPrice - minPrice) + minPrice;
-  console.log(Number(result.toFixed(2)), "asdasdasdasd");
   return Number(result.toFixed(2));
 };
