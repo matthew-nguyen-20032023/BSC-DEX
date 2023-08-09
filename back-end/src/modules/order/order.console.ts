@@ -26,6 +26,8 @@ import { Pair, PairDocument } from "src/models/schemas/pair.schema";
 import { PairRepository } from "src/models/repositories/pair.repository";
 import { OrderService } from "src/modules/order/order.service";
 import { IOrderBook } from "src/modules/order/order.interface";
+import { OHLCV, OHLCVDocument } from "src/models/schemas/ohlcv.schema";
+import { OHLCVRepository } from "src/models/repositories/ohlcv.repository";
 
 @Console()
 export class OrderConsole {
@@ -33,6 +35,7 @@ export class OrderConsole {
   private readonly orderRepository: OrderRepository;
   private readonly tradeRepository: TradeRepository;
   private readonly pairRepository: PairRepository;
+  private readonly ohlcvRepository: OHLCVRepository;
 
   constructor(
     @InjectModel(Event.name)
@@ -42,12 +45,15 @@ export class OrderConsole {
     @InjectModel(Trade.name)
     private readonly tradeModel: Model<TradeDocument>,
     @InjectModel(Pair.name)
-    private readonly pairModel: Model<PairDocument>
+    private readonly pairModel: Model<PairDocument>,
+    @InjectModel(OHLCV.name)
+    private readonly ohlcvModel: Model<OHLCVDocument>
   ) {
     this.eventRepository = new EventRepository(this.eventModel);
     this.orderRepository = new OrderRepository(this.orderModel);
     this.tradeRepository = new TradeRepository(this.tradeModel);
     this.pairRepository = new PairRepository(this.pairModel);
+    this.ohlcvRepository = new OHLCVRepository(this.ohlcvModel);
   }
 
   /**

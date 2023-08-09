@@ -12,6 +12,7 @@ import {
   OHLCVTypeInterval,
   TradeMessageError,
 } from "src/modules/trade/trade.const";
+import { OHLCV, OHLCVType } from "src/models/schemas/ohlcv.schema";
 
 @Injectable()
 export class TradeService {
@@ -49,6 +50,71 @@ export class TradeService {
     return dataConvert[ohlcvTypeInterval]
       ? dataConvert[ohlcvTypeInterval]
       : null;
+  }
+
+  /**
+   * @description round down the time of trade follow OHLCV rule
+   * @param trade
+   * @param ohlcvType
+   */
+  public static roundDownTimeByOHLCVRules(
+    trade: Trade,
+    ohlcvType: OHLCVType
+  ): number {
+    // round down to exactly minute
+    const roundDownTradeTimestamp = Math.floor(trade.timestamp / 60000) * 60000;
+    const tradeTimestamp = new Date(roundDownTradeTimestamp);
+    // round down to exactly rule of ohlcv
+    const roundedMinutes =
+      Math.floor(tradeTimestamp.getMinutes() / ohlcvType) * ohlcvType;
+    tradeTimestamp.setMinutes(roundedMinutes);
+    tradeTimestamp.setSeconds(0);
+    // return timestamp rounded
+    return tradeTimestamp.getTime();
+  }
+
+  public static combineOHLCVWithTrade(
+    currentOHLCV: OHLCV,
+    trade: Trade,
+    ohlvcType: OHLCVType
+  ): { data: OHLCV; isNext: boolean } {
+    const tradeTimestamp = TradeService.roundDownTimeByOHLCVRules(
+      trade,
+      ohlvcType
+    );
+
+    // No ohlvc or new trade have new timestamp
+    if (!currentOHLCV || tradeTimestamp > currentOHLCV.timestamp) {
+      const newOHLCV = new OHLCV();
+      newOHLCV.pairId = trade.pairId;
+      newOHLCV.ohlcvType = ohlvcType;
+      newOHLCV.timestamp = tradeTimestamp;
+      newOHLCV.open = trade.price;
+      newOHLCV.high = trade.price;
+      newOHLCV.low = trade.price;
+      newOHLCV.close = trade.price;
+      newOHLCV.volume = new BigNumber(trade.volume)
+        .div(new BigNumber(10).pow(18))
+        .toFixed(2);
+      return {
+        data: newOHLCV,
+        isNext: true,
+      };
+    }
+
+    // Update current ohlvc
+    if (new BigNumber(currentOHLCV.high).lt(trade.price))
+      currentOHLCV.high = trade.price;
+    if (new BigNumber(currentOHLCV.low).gt(trade.price))
+      currentOHLCV.low = trade.price;
+    currentOHLCV.close = trade.price;
+    currentOHLCV.volume = new BigNumber(currentOHLCV.volume)
+      .plus(new BigNumber(trade.volume).div(new BigNumber(10).pow(18)))
+      .toFixed(2);
+    return {
+      data: currentOHLCV,
+      isNext: false,
+    };
   }
 
   public async getTrades(tradeDto: TradeDto): Promise<IOHLCV[]> {

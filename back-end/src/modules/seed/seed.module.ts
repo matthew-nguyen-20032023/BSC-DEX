@@ -7,6 +7,7 @@ import { Trade, TradeSchema } from "src/models/schemas/trade.schema";
 import { Order, OrderSchema } from "src/models/schemas/order.schema";
 import { EventSchema } from "src/models/schemas/event.schema";
 import { SeedConsole } from "src/modules/seed/seed.console";
+import { OHLCV, OHLCVSchema } from "src/models/schemas/ohlcv.schema";
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { SeedConsole } from "src/modules/seed/seed.console";
       { name: Token.name, schema: TokenSchema },
       { name: Trade.name, schema: TradeSchema },
       { name: User.name, schema: UserSchema },
+      { name: OHLCV.name, schema: OHLCVSchema },
     ]),
   ],
   controllers: [],

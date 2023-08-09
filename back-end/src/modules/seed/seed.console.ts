@@ -1,9 +1,19 @@
 import { Command, Console } from "nestjs-console";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
+import * as bcrypt from "bcrypt";
+const {
+  RPCSubprovider,
+  Web3ProviderEngine,
+  PrivateKeyWalletSubprovider,
+} = require("@0x/subproviders");
+const { providerUtils } = require("@0x/utils");
+const { Web3Wrapper } = require("@0x/web3-wrapper");
+const BigNumber = require("bignumber.js");
+import { LimitOrder, SignatureType } from "@0x/protocol-utils";
+
 import { UserRepository } from "src/models/repositories/user.repository";
 import { User, UserDocument, UserRole } from "src/models/schemas/user.schema";
-import * as bcrypt from "bcrypt";
 import { Trade, TradeDocument } from "src/models/schemas/trade.schema";
 import { Token, TokenDocument } from "src/models/schemas/token.schema";
 import { Pair, PairDocument, PairStatus } from "src/models/schemas/pair.schema";
@@ -20,21 +30,19 @@ import { PairRepository } from "src/models/repositories/pair.repository";
 import { OrderRepository } from "src/models/repositories/order.repository";
 import { EventRepository } from "src/models/repositories/event.repository";
 import { Binance } from "src/blockchains/binance";
-const BigNumber = require("bignumber.js");
-import { LimitOrder, SignatureType } from "@0x/protocol-utils";
 import {
   getRandomPriceByRule,
   randomIntFromInterval,
   sleep,
 } from "src/helper/common";
 import { SocketEmitter } from "src/socket/socket-emitter";
-const {
-  RPCSubprovider,
-  Web3ProviderEngine,
-  PrivateKeyWalletSubprovider,
-} = require("@0x/subproviders");
-const { providerUtils } = require("@0x/utils");
-const { Web3Wrapper } = require("@0x/web3-wrapper");
+import { TradeService } from "src/modules/trade/trade.service";
+import {
+  OHLCV,
+  OHLCVDocument,
+  OHLCVType,
+} from "src/models/schemas/ohlcv.schema";
+import { OHLCVRepository } from "src/models/repositories/ohlcv.repository";
 
 @Console()
 export class SeedConsole {
@@ -44,6 +52,7 @@ export class SeedConsole {
   private pairRepository: PairRepository;
   private orderRepository: OrderRepository;
   private eventRepository: EventRepository;
+  private ohlcvRepository: OHLCVRepository;
 
   constructor(
     @InjectModel(User.name)
@@ -57,7 +66,9 @@ export class SeedConsole {
     @InjectModel(Order.name)
     private readonly orderModel: Model<OrderDocument>,
     @InjectModel(Event.name)
-    private readonly eventModel: Model<EventDocument>
+    private readonly eventModel: Model<EventDocument>,
+    @InjectModel(OHLCV.name)
+    private readonly ohlcvModel: Model<OHLCVDocument>
   ) {
     this.userRepository = new UserRepository(this.userModel);
     this.tradeRepository = new TradeRepository(this.tradeModel);
@@ -65,6 +76,7 @@ export class SeedConsole {
     this.pairRepository = new PairRepository(this.pairModel);
     this.orderRepository = new OrderRepository(this.orderModel);
     this.eventRepository = new EventRepository(this.eventModel);
+    this.ohlcvRepository = new OHLCVRepository(this.ohlcvModel);
   }
 
   private async deleteAllDataOnDatabase(): Promise<void> {
@@ -415,14 +427,84 @@ export class SeedConsole {
     command: "seed-trades",
   })
   async seedTrades(): Promise<void> {
-    let timestamp = new Date(Date.now() - 86400000 * 30).getTime();
+    const pairId = "64ca637a5dc04241fff1d209";
+    let timestamp = new Date(Date.now() - 86400000 * 1080).getTime();
     let previousPrice = 15;
     let count = 0;
     let saveTrades = [];
+
+    let ohlcvByMinute = await this.ohlcvRepository.getLatestOHLCVByType(
+      pairId,
+      OHLCVType.Minute
+    );
+    let ohlcvBy15Minute = await this.ohlcvRepository.getLatestOHLCVByType(
+      pairId,
+      OHLCVType.FifteenMinutes
+    );
+    let ohlcvBy30Minute = await this.ohlcvRepository.getLatestOHLCVByType(
+      pairId,
+      OHLCVType.ThirtyMinutes
+    );
+    let ohlcvBy60Minute = await this.ohlcvRepository.getLatestOHLCVByType(
+      pairId,
+      OHLCVType.Hour
+    );
+
     while (true) {
       if (timestamp > Date.now()) {
-        if (saveTrades.length > 0)
+        if (saveTrades.length > 0) {
           await this.tradeRepository.saveTrades(saveTrades);
+          for (const trade of saveTrades) {
+            const ohlcvByMinuteCombined = TradeService.combineOHLCVWithTrade(
+              ohlcvByMinute,
+              trade,
+              OHLCVType.Minute
+            );
+            const ohlcvBy15MinuteCombined = TradeService.combineOHLCVWithTrade(
+              ohlcvBy15Minute,
+              trade,
+              OHLCVType.FifteenMinutes
+            );
+            const ohlcvBy30MinuteCombined = TradeService.combineOHLCVWithTrade(
+              ohlcvBy30Minute,
+              trade,
+              OHLCVType.ThirtyMinutes
+            );
+            const ohlcvBy60MinuteCombined = TradeService.combineOHLCVWithTrade(
+              ohlcvBy60Minute,
+              trade,
+              OHLCVType.Hour
+            );
+
+            if (!ohlcvByMinute || !ohlcvByMinuteCombined)
+              ohlcvByMinute = ohlcvByMinuteCombined.data;
+            else {
+              await this.ohlcvRepository.save(ohlcvByMinute);
+              ohlcvByMinute = ohlcvByMinuteCombined.data;
+            }
+
+            if (!ohlcvBy15Minute || !ohlcvBy15MinuteCombined.isNext)
+              ohlcvBy15Minute = ohlcvBy15MinuteCombined.data;
+            else {
+              await this.ohlcvRepository.save(ohlcvBy15Minute);
+              ohlcvBy15Minute = ohlcvBy15MinuteCombined.data;
+            }
+
+            if (!ohlcvBy30Minute || !ohlcvBy30MinuteCombined.isNext)
+              ohlcvBy30Minute = ohlcvBy30MinuteCombined.data;
+            else {
+              await this.ohlcvRepository.save(ohlcvBy30Minute);
+              ohlcvBy30Minute = ohlcvBy30MinuteCombined.data;
+            }
+
+            if (!ohlcvBy60Minute || !ohlcvBy60MinuteCombined.isNext)
+              ohlcvBy60Minute = ohlcvBy60MinuteCombined.data;
+            else {
+              await this.ohlcvRepository.save(ohlcvBy60Minute);
+              ohlcvBy60Minute = ohlcvBy60MinuteCombined.data;
+            }
+          }
+        }
         break;
       }
       const newTrade = new Trade();
@@ -446,6 +528,56 @@ export class SeedConsole {
 
       if (count > 1000) {
         await this.tradeRepository.saveTrades(saveTrades);
+        for (const trade of saveTrades) {
+          const ohlcvByMinuteCombined = TradeService.combineOHLCVWithTrade(
+            ohlcvByMinute,
+            trade,
+            OHLCVType.Minute
+          );
+          const ohlcvBy15MinuteCombined = TradeService.combineOHLCVWithTrade(
+            ohlcvBy15Minute,
+            trade,
+            OHLCVType.FifteenMinutes
+          );
+          const ohlcvBy30MinuteCombined = TradeService.combineOHLCVWithTrade(
+            ohlcvBy30Minute,
+            trade,
+            OHLCVType.ThirtyMinutes
+          );
+          const ohlcvBy60MinuteCombined = TradeService.combineOHLCVWithTrade(
+            ohlcvBy60Minute,
+            trade,
+            OHLCVType.Hour
+          );
+
+          if (!ohlcvByMinute || !ohlcvByMinuteCombined.isNext)
+            ohlcvByMinute = ohlcvByMinuteCombined.data;
+          else {
+            await this.ohlcvRepository.save(ohlcvByMinute);
+            ohlcvByMinute = ohlcvByMinuteCombined.data;
+          }
+
+          if (!ohlcvBy15Minute || !ohlcvBy15MinuteCombined.isNext)
+            ohlcvBy15Minute = ohlcvBy15MinuteCombined.data;
+          else {
+            await this.ohlcvRepository.save(ohlcvBy15Minute);
+            ohlcvBy15Minute = ohlcvBy15MinuteCombined.data;
+          }
+
+          if (!ohlcvBy30Minute || !ohlcvBy30MinuteCombined.isNext)
+            ohlcvBy30Minute = ohlcvBy30MinuteCombined.data;
+          else {
+            await this.ohlcvRepository.save(ohlcvBy30Minute);
+            ohlcvBy30Minute = ohlcvBy30MinuteCombined.data;
+          }
+
+          if (!ohlcvBy60Minute || !ohlcvBy60MinuteCombined.isNext)
+            ohlcvBy60Minute = ohlcvBy60MinuteCombined.data;
+          else {
+            await this.ohlcvRepository.save(ohlcvBy60Minute);
+            ohlcvBy60Minute = ohlcvBy60MinuteCombined.data;
+          }
+        }
         console.log(new Date(newTrade.timestamp));
         count = 0;
         saveTrades = [];
