@@ -72,7 +72,6 @@ const debounce = require('debounce');
 export default {
   props: {
     walletProp: {
-      type: String,
       required: true
     },
     pairId: {
@@ -190,6 +189,7 @@ export default {
       }, 1000);
     },
     async getBalances() {
+      if (!this.currentAccountWallet) return;
       await this.getTokenBalance();
       if (this.autoUpdateBalance) {
         clearInterval(this.autoUpdateBalance);

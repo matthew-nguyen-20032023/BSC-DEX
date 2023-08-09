@@ -25,7 +25,6 @@ import { TradingVue, DataCube } from 'trading-vue-js'
 import {listTrades} from "@/plugins/backend";
 import {notificationWithCustomMessage} from "@/plugins/notification";
 const debounce = require('debounce');
-import {socket} from "@/plugins/socket";
 const BigNumber = require('bignumber.js');
 import TFSelector from "@/layout/trading/tf/TFSelector";
 export default {
@@ -52,6 +51,12 @@ export default {
           tf: '1m',
           data: []
         },
+        offchart: [{
+          type: 'BuySellBalance',
+          name: 'Buy/Sell Rate',
+          data: [],
+          settings: {}
+        }],
       }, { aggregation: 100, auto_scroll: false }),
       intervalType: '1m',
       millisecondStep: 60000,

@@ -106,6 +106,7 @@ export default {
     getCurrentWallet(client) {
       client.eth.getAccounts().then(res => {
         if (res[0] && this.walletAddress === res[0]) return;
+        if (!res[0]) return;
         this.walletAddress = res[0]
         this.sortWalletAddress = this.walletAddress.substring(0, 5)
           + '...'
