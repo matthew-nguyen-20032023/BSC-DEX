@@ -10,3 +10,8 @@ db.createUser({
     { role: "dbAdmin", db: process.env.DATABASE_NAME },
   ],
 });
+
+/**
+ * @Indexes
+ * db.trades.createIndex({ pairId: 1, timestamp: 1 });
+ */
