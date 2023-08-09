@@ -170,7 +170,6 @@ const moment = require('moment');
 export default {
   props: {
     walletProp: {
-      type: String,
       required: true
     },
     baseTokenAddress: {
