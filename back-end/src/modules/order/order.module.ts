@@ -7,6 +7,7 @@ import { Pair, PairSchema } from "src/models/schemas/pair.schema";
 import { OrderConsole } from "src/modules/order/order.console";
 import { Event, EventSchema } from "src/models/schemas/event.schema";
 import { Trade, TradeSchema } from "src/models/schemas/trade.schema";
+import { OHLCV, OHLCVSchema } from "src/models/schemas/ohlcv.schema";
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { Trade, TradeSchema } from "src/models/schemas/trade.schema";
       { name: Pair.name, schema: PairSchema },
       { name: Event.name, schema: EventSchema },
       { name: Trade.name, schema: TradeSchema },
+      { name: OHLCV.name, schema: OHLCVSchema },
     ]),
   ],
   controllers: [OrderController],

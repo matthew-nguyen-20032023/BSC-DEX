@@ -26,6 +26,13 @@ import { Pair, PairDocument } from "src/models/schemas/pair.schema";
 import { PairRepository } from "src/models/repositories/pair.repository";
 import { OrderService } from "src/modules/order/order.service";
 import { IOrderBook } from "src/modules/order/order.interface";
+import {
+  OHLCV,
+  OHLCVDocument,
+  OHLCVType,
+} from "src/models/schemas/ohlcv.schema";
+import { OHLCVRepository } from "src/models/repositories/ohlcv.repository";
+import { TradeService } from "src/modules/trade/trade.service";
 
 @Console()
 export class OrderConsole {
@@ -33,6 +40,7 @@ export class OrderConsole {
   private readonly orderRepository: OrderRepository;
   private readonly tradeRepository: TradeRepository;
   private readonly pairRepository: PairRepository;
+  private readonly ohlcvRepository: OHLCVRepository;
 
   constructor(
     @InjectModel(Event.name)
@@ -42,12 +50,15 @@ export class OrderConsole {
     @InjectModel(Trade.name)
     private readonly tradeModel: Model<TradeDocument>,
     @InjectModel(Pair.name)
-    private readonly pairModel: Model<PairDocument>
+    private readonly pairModel: Model<PairDocument>,
+    @InjectModel(OHLCV.name)
+    private readonly ohlcvModel: Model<OHLCVDocument>
   ) {
     this.eventRepository = new EventRepository(this.eventModel);
     this.orderRepository = new OrderRepository(this.orderModel);
     this.tradeRepository = new TradeRepository(this.tradeModel);
     this.pairRepository = new PairRepository(this.pairModel);
+    this.ohlcvRepository = new OHLCVRepository(this.ohlcvModel);
   }
 
   /**
@@ -82,6 +93,22 @@ export class OrderConsole {
     newTrade.maker = event.maker.toLowerCase();
     newTrade.taker = event.taker.toLowerCase();
     return newTrade;
+  }
+
+  private async calculateOHLCVByTrade(
+    trade: Trade,
+    ohlcvType: OHLCVType
+  ): Promise<void> {
+    const ohlcv = await this.ohlcvRepository.getLatestOHLCVByType(
+      trade.pairId,
+      ohlcvType
+    );
+    const ohlcvCombined = TradeService.combineOHLCVWithTrade(
+      ohlcv,
+      trade,
+      ohlcvType
+    );
+    await this.ohlcvRepository.save(ohlcvCombined.ohlcv);
   }
 
   /**
@@ -297,6 +324,14 @@ export class OrderConsole {
       order.updatedAt = new Date();
       oldestEventCrawled.status = EventStatus.Complete;
       oldestEventCrawled.updatedAt = new Date();
+
+      // Calculate OHLCV
+      await this.calculateOHLCVByTrade(newTrade, OHLCVType.Minute);
+      await this.calculateOHLCVByTrade(newTrade, OHLCVType.FifteenMinutes);
+      await this.calculateOHLCVByTrade(newTrade, OHLCVType.Hour);
+      await this.calculateOHLCVByTrade(newTrade, OHLCVType.FourHours);
+      await this.calculateOHLCVByTrade(newTrade, OHLCVType.Day);
+      await this.calculateOHLCVByTrade(newTrade, OHLCVType.Week);
 
       // Emit trade to FE
       SocketEmitter.getInstance().emitNewTradeCreated(newTrade);

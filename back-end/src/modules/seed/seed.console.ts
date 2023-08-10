@@ -1,9 +1,19 @@
 import { Command, Console } from "nestjs-console";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
+import * as bcrypt from "bcrypt";
+const {
+  RPCSubprovider,
+  Web3ProviderEngine,
+  PrivateKeyWalletSubprovider,
+} = require("@0x/subproviders");
+const { providerUtils } = require("@0x/utils");
+const { Web3Wrapper } = require("@0x/web3-wrapper");
+const BigNumber = require("bignumber.js");
+import { LimitOrder, SignatureType } from "@0x/protocol-utils";
+
 import { UserRepository } from "src/models/repositories/user.repository";
 import { User, UserDocument, UserRole } from "src/models/schemas/user.schema";
-import * as bcrypt from "bcrypt";
 import { Trade, TradeDocument } from "src/models/schemas/trade.schema";
 import { Token, TokenDocument } from "src/models/schemas/token.schema";
 import { Pair, PairDocument, PairStatus } from "src/models/schemas/pair.schema";
@@ -20,21 +30,19 @@ import { PairRepository } from "src/models/repositories/pair.repository";
 import { OrderRepository } from "src/models/repositories/order.repository";
 import { EventRepository } from "src/models/repositories/event.repository";
 import { Binance } from "src/blockchains/binance";
-const BigNumber = require("bignumber.js");
-import { LimitOrder, SignatureType } from "@0x/protocol-utils";
 import {
   getRandomPriceByRule,
   randomIntFromInterval,
   sleep,
 } from "src/helper/common";
 import { SocketEmitter } from "src/socket/socket-emitter";
-const {
-  RPCSubprovider,
-  Web3ProviderEngine,
-  PrivateKeyWalletSubprovider,
-} = require("@0x/subproviders");
-const { providerUtils } = require("@0x/utils");
-const { Web3Wrapper } = require("@0x/web3-wrapper");
+import { TradeService } from "src/modules/trade/trade.service";
+import {
+  OHLCV,
+  OHLCVDocument,
+  OHLCVType,
+} from "src/models/schemas/ohlcv.schema";
+import { OHLCVRepository } from "src/models/repositories/ohlcv.repository";
 
 @Console()
 export class SeedConsole {
@@ -44,6 +52,7 @@ export class SeedConsole {
   private pairRepository: PairRepository;
   private orderRepository: OrderRepository;
   private eventRepository: EventRepository;
+  private ohlcvRepository: OHLCVRepository;
 
   constructor(
     @InjectModel(User.name)
@@ -57,7 +66,9 @@ export class SeedConsole {
     @InjectModel(Order.name)
     private readonly orderModel: Model<OrderDocument>,
     @InjectModel(Event.name)
-    private readonly eventModel: Model<EventDocument>
+    private readonly eventModel: Model<EventDocument>,
+    @InjectModel(OHLCV.name)
+    private readonly ohlcvModel: Model<OHLCVDocument>
   ) {
     this.userRepository = new UserRepository(this.userModel);
     this.tradeRepository = new TradeRepository(this.tradeModel);
@@ -65,6 +76,7 @@ export class SeedConsole {
     this.pairRepository = new PairRepository(this.pairModel);
     this.orderRepository = new OrderRepository(this.orderModel);
     this.eventRepository = new EventRepository(this.eventModel);
+    this.ohlcvRepository = new OHLCVRepository(this.ohlcvModel);
   }
 
   private async deleteAllDataOnDatabase(): Promise<void> {
@@ -122,6 +134,37 @@ export class SeedConsole {
     newPair.quoteTokenAddress = quoteToken.address;
     newPair.status = PairStatus.Active;
     await this.pairRepository.save(newPair);
+  }
+
+  private async calculateOHLCVBySeedTrade(
+    ohlcv: OHLCV,
+    trade: Trade,
+    ohlcvType: OHLCVType,
+    isUpdateImmediately = false
+  ): Promise<OHLCV> {
+    if (isUpdateImmediately) {
+      const latestOHLCV = await this.ohlcvRepository.getLatestOHLCVByType(
+        trade.pairId,
+        ohlcvType
+      );
+      const ohlcvCombined = TradeService.combineOHLCVWithTrade(
+        latestOHLCV,
+        trade,
+        ohlcvType
+      );
+      return this.ohlcvRepository.save(ohlcvCombined.ohlcv);
+    } else {
+      const ohlcvCombined = TradeService.combineOHLCVWithTrade(
+        ohlcv,
+        trade,
+        ohlcvType
+      );
+      if (ohlcvCombined.isNext && ohlcv) {
+        await this.ohlcvRepository.save(ohlcv);
+      }
+      ohlcv = ohlcvCombined.ohlcv;
+      return ohlcv;
+    }
   }
 
   public static async mintTokenForTestingAccounts(
@@ -415,14 +458,94 @@ export class SeedConsole {
     command: "seed-trades",
   })
   async seedTrades(): Promise<void> {
-    let timestamp = new Date(Date.now() - 86400000 * 30).getTime();
+    let pairId = "64ca637a5dc04241fff1d209";
+    const latestTrade = await this.tradeRepository.getLatestTradeHappenedByPair(
+      pairId,
+      1
+    );
+    let timestamp =
+      latestTrade.length === 0
+        ? new Date(Date.now() - 86400000 * 1080).getTime()
+        : latestTrade[0].timestamp;
     let previousPrice = 15;
     let count = 0;
     let saveTrades = [];
+
+    let ohlcvMinute = await this.ohlcvRepository.getLatestOHLCVByType(
+      pairId,
+      OHLCVType.Minute
+    );
+    let ohlcv15Minute = await this.ohlcvRepository.getLatestOHLCVByType(
+      pairId,
+      OHLCVType.FifteenMinutes
+    );
+    let ohlcvHour = await this.ohlcvRepository.getLatestOHLCVByType(
+      pairId,
+      OHLCVType.Hour
+    );
+    let ohlcv4Hour = await this.ohlcvRepository.getLatestOHLCVByType(
+      pairId,
+      OHLCVType.FourHours
+    );
+    let ohlcvDay = await this.ohlcvRepository.getLatestOHLCVByType(
+      pairId,
+      OHLCVType.Day
+    );
+    let ohlcvWeek = await this.ohlcvRepository.getLatestOHLCVByType(
+      pairId,
+      OHLCVType.Week
+    );
+
     while (true) {
       if (timestamp > Date.now()) {
-        if (saveTrades.length > 0)
+        if (saveTrades.length > 0) {
           await this.tradeRepository.saveTrades(saveTrades);
+          await this.ohlcvRepository.save(ohlcvMinute);
+          await this.ohlcvRepository.save(ohlcv15Minute);
+          await this.ohlcvRepository.save(ohlcvHour);
+          await this.ohlcvRepository.save(ohlcv4Hour);
+          await this.ohlcvRepository.save(ohlcvDay);
+          await this.ohlcvRepository.save(ohlcvWeek);
+
+          for (const trade of saveTrades) {
+            await this.calculateOHLCVBySeedTrade(
+              ohlcvMinute,
+              trade,
+              OHLCVType.Minute,
+              true
+            );
+            await this.calculateOHLCVBySeedTrade(
+              ohlcv15Minute,
+              trade,
+              OHLCVType.FifteenMinutes,
+              true
+            );
+            await this.calculateOHLCVBySeedTrade(
+              ohlcvHour,
+              trade,
+              OHLCVType.Hour,
+              true
+            );
+            await this.calculateOHLCVBySeedTrade(
+              ohlcv4Hour,
+              trade,
+              OHLCVType.FourHours,
+              true
+            );
+            await this.calculateOHLCVBySeedTrade(
+              ohlcvDay,
+              trade,
+              OHLCVType.Day,
+              true
+            );
+            await this.calculateOHLCVBySeedTrade(
+              ohlcvWeek,
+              trade,
+              OHLCVType.Week,
+              true
+            );
+          }
+        }
         break;
       }
       const newTrade = new Trade();
@@ -430,7 +553,7 @@ export class SeedConsole {
         randomIntFromInterval(1, 2) === 1
           ? OrderType.BuyOrder
           : OrderType.SellOrder;
-      newTrade.pairId = "64ca637a5dc04241fff1d209";
+      newTrade.pairId = pairId;
       const price = getRandomPriceByRule(previousPrice, 1);
       newTrade.price = `${price}`;
       newTrade.volume = new BigNumber(randomIntFromInterval(1, 10))
@@ -446,6 +569,38 @@ export class SeedConsole {
 
       if (count > 1000) {
         await this.tradeRepository.saveTrades(saveTrades);
+        for (const trade of saveTrades) {
+          ohlcvMinute = await this.calculateOHLCVBySeedTrade(
+            ohlcvMinute,
+            trade,
+            OHLCVType.Minute
+          );
+          ohlcv15Minute = await this.calculateOHLCVBySeedTrade(
+            ohlcv15Minute,
+            trade,
+            OHLCVType.FifteenMinutes
+          );
+          ohlcvHour = await this.calculateOHLCVBySeedTrade(
+            ohlcvHour,
+            trade,
+            OHLCVType.Hour
+          );
+          ohlcv4Hour = await this.calculateOHLCVBySeedTrade(
+            ohlcv4Hour,
+            trade,
+            OHLCVType.FourHours
+          );
+          ohlcvDay = await this.calculateOHLCVBySeedTrade(
+            ohlcvDay,
+            trade,
+            OHLCVType.Day
+          );
+          ohlcvWeek = await this.calculateOHLCVBySeedTrade(
+            ohlcvWeek,
+            trade,
+            OHLCVType.Week
+          );
+        }
         console.log(new Date(newTrade.timestamp));
         count = 0;
         saveTrades = [];

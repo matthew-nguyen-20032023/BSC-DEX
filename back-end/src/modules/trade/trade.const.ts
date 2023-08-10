@@ -1,5 +1,6 @@
 export enum TradeMessageSuccess {
   GetTradesSuccess = "Get trades successfully.",
+  GetOHLCVSuccess = "Get ohlcv successfully.",
   GetOriginTradesSuccess = "Get current origin trades happened success.",
   GetWalletTradesSuccess = "Get wallet trades success.",
 }
