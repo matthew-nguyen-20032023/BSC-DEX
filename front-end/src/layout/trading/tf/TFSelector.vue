@@ -29,14 +29,9 @@ export default {
         return {
           timeFrames: [
             {tf: '1m', intervalType: "1m", millisecondStep: 60000},
-            {tf: '3m', intervalType: "3m", millisecondStep: 180000},
-            {tf: '5m', intervalType: "5m", millisecondStep: 300000},
             {tf: '15m', intervalType: "15m", millisecondStep: 900000},
-            {tf: '30m', intervalType: "30m", millisecondStep: 1800000},
             {tf: '1H', intervalType: "1h", millisecondStep: 3600000},
-            {tf: '2H', intervalType: "2h", millisecondStep: 7200000},
             {tf: '4H', intervalType: "4h", millisecondStep: 14400000},
-            {tf: '12H', intervalType: "12h", millisecondStep: 43200000},
             {tf: '1D', intervalType: "1d", millisecondStep: 86400000},
             {tf: '1W', intervalType: "1w", millisecondStep: 604800000},
           ],

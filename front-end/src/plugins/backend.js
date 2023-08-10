@@ -42,6 +42,16 @@ export const listTrades = async (
   return axios.get(url);
 };
 
+export const getOHLCV = async (
+  pairId,
+  fromTimestamp,
+  toTimestamp,
+  ohlcvTypeInterval
+) => {
+  let url = `${process.env.VUE_APP_BACKEND_URL}/trade/ohlcv?pairId=${pairId}&fromTimestamp=${fromTimestamp}&toTimestamp=${toTimestamp}&ohlcvTypeInterval=${ohlcvTypeInterval}`;
+  return axios.get(url);
+};
+
 export const listMyTrades = async (page, limit, wallet, pairId) => {
   let url = `${
     process.env.VUE_APP_BACKEND_URL

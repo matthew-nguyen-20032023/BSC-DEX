@@ -1,5 +1,5 @@
 import { Controller, Get, HttpStatus, Query } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import { IResponseToClient } from "src/configs/response-to-client.config";
 import { Public } from "src/modules/authentication/auth.const";
@@ -8,12 +8,27 @@ import { TradeMessageSuccess } from "src/modules/trade/trade.const";
 import { TradeDto } from "src/modules/trade/dto/trade.dto";
 import { CurrentOriginTradeDto } from "src/modules/trade/dto/current-origin-trade.dto";
 import { MyTradeDto } from "src/modules/trade/dto/my-trade.dto";
+import { GetOHLCVDto } from "src/modules/trade/dto/get-ohlcv.dto";
 
 @Controller("trade")
 @Public()
 @ApiTags("Trade")
 export class TradeController {
   constructor(private readonly tradeService: TradeService) {}
+  @Get("ohlcv")
+  @ApiOperation({
+    summary: "Api get ohlcv calculated",
+  })
+  public async getOHLCV(
+    @Query() getOHLCVDto: GetOHLCVDto
+  ): Promise<IResponseToClient> {
+    const data = await this.tradeService.getOHLCV(getOHLCVDto);
+    return {
+      message: TradeMessageSuccess.GetOHLCVSuccess,
+      data: data,
+      statusCode: HttpStatus.OK,
+    };
+  }
 
   @Get()
   @ApiOperation({

@@ -27,13 +27,17 @@ export class OHLCVRepository {
 
   public async getOHLCVFromToByPair(
     pairId: string,
+    ohlcvType: OHLCVType,
     fromTimestamp: number,
     toTimestamp: number
   ): Promise<OHLCV[]> {
-    return this.model.find({
-      pairId,
-      timestamp: { $gte: fromTimestamp, $lte: toTimestamp },
-    });
+    return this.model
+      .find({
+        pairId,
+        ohlcvType,
+        timestamp: { $gte: fromTimestamp, $lte: toTimestamp },
+      })
+      .select(["timestamp", "open", "high", "low", "close", "volume"]);
   }
 
   /**

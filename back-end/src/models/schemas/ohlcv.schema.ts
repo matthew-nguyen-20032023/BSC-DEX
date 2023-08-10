@@ -10,8 +10,10 @@ export type OHLCVDocument = HydratedDocument<OHLCV>;
 export enum OHLCVType {
   Minute = 1,
   FifteenMinutes = 15,
-  ThirtyMinutes = 30,
   Hour = 60,
+  FourHours = 240,
+  Day = 3600,
+  Week = 25200,
 }
 
 @Schema({ collection: "ohlcvs" })

@@ -1,9 +1,8 @@
-import { MyTradeDto } from "./dto/my-trade.dto";
-
-const BigNumber = require("bignumber.js");
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
+const BigNumber = require("bignumber.js");
+
 import { TradeRepository } from "src/models/repositories/trade.repository";
 import { Trade, TradeDocument } from "src/models/schemas/trade.schema";
 import { IOHLCV } from "src/modules/trade/trade.interface";
@@ -12,17 +11,28 @@ import {
   OHLCVTypeInterval,
   TradeMessageError,
 } from "src/modules/trade/trade.const";
-import { OHLCV, OHLCVType } from "src/models/schemas/ohlcv.schema";
+import {
+  OHLCV,
+  OHLCVDocument,
+  OHLCVType,
+} from "src/models/schemas/ohlcv.schema";
+import { GetOHLCVDto } from "src/modules/trade/dto/get-ohlcv.dto";
+import { OHLCVRepository } from "src/models/repositories/ohlcv.repository";
+import { MyTradeDto } from "src/modules/trade/dto/my-trade.dto";
 
 @Injectable()
 export class TradeService {
   private tradeRepository: TradeRepository;
+  private ohlcvRepository: OHLCVRepository;
 
   constructor(
     @InjectModel(Trade.name)
-    private readonly tradeModel: Model<TradeDocument>
+    private readonly tradeModel: Model<TradeDocument>,
+    @InjectModel(OHLCV.name)
+    private readonly ohlcvModel: Model<OHLCVDocument>
   ) {
     this.tradeRepository = new TradeRepository(this.tradeModel);
+    this.ohlcvRepository = new OHLCVRepository(this.ohlcvModel);
   }
 
   /**
@@ -35,17 +45,10 @@ export class TradeService {
   ): Promise<number> {
     const dataConvert = [];
     dataConvert["1m"] = 60000;
-    dataConvert["3m"] = 180000;
-    dataConvert["5m"] = 300000;
     dataConvert["15m"] = 900000;
-    dataConvert["30m"] = 1800000;
     dataConvert["1h"] = 3600000;
-    dataConvert["2h"] = 7200000;
     dataConvert["4h"] = 14400000;
-    dataConvert["8h"] = 28800000;
-    dataConvert["12h"] = 43200000;
     dataConvert["1d"] = 86400000;
-    dataConvert["3d"] = 259200000;
     dataConvert["1w"] = 604800000;
     return dataConvert[ohlcvTypeInterval]
       ? dataConvert[ohlcvTypeInterval]
@@ -64,20 +67,58 @@ export class TradeService {
     // round down to exactly minute
     const roundDownTradeTimestamp = Math.floor(trade.timestamp / 60000) * 60000;
     const tradeTimestamp = new Date(roundDownTradeTimestamp);
-    // round down to exactly rule of ohlcv
-    const roundedMinutes =
-      Math.floor(tradeTimestamp.getMinutes() / ohlcvType) * ohlcvType;
-    tradeTimestamp.setMinutes(roundedMinutes);
-    tradeTimestamp.setSeconds(0);
-    // return timestamp rounded
-    return tradeTimestamp.getTime();
+
+    // round down timestamp by minutes
+    if (
+      ohlcvType === OHLCVType.Minute ||
+      ohlcvType === OHLCVType.FifteenMinutes
+    ) {
+      const roundedMinutes =
+        Math.floor(tradeTimestamp.getMinutes() / ohlcvType) * ohlcvType;
+      tradeTimestamp.setMinutes(roundedMinutes);
+      tradeTimestamp.setSeconds(0);
+      return tradeTimestamp.getTime();
+    }
+
+    // round down timestamp by hour
+    if (ohlcvType === OHLCVType.Hour || ohlcvType === OHLCVType.FourHours) {
+      const convertOHLCVTypeToHour = ohlcvType / 60;
+      const roundedHours =
+        Math.floor(tradeTimestamp.getHours() / convertOHLCVTypeToHour) *
+        convertOHLCVTypeToHour;
+      tradeTimestamp.setHours(roundedHours);
+      tradeTimestamp.setMinutes(0);
+      tradeTimestamp.setSeconds(0);
+      tradeTimestamp.setMilliseconds(0);
+      return tradeTimestamp.getTime();
+    }
+
+    if (ohlcvType === OHLCVType.Day) {
+      tradeTimestamp.setHours(0);
+      tradeTimestamp.setMinutes(0);
+      tradeTimestamp.setSeconds(0);
+      tradeTimestamp.setMilliseconds(0);
+      return tradeTimestamp.getTime();
+    }
+
+    if (ohlcvType === OHLCVType.Week) {
+      const dayOfWeek = tradeTimestamp.getDay();
+      const daysUntilMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const firstDayOfWeek = new Date(tradeTimestamp);
+      firstDayOfWeek.setDate(tradeTimestamp.getDate() - daysUntilMonday);
+      firstDayOfWeek.setHours(0);
+      firstDayOfWeek.setMinutes(0);
+      firstDayOfWeek.setSeconds(0);
+      firstDayOfWeek.setMilliseconds(0);
+      return firstDayOfWeek.getTime();
+    }
   }
 
   public static combineOHLCVWithTrade(
     currentOHLCV: OHLCV,
     trade: Trade,
     ohlvcType: OHLCVType
-  ): { data: OHLCV; isNext: boolean } {
+  ): { ohlcv: OHLCV; isNext: boolean } {
     const tradeTimestamp = TradeService.roundDownTimeByOHLCVRules(
       trade,
       ohlvcType
@@ -89,7 +130,7 @@ export class TradeService {
       newOHLCV.pairId = trade.pairId;
       newOHLCV.ohlcvType = ohlvcType;
       newOHLCV.timestamp = tradeTimestamp;
-      newOHLCV.open = trade.price;
+      newOHLCV.open = currentOHLCV ? currentOHLCV.close : trade.price;
       newOHLCV.high = trade.price;
       newOHLCV.low = trade.price;
       newOHLCV.close = trade.price;
@@ -97,7 +138,7 @@ export class TradeService {
         .div(new BigNumber(10).pow(18))
         .toFixed(2);
       return {
-        data: newOHLCV,
+        ohlcv: newOHLCV,
         isNext: true,
       };
     }
@@ -112,9 +153,30 @@ export class TradeService {
       .plus(new BigNumber(trade.volume).div(new BigNumber(10).pow(18)))
       .toFixed(2);
     return {
-      data: currentOHLCV,
+      ohlcv: currentOHLCV,
       isNext: false,
     };
+  }
+
+  public async getOHLCV(getOHLCVDto: GetOHLCVDto): Promise<OHLCV[]> {
+    const ohlcvInterval = await TradeService.convertToMilliseconds(
+      getOHLCVDto.ohlcvTypeInterval
+    );
+
+    let ohlcvType: OHLCVType;
+    if (ohlcvInterval === 60000) ohlcvType = OHLCVType.Minute;
+    if (ohlcvInterval === 900000) ohlcvType = OHLCVType.FifteenMinutes;
+    if (ohlcvInterval === 3600000) ohlcvType = OHLCVType.Hour;
+    if (ohlcvInterval === 14400000) ohlcvType = OHLCVType.FourHours;
+    if (ohlcvInterval === 86400000) ohlcvType = OHLCVType.Day;
+    if (ohlcvInterval === 604800000) ohlcvType = OHLCVType.Week;
+
+    return this.ohlcvRepository.getOHLCVFromToByPair(
+      getOHLCVDto.pairId,
+      ohlcvType,
+      getOHLCVDto.fromTimestamp,
+      getOHLCVDto.toTimestamp
+    );
   }
 
   public async getTrades(tradeDto: TradeDto): Promise<IOHLCV[]> {
